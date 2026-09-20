@@ -1,0 +1,6 @@
+{
+  "name": "Hamro Patro",
+  "description": "Comprehensive Nepali Bikram Sambat calendar, Daily Motivation & Nepali proverbs, Health & Wellness seasonal Ayurvedic Ritucharya & yoga, free online Sudoku & mind activity games centre with Nepali Devanagari numbers and Bagh-Chal, live weather forecasts, daily Rashifal, Nepali news, real Forex & Gold rates, calculators, and official government help centre with interactive public services map.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ne">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Extension Guard for Web3 Wallet property collisions -->
+    <script>
+      (function() {
+        try {
+          const originalDefineProperty = Object.defineProperty;
+          Object.defineProperty = function(obj, prop, descriptor) {
+            if (obj === window && (prop === 'ethereum' || prop === 'solana' || prop === 'web3')) {
+              try {
+                return originalDefineProperty.call(this, obj, prop, {
+                  ...descriptor,
+                  configurable: true,
+                  writable: true,
+                });
+              } catch (e) {
+                try {
+                  if (descriptor && 'value' in descriptor) {
+                    obj[prop] = descriptor.value;
+                  }
+                } catch (_) {}
+                return obj;
+              }
+            }
+            try {
+              return originalDefineProperty.call(this, obj, prop, descriptor);
+            } catch (err) {
+              if (obj === window && (prop === 'ethereum' || prop === 'solana' || prop === 'web3')) {
+                return obj;
+              }
+              throw err;
+            }
+          };
+
+          // Intercept benign [vite] websocket logs in AI Studio container environment
+          const originalConsoleError = console.error;
+          console.error = function(...args) {
+            const msg = args.map(a => (typeof a === 'string' ? a : (a && a.message) ? a.message : '')).join(' ');
+            if (msg.includes('[vite] failed to connect') || msg.includes('[vite]')) {
+              return;
+            }
+            return originalConsoleError.apply(console, args);
+          };
+
+          const originalConsoleWarn = console.warn;
+          console.warn = function(...args) {
+            const msg = args.map(a => (typeof a === 'string' ? a : (a && a.message) ? a.message : '')).join(' ');
+            if (msg.includes('[vite] failed to connect') || msg.includes('[vite]')) {
+              return;
+            }
+            return originalConsoleWarn.apply(console, args);
+          };
+
+          window.addEventListener('error', function(event) {
+            const msg = (event && event.message) ? event.message : '';
+            if (
+              msg.includes('[vite]') ||
+              msg.includes('websocket') ||
+              msg.includes('Cannot redefine property: ethereum') ||
+              msg.includes('Cannot redefine property') ||
+              msg.includes('ethereum')
+            ) {
+              event.preventDefault?.();
+              event.stopPropagation?.();
+              return true;
+            }
+          }, true);
+
+          window.addEventListener('unhandledrejection', function(event) {
+            const reason = event && event.reason;
+            const msg = typeof reason === 'string' ? reason : ((reason && reason.message) ? reason.message : '');
+            if (
+              msg.includes('[vite]') ||
+              msg.includes('websocket') ||
+              msg.includes('Cannot redefine property: ethereum') ||
+              msg.includes('Cannot redefine property')
+            ) {
+              event.preventDefault?.();
+              event.stopPropagation?.();
+              return true;
+            }
+          }, true);
+        } catch (_) {}
+      })();
+    </script>
+    <title>Hamro Patro - Nepali Calendar, Weather, News, Sudoku & Utilities</title>
+    <meta name="description" content="Comprehensive Nepali Bikram Sambat calendar, Daily Motivation & Nepali proverbs, Health & Wellness seasonal Ayurvedic Ritucharya & yoga, free online Sudoku & mind activity games centre with Nepali Devanagari numbers and Bagh-Chal, live weather forecasts, daily Rashifal, Nepali news, real Forex & Gold rates, calculators, and official government help centre with interactive public services map." />
+    <meta property="og:title" content="Hamro Patro - Nepali Calendar, Weather, News, Sudoku & Utilities" />
+    <meta property="og:description" content="Comprehensive Nepali Bikram Sambat calendar, Daily Motivation & Nepali proverbs, Health & Wellness seasonal Ayurvedic Ritucharya & yoga, free online Sudoku & mind activity games centre with Nepali Devanagari numbers and Bagh-Chal, live weather forecasts, daily Rashifal, Nepali news, real Forex & Gold rates, calculators, and official government help centre with interactive public services map." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Web Portal & Responsive Meta Tags -->
+    <meta name="theme-color" content="#b91c1c" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Hamro Patro" />
+    <meta name="application-name" content="Hamro Patro" />
+    <meta name="msapplication-TileColor" content="#b91c1c" />
+
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="/icon.svg" />
+  </head>
+  <body class="bg-stone-50 text-stone-900 antialiased selection:bg-red-500 selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
