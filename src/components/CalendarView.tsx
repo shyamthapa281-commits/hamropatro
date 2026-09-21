@@ -15,7 +15,16 @@ import {
   X,
   Share2,
   HeartPulse,
-  Leaf
+  Leaf,
+  CloudSun,
+  Newspaper,
+  Coins,
+  Calculator as CalcIcon,
+  ArrowLeftRight,
+  Gamepad2,
+  Building2,
+  Languages,
+  Flame
 } from 'lucide-react';
 import { 
   CalendarDay, 
@@ -42,6 +51,7 @@ import { CalendarSearchBar } from './CalendarSearchBar';
 interface CalendarViewProps {
   todayBs: NepaliDate;
   lang: Language;
+  onNavigate?: (tab: string) => void;
   onSelectDateForHoroscope?: (rashiIndex: number) => void;
   onOpenWellness?: () => void;
 }
@@ -53,7 +63,7 @@ interface UserNote {
   createdAt: string;
 }
 
-export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onOpenWellness }) => {
+export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNavigate, onOpenWellness }) => {
   const [currentYear, setCurrentYear] = useState<number>(todayBs.year);
   const [currentMonth, setCurrentMonth] = useState<number>(todayBs.month);
   const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
@@ -408,11 +418,62 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onOpe
           </div>
         </div>
 
-        {/* Right Sidebar: Daily Motivation, Today's Full Panchanga & Selected Day Details */}
+        {/* Right Sidebar: Daily Motivation, Quick Features Hub, Today's Full Panchanga & Selected Day Details */}
         <div className="lg:col-span-4 space-y-6">
           
           {/* Daily Motivation Card */}
           <DailyMotivationCard lang={lang} todayBs={todayBs} />
+
+          {/* Quick Feature Navigation Hub */}
+          {onNavigate && (
+            <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-xs border border-stone-200 dark:border-stone-800 p-4 transition-colors">
+              <div className="flex items-center justify-between mb-3 border-b border-stone-100 dark:border-stone-800 pb-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <h3 className="font-extrabold text-stone-900 dark:text-white text-xs sm:text-sm uppercase tracking-wider">
+                    {lang === 'ne' ? 'द्रुत सेवाहरू' : 'Quick Features'}
+                  </h3>
+                </div>
+                <span className="text-[10px] text-stone-400 font-medium">
+                  {lang === 'ne' ? 'सिधै जानुहोस्' : 'Instant Jump'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'rashifal', labelNe: 'राशिफल', labelEn: 'Rashifal', icon: Sparkles, color: 'text-amber-700 dark:text-amber-300 bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60' },
+                  { id: 'weather', labelNe: 'मौसम', labelEn: 'Weather', icon: CloudSun, color: 'text-sky-700 dark:text-sky-300 bg-sky-50/80 dark:bg-sky-950/40 hover:bg-sky-100 dark:hover:bg-sky-900/60' },
+                  { id: 'news', labelNe: 'समाचार', labelEn: 'News', icon: Newspaper, color: 'text-red-700 dark:text-red-300 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60' },
+                  { id: 'forex', labelNe: 'मुद्रा / सुन', labelEn: 'Forex & Gold', icon: Coins, color: 'text-emerald-700 dark:text-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60' },
+                  { id: 'worldclock', labelNe: 'विश्व घडी', labelEn: 'World Clock', icon: Clock, color: 'text-indigo-700 dark:text-indigo-300 bg-indigo-50/80 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60' },
+                  { id: 'calculator', labelNe: 'क्याल्कुलेटर', labelEn: 'Calculator', icon: CalcIcon, color: 'text-teal-700 dark:text-teal-300 bg-teal-50/80 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60' },
+                  { id: 'converter', labelNe: 'नाप रूपान्तरण', labelEn: 'Converters', icon: ArrowLeftRight, color: 'text-purple-700 dark:text-purple-300 bg-purple-50/80 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/60' },
+                  { id: 'games', labelNe: 'सुडोकू र खेल', labelEn: 'Sudoku & Games', icon: Gamepad2, color: 'text-amber-800 dark:text-amber-200 bg-amber-100/60 dark:bg-amber-950/50 hover:bg-amber-200/70 dark:hover:bg-amber-900/70' },
+                  { id: 'health', labelNe: 'स्वास्थ्य / योग', labelEn: 'Wellness', icon: HeartPulse, color: 'text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60' },
+                  { id: 'govhelp', labelNe: 'सरकारी सेवा', labelEn: 'Gov Help', icon: Building2, color: 'text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60' },
+                  { id: 'language', labelNe: 'भाषा सिकाई', labelEn: 'Language Hub', icon: Languages, color: 'text-orange-700 dark:text-orange-300 bg-orange-50/80 dark:bg-orange-950/40 hover:bg-orange-100 dark:hover:bg-orange-900/60' },
+                  { id: 'festivals', labelNe: 'चाडपर्वहरू', labelEn: 'Festivals', icon: Flame, color: 'text-red-800 dark:text-red-200 bg-red-100/60 dark:bg-red-950/50 hover:bg-red-200/70 dark:hover:bg-red-900/70' },
+                ].map((item) => {
+                  const IconComp = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      id={`calendar-quick-nav-${item.id}`}
+                      onClick={() => onNavigate(item.id)}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border border-stone-200/70 dark:border-stone-800 transition-all duration-150 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 ${item.color}`}
+                      title={lang === 'ne' ? `${item.labelNe} हेर्नुहोस्` : `Open ${item.labelEn}`}
+                    >
+                      <IconComp className="w-4 h-4 mb-1 shrink-0" />
+                      <span className="text-[10.5px] font-bold leading-tight truncate w-full text-center">
+                        {lang === 'ne' ? item.labelNe : item.labelEn}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Day Detail & Panchanga Card */}
           <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-200 dark:border-stone-800 p-5 transition-colors">
@@ -638,6 +699,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onOpe
                 ))
               )}
             </div>
+
+            {onNavigate && (
+              <button
+                type="button"
+                id="calendar-explore-all-festivals-btn"
+                onClick={() => onNavigate('festivals')}
+                className="w-full mt-3 py-2 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800/80 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-stone-200/60 dark:border-stone-700"
+              >
+                <span>{lang === 'ne' ? 'सबै चाडपर्वहरू हेर्नुहोस्' : 'Explore All Nepali Festivals'}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           {/* Seasonal Health & Wellness Quick Teaser Card */}

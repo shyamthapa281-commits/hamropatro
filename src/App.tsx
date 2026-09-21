@@ -63,6 +63,19 @@ export function App() {
     setLang((prev) => (prev === 'ne' ? 'en' : 'ne'));
   };
 
+  const handleNavigate = (tab: string) => {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    if (typeof document !== 'undefined') {
+      document.documentElement.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      document.body.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }, [activeTab]);
+
   return (
     <div className="min-h-screen bg-stone-100/80 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans selection:bg-red-500 selection:text-white transition-colors duration-200">
       {/* Top Header */}
@@ -76,16 +89,13 @@ export function App() {
         onOpenRadio={() => setIsRadioOpen(true)}
         isRadioPlaying={isRadioPlaying}
         activeRadioName={activeRadioStation.name}
-        onNavigate={(tab) => setActiveTab(tab)}
+        onNavigate={handleNavigate}
       />
 
       {/* Navigation Bar */}
       <Navigation
         activeTab={activeTab}
-        onSelectTab={(tab) => {
-          setActiveTab(tab);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        onSelectTab={handleNavigate}
         lang={lang}
       />
 
@@ -95,8 +105,9 @@ export function App() {
           <CalendarView
             todayBs={todayBs}
             lang={lang}
-            onSelectDateForHoroscope={() => setActiveTab('rashifal')}
-            onOpenWellness={() => setActiveTab('health')}
+            onNavigate={handleNavigate}
+            onSelectDateForHoroscope={() => handleNavigate('rashifal')}
+            onOpenWellness={() => handleNavigate('health')}
           />
         )}
 
@@ -164,7 +175,7 @@ export function App() {
       />
 
       {/* Footer */}
-      <Footer lang={lang} onNavigate={(tab) => setActiveTab(tab)} />
+      <Footer lang={lang} onNavigate={handleNavigate} />
     </div>
   );
 }

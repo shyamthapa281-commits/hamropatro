@@ -34,58 +34,129 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">
-              {lang === 'ne' ? 'द्रुत सेवाहरू' : 'Quick Features'}
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>{lang === 'ne' ? 'द्रुत सेवाहरू' : 'Quick Features'}</span>
             </h4>
             <ul className="space-y-2 text-xs text-stone-400">
               <li>
-                <button onClick={() => onNavigate('weather')} className="hover:text-amber-300 transition-colors cursor-pointer text-sky-400 font-medium flex items-center gap-1">
+                <button
+                  type="button"
+                  id="footer-quick-weather"
+                  onClick={() => onNavigate('weather')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-sky-400 font-medium flex items-center gap-1 text-left w-full"
+                >
                   <span>{lang === 'ne' ? '• मौसम पूर्वानुमान (नेपालका शहरहरू)' : '• Weather Forecast (Nepal Cities)'}</span>
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('worldclock')} className="hover:text-amber-300 transition-colors cursor-pointer text-amber-300/90 font-medium flex items-center gap-1">
+                <button
+                  type="button"
+                  id="footer-quick-worldclock"
+                  onClick={() => onNavigate('worldclock')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-amber-300/90 font-medium flex items-center gap-1 text-left w-full"
+                >
                   <span>{lang === 'ne' ? '• विश्व घडी (नेपाल समय NPT)' : '• World Clock (Nepal Time NPT)'}</span>
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('health')} className="hover:text-amber-300 transition-colors cursor-pointer text-rose-400 font-medium flex items-center gap-1">
+                <button
+                  type="button"
+                  id="footer-quick-rashifal"
+                  onClick={() => onNavigate('rashifal')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-amber-200 font-medium flex items-center gap-1 text-left w-full"
+                >
+                  <span>{lang === 'ne' ? '• दैनिक राशिफल र भविष्यफल' : '• Daily Rashifal (Horoscope)'}</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  id="footer-quick-health"
+                  onClick={() => onNavigate('health')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-rose-400 font-medium flex items-center gap-1 text-left w-full"
+                >
                   <span>{lang === 'ne' ? '• स्वास्थ्य तथा कल्याण (योग र ऋतुचर्या)' : '• Health & Wellness (Yoga & Ritucharya)'}</span>
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('games')} className="hover:text-amber-300 transition-colors cursor-pointer text-amber-300 font-semibold flex items-center gap-1">
+                <button
+                  type="button"
+                  id="footer-quick-games"
+                  onClick={() => onNavigate('games')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-amber-300 font-semibold flex items-center gap-1 text-left w-full"
+                >
                   <span>{lang === 'ne' ? '• सुडोकू र खेल केन्द्र (Sudoku & Mind Games)' : '• Sudoku & Activity Games Centre'}</span>
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('calendar')} className="hover:text-amber-300 transition-colors cursor-pointer">
+                <button
+                  type="button"
+                  id="footer-quick-calendar"
+                  onClick={() => onNavigate('calendar')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                >
                   {lang === 'ne' ? '• नेपाली पात्रो र पञ्चाङ्ग' : '• Nepali Calendar & Panchanga'}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('calculator')} className="hover:text-amber-300 transition-colors cursor-pointer">
+                <button
+                  type="button"
+                  id="footer-quick-calculator"
+                  onClick={() => onNavigate('calculator')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                >
                   {lang === 'ne' ? '• क्याल्कुलेटर र साइन्टिफिक' : '• Standard & Scientific Calculator'}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('converter')} className="hover:text-amber-300 transition-colors cursor-pointer">
+                <button
+                  type="button"
+                  id="footer-quick-converter"
+                  onClick={() => onNavigate('converter')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                >
                   {lang === 'ne' ? '• नाप, जग्गा र मिति रूपान्तरण' : '• Measurement & Date Converter'}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('language')} className="hover:text-amber-300 transition-colors cursor-pointer">
+                <button
+                  type="button"
+                  id="footer-quick-language"
+                  onClick={() => onNavigate('language')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                >
                   {lang === 'ne' ? '• नेपाली-अंग्रेजी भाषा सिकाई' : '• Language Learning Hub'}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('govhelp')} className="hover:text-amber-300 transition-colors cursor-pointer">
+                <button
+                  type="button"
+                  id="footer-quick-govhelp"
+                  onClick={() => onNavigate('govhelp')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                >
                   {lang === 'ne' ? '• सरकारी सेवा र आपतकालीन हटलाइन' : '• Government Portals & Emergency'}
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('forex')} className="hover:text-amber-300 transition-colors cursor-pointer">
+                <button
+                  type="button"
+                  id="footer-quick-forex"
+                  onClick={() => onNavigate('forex')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                >
                   {lang === 'ne' ? '• विनिमय दर र सुनको मूल्य' : '• Forex Rates & Bullion'}
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  id="footer-quick-festivals"
+                  onClick={() => onNavigate('festivals')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                >
+                  {lang === 'ne' ? '• नेपाली चाडपर्वहरू' : '• Nepali Festivals'}
                 </button>
               </li>
             </ul>
