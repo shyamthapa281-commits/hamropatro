@@ -199,6 +199,12 @@ export interface FestivalInfo {
   recipeOrHighlightNe?: string;
   recipeOrHighlightEn?: string;
   imageTheme: string;
+  isPassedThisYear?: boolean;
+  statusBadgeNe?: string;
+  statusBadgeEn?: string;
+  yearBs?: number;
+  seasonNe?: string;
+  seasonEn?: string;
 }
 
 export interface KundaliQuestionRequest {

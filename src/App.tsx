@@ -161,7 +161,7 @@ export function App() {
         )}
 
         {activeTab === 'festivals' && (
-          <FestivalsView lang={lang} />
+          <FestivalsView lang={lang} todayBs={todayBs} />
         )}
       </main>
 
