@@ -24,7 +24,8 @@ import {
   Gamepad2,
   Building2,
   Languages,
-  Flame
+  Flame,
+  BookOpen
 } from 'lucide-react';
 import { 
   CalendarDay, 
@@ -152,7 +153,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
     const monthNe = BS_MONTH_NAMES_NE[month - 1];
     const monthEn = BS_MONTH_NAMES_EN[month - 1];
     const notificationText = lang === 'ne'
-      ? `${toNepaliDigits(day)} ${monthNe} ${toNepaliDigits(year)} पात्रोमा चयन गरियो`
+      ? `${toNepaliDigits(day)} ${monthNe} ${toNepaliDigits(year)} क्यालेन्डरमा चयन गरियो`
       : `Selected ${day} ${monthEn} ${year} in calendar`;
     setSearchNotification(notificationText);
 
@@ -309,7 +310,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
                   key={idx}
                   id={`cal-cell-${day.bsYear}-${day.bsMonth}-${day.bsDay}`}
                   onClick={() => setSelectedDay(day)}
-                  className={`min-h-[88px] sm:min-h-[105px] p-1.5 sm:p-2 cursor-pointer transition-all duration-150 relative flex flex-col justify-between select-none group ${
+                  className={`min-h-[102px] sm:min-h-[116px] md:min-h-[124px] p-1.5 sm:p-2 cursor-pointer transition-all duration-150 relative flex flex-col justify-between select-none group ${
                     isHighlighted
                       ? 'bg-amber-100/90 dark:bg-amber-950/80 ring-4 ring-red-600 dark:ring-red-400 z-10 scale-[1.02] shadow-md'
                       : !day.isCurrentMonth
@@ -323,72 +324,105 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
                       : 'bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800/80'
                   }`}
                 >
-                  {/* Top Row: BS Day (Large) & AD Day (Corner) */}
-                  <div className="flex items-start justify-between">
+                  {/* Top Row: BS Day (Large) & Tithi */}
+                  <div className="flex items-baseline justify-between gap-1">
                     <span
-                      className={`text-lg sm:text-2xl font-bold tracking-tight leading-none ${
+                      className={`text-xl sm:text-2xl md:text-3xl font-black tracking-tight leading-none ${
                         !day.isCurrentMonth
                           ? 'text-stone-400 dark:text-stone-600'
                           : day.isSaturday || day.isHoliday
                           ? 'text-red-600 dark:text-red-400'
                           : day.isToday
-                          ? 'text-amber-700 dark:text-amber-400 font-extrabold'
+                          ? 'text-amber-700 dark:text-amber-400 font-black'
                           : 'text-stone-900 dark:text-stone-100'
                       }`}
                     >
                       {day.bsDayNe}
                     </span>
 
-                    <span className="text-[10px] sm:text-xs font-semibold text-stone-400 dark:text-stone-500">
-                      {day.adDay}
-                    </span>
-                  </div>
-
-                  {/* Middle: Tithi Label */}
-                  <div className="my-1">
-                    <span className={`text-[10px] leading-tight block truncate ${
-                      day.isToday ? 'text-amber-800 dark:text-amber-300 font-semibold' : 'text-stone-500 dark:text-stone-400'
+                    <span className={`text-[9.5px] sm:text-[11px] leading-tight truncate text-right font-medium max-w-[65%] ${
+                      day.isToday ? 'text-amber-800 dark:text-amber-300 font-bold' : 'text-stone-500 dark:text-stone-400'
                     }`}>
                       {lang === 'ne' ? day.tithiNe : day.tithiEn}
                     </span>
                   </div>
 
-                  {/* Bottom: Event Pills & Personal Note indicator */}
-                  <div className="flex flex-col gap-0.5 mt-auto">
-                    {day.events.slice(0, 1).map((ev) => (
-                      <span
-                        key={ev.id}
-                        className={`text-[9px] sm:text-[10px] px-1 py-0.5 rounded truncate font-medium ${
-                          ev.isHoliday
-                            ? 'bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-300 font-bold border border-red-200 dark:border-red-900'
-                            : 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-900'
-                        }`}
-                        title={lang === 'ne' ? ev.titleNe : ev.titleEn}
-                      >
-                        {lang === 'ne' ? ev.titleNe : ev.titleEn}
-                      </span>
-                    ))}
+                  {/* Middle: Event Box - Displays both primary title and secondary (parenthesized) info in one box */}
+                  <div className="flex flex-col gap-0.5 my-1">
+                    {day.events.slice(0, 1).map((ev) => {
+                      const fullTitle = lang === 'ne' ? ev.titleNe : ev.titleEn;
+                      // Detect secondary title in parentheses, e.g. "मातातीर्थ औंसी (आमाको मुख हेर्ने दिन)"
+                      const parenMatch = fullTitle.match(/^(.*?)\s*(\([^\)]+\))$/);
+
+                      return (
+                        <div
+                          key={ev.id}
+                          className={`px-1.5 py-0.5 sm:py-1 rounded text-left transition-colors ${
+                            ev.isHoliday
+                              ? 'bg-red-100/95 dark:bg-red-950/85 text-red-900 dark:text-red-200 border border-red-200 dark:border-red-900 shadow-2xs'
+                              : 'bg-amber-100/95 dark:bg-amber-950/85 text-amber-950 dark:text-amber-200 border border-amber-200 dark:border-amber-900 shadow-2xs'
+                          }`}
+                          title={fullTitle}
+                        >
+                          {parenMatch ? (
+                            <div className="flex flex-col leading-tight">
+                              <span className="text-[8.5px] sm:text-[9.5px] md:text-[10px] font-bold tracking-tight break-words">
+                                {parenMatch[1]}
+                              </span>
+                              <span className={`text-[7.5px] sm:text-[8px] md:text-[8.5px] font-semibold tracking-tight break-words mt-0.5 ${
+                                ev.isHoliday 
+                                  ? 'text-red-800 dark:text-red-300' 
+                                  : 'text-amber-800 dark:text-amber-300'
+                              }`}>
+                                {parenMatch[2]}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-[8.5px] sm:text-[9.5px] md:text-[10px] font-semibold leading-tight break-words line-clamp-2 block">
+                              {fullTitle}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
                     {day.events.length > 1 && (
-                      <span className="text-[9px] text-red-600 dark:text-red-400 font-bold">
+                      <span className="text-[8.5px] text-red-600 dark:text-red-400 font-bold px-0.5">
                         +{day.events.length - 1} थप
                       </span>
                     )}
+                  </div>
 
-                    {hasNotes && (
-                      <span className="w-2 h-2 rounded-full bg-blue-600 absolute top-1.5 right-1.5" title="Note saved" />
-                    )}
+                  {/* Bottom Row: Status Tags on Left & English Date on Bottom Right */}
+                  <div className="flex items-end justify-between mt-auto pt-0.5 gap-1">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {day.isToday && (
+                        <span className="text-[9px] bg-amber-500 text-stone-950 font-bold px-1 rounded leading-tight">
+                          {lang === 'ne' ? 'आज' : 'Today'}
+                        </span>
+                      )}
 
-                    {isHighlighted && (
-                      <span className="inline-block self-start text-[9px] bg-red-600 text-white font-extrabold px-1 rounded shadow-xs">
-                        🔍 {lang === 'ne' ? 'नतिजा' : 'Match'}
-                      </span>
-                    )}
+                      {isHighlighted && (
+                        <span className="text-[9px] bg-red-600 text-white font-extrabold px-1 rounded shadow-xs leading-tight">
+                          🔍 {lang === 'ne' ? 'नतिजा' : 'Match'}
+                        </span>
+                      )}
 
-                    {day.isToday && (
-                      <span className="inline-block self-start text-[9px] bg-amber-500 text-stone-950 font-bold px-1 rounded">
-                        {lang === 'ne' ? 'आज' : 'Today'}
-                      </span>
-                    )}
+                      {hasNotes && (
+                        <span className="w-2 h-2 rounded-full bg-blue-600 inline-block" title="Note saved" />
+                      )}
+                    </div>
+
+                    <span
+                      className={`text-xs sm:text-sm font-semibold tracking-tight font-sans ml-auto shrink-0 ${
+                        !day.isCurrentMonth
+                          ? 'text-stone-300 dark:text-stone-700'
+                          : day.isToday
+                          ? 'text-amber-800 dark:text-amber-300 font-bold'
+                          : 'text-stone-400 dark:text-stone-500'
+                      }`}
+                    >
+                      {day.adDay === 1 ? `${day.adMonthName} 1` : day.adDay}
+                    </span>
                   </div>
                 </div>
               );
@@ -429,7 +463,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
             <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-xs border border-stone-200 dark:border-stone-800 p-4 transition-colors">
               <div className="flex items-center justify-between mb-3 border-b border-stone-100 dark:border-stone-800 pb-2">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <Sparkles className="w-4 h-4 text-red-600 dark:text-red-400" />
                   <h3 className="font-extrabold text-stone-900 dark:text-white text-xs sm:text-sm uppercase tracking-wider">
                     {lang === 'ne' ? 'द्रुत सेवाहरू' : 'Quick Features'}
                   </h3>
@@ -441,18 +475,19 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
 
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { id: 'rashifal', labelNe: 'राशिफल', labelEn: 'Rashifal', icon: Sparkles, color: 'text-amber-700 dark:text-amber-300 bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60' },
-                  { id: 'weather', labelNe: 'मौसम', labelEn: 'Weather', icon: CloudSun, color: 'text-sky-700 dark:text-sky-300 bg-sky-50/80 dark:bg-sky-950/40 hover:bg-sky-100 dark:hover:bg-sky-900/60' },
-                  { id: 'news', labelNe: 'समाचार', labelEn: 'News', icon: Newspaper, color: 'text-red-700 dark:text-red-300 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60' },
-                  { id: 'forex', labelNe: 'मुद्रा / सुन', labelEn: 'Forex & Gold', icon: Coins, color: 'text-emerald-700 dark:text-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60' },
-                  { id: 'worldclock', labelNe: 'विश्व घडी', labelEn: 'World Clock', icon: Clock, color: 'text-indigo-700 dark:text-indigo-300 bg-indigo-50/80 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60' },
-                  { id: 'calculator', labelNe: 'क्याल्कुलेटर', labelEn: 'Calculator', icon: CalcIcon, color: 'text-teal-700 dark:text-teal-300 bg-teal-50/80 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60' },
-                  { id: 'converter', labelNe: 'नाप रूपान्तरण', labelEn: 'Converters', icon: ArrowLeftRight, color: 'text-purple-700 dark:text-purple-300 bg-purple-50/80 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/60' },
-                  { id: 'games', labelNe: 'सुडोकू र खेल', labelEn: 'Sudoku & Games', icon: Gamepad2, color: 'text-amber-800 dark:text-amber-200 bg-amber-100/60 dark:bg-amber-950/50 hover:bg-amber-200/70 dark:hover:bg-amber-900/70' },
-                  { id: 'health', labelNe: 'स्वास्थ्य / योग', labelEn: 'Wellness', icon: HeartPulse, color: 'text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60' },
-                  { id: 'govhelp', labelNe: 'सरकारी सेवा', labelEn: 'Gov Help', icon: Building2, color: 'text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60' },
-                  { id: 'language', labelNe: 'भाषा सिकाई', labelEn: 'Language Hub', icon: Languages, color: 'text-orange-700 dark:text-orange-300 bg-orange-50/80 dark:bg-orange-950/40 hover:bg-orange-100 dark:hover:bg-orange-900/60' },
-                  { id: 'festivals', labelNe: 'चाडपर्वहरू', labelEn: 'Festivals', icon: Flame, color: 'text-red-800 dark:text-red-200 bg-red-100/60 dark:bg-red-950/50 hover:bg-red-200/70 dark:hover:bg-red-900/70' },
+                  { id: 'rashifal', labelNe: 'राशिफल', labelEn: 'Rashifal', icon: Sparkles },
+                  { id: 'dharma', labelNe: 'धर्म / सपना', labelEn: 'Dharma & Dreams', icon: BookOpen },
+                  { id: 'weather', labelNe: 'मौसम', labelEn: 'Weather', icon: CloudSun },
+                  { id: 'news', labelNe: 'समाचार', labelEn: 'News', icon: Newspaper },
+                  { id: 'forex', labelNe: 'मुद्रा / सुन', labelEn: 'Forex & Gold', icon: Coins },
+                  { id: 'worldclock', labelNe: 'विश्व घडी', labelEn: 'World Clock', icon: Clock },
+                  { id: 'calculator', labelNe: 'क्याल्कुलेटर', labelEn: 'Calculator', icon: CalcIcon },
+                  { id: 'converter', labelNe: 'नाप रूपान्तरण', labelEn: 'Converters', icon: ArrowLeftRight },
+                  { id: 'games', labelNe: 'सुडोकू र खेल', labelEn: 'Sudoku & Games', icon: Gamepad2 },
+                  { id: 'health', labelNe: 'स्वास्थ्य / योग', labelEn: 'Wellness', icon: HeartPulse },
+                  { id: 'govhelp', labelNe: 'सरकारी सेवा', labelEn: 'Gov Help', icon: Building2 },
+                  { id: 'language', labelNe: 'भाषा सिकाई', labelEn: 'Language Hub', icon: Languages },
+                  { id: 'festivals', labelNe: 'चाडपर्वहरू', labelEn: 'Festivals', icon: Flame },
                 ].map((item) => {
                   const IconComp = item.icon;
                   return (
@@ -461,11 +496,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
                       type="button"
                       id={`calendar-quick-nav-${item.id}`}
                       onClick={() => onNavigate(item.id)}
-                      className={`flex flex-col items-center justify-center p-2 rounded-xl border border-stone-200/70 dark:border-stone-800 transition-all duration-150 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 ${item.color}`}
+                      className="group flex flex-col items-center justify-center p-2 rounded-xl border border-red-200/60 dark:border-red-950 bg-red-50/50 hover:bg-red-100/70 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-700 dark:text-red-300 transition-all duration-150 cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
                       title={lang === 'ne' ? `${item.labelNe} हेर्नुहोस्` : `Open ${item.labelEn}`}
                     >
-                      <IconComp className="w-4 h-4 mb-1 shrink-0" />
-                      <span className="text-[10.5px] font-bold leading-tight truncate w-full text-center">
+                      <IconComp className="w-4 h-4 mb-1 shrink-0 text-red-700 dark:text-red-300 group-hover:scale-110 transition-transform" />
+                      <span className="text-[10.5px] font-bold leading-tight truncate w-full text-center text-red-700 dark:text-red-300">
                         {lang === 'ne' ? item.labelNe : item.labelEn}
                       </span>
                     </button>
@@ -682,7 +717,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
                     className="flex items-center justify-between p-2 rounded-xl bg-stone-50 dark:bg-stone-800/60 hover:bg-red-50/50 dark:hover:bg-stone-800 border border-stone-100 dark:border-stone-700/60 transition-colors text-xs"
                   >
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-red-700 text-white font-bold flex items-center justify-center text-xs shrink-0">
+                      <span className="w-7 h-7 rounded-lg bg-red-700 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-2xs">
                         {ev.dayNumNe}
                       </span>
                       <span className="font-medium text-stone-800 dark:text-stone-200">

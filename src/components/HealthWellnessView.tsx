@@ -211,7 +211,7 @@ export const HealthWellnessView: React.FC<HealthWellnessViewProps> = ({
       const perm = await Notification.requestPermission();
       if (perm === 'granted') {
         setNotificationStatus(lang === 'ne' ? 'दैनिक रिमाइन्डर सक्रिय भयो!' : 'Daily reminders successfully activated!');
-        new Notification('Hamro Patro Health & Wellness', {
+        new Notification('Nepali Calendar Health & Wellness', {
           body: lang === 'ne' ? 'दैनिक योग र ध्यान रिमाइन्डर सक्रिय गरियो।' : 'Daily yoga & meditation reminders are active.',
           icon: '/icon.svg'
         });

@@ -106,7 +106,7 @@ export const DailyMotivationCard: React.FC<DailyMotivationCardProps> = ({
 
   // Copy to Clipboard
   const handleCopyQuote = async () => {
-    const textToCopy = `"${lang === 'ne' ? activeQuote.quoteNe : activeQuote.quoteEn}"\n— ${lang === 'ne' ? activeQuote.authorNe : activeQuote.authorEn}\n(हाम्रो पात्रो | Hamro Patro)`;
+    const textToCopy = `"${lang === 'ne' ? activeQuote.quoteNe : activeQuote.quoteEn}"\n— ${lang === 'ne' ? activeQuote.authorNe : activeQuote.authorEn}\n(Nepali Calendar)`;
     try {
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
@@ -122,7 +122,7 @@ export const DailyMotivationCard: React.FC<DailyMotivationCardProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: lang === 'ne' ? 'हाम्रो पात्रो - दैनिक प्रेरणा' : 'Hamro Patro - Daily Motivation',
+          title: lang === 'ne' ? 'Nepali Calendar - दैनिक प्रेरणा' : 'Nepali Calendar - Daily Motivation',
           text: shareText,
           url: window.location.href,
         });

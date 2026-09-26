@@ -505,26 +505,26 @@ export const CalendarSearchBar: React.FC<CalendarSearchBarProps> = ({
                         </div>
 
                         {/* Festival / Event / Tithi Highlight */}
-                        <div className="mt-1 flex items-center gap-2 text-xs">
+                        <div className="mt-1 flex items-center gap-2 text-xs flex-wrap">
                           {result.matchType === 'festival' ? (
-                            <span className="font-bold text-red-700 dark:text-red-400 flex items-center gap-1 truncate">
+                            <span className="font-bold text-red-700 dark:text-red-400 flex items-center gap-1 break-words">
                               <Flag className="w-3.5 h-3.5 shrink-0" />
                               {lang === 'ne' ? result.matchLabelNe : result.matchLabelEn}
                             </span>
                           ) : result.matchType === 'tithi' ? (
-                            <span className="font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1 truncate">
+                            <span className="font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1 break-words">
                               <Moon className="w-3.5 h-3.5 shrink-0" />
                               {lang === 'ne' ? result.matchLabelNe : result.matchLabelEn}
                             </span>
                           ) : (
-                            <span className="font-medium text-stone-700 dark:text-stone-300 truncate">
+                            <span className="font-medium text-stone-700 dark:text-stone-300 break-words">
                               {lang === 'ne' ? result.matchLabelNe : result.matchLabelEn}
                             </span>
                           )}
 
                           <span className="text-stone-400 dark:text-stone-600">•</span>
                           
-                          <span className="text-stone-500 dark:text-stone-400 text-[11px] truncate">
+                          <span className="text-stone-500 dark:text-stone-400 text-[11px] shrink-0">
                             {lang === 'ne' ? result.tithiNe : result.tithiEn}
                           </span>
                         </div>
@@ -534,7 +534,7 @@ export const CalendarSearchBar: React.FC<CalendarSearchBarProps> = ({
                     {/* Right: Navigate CTA */}
                     <div className="shrink-0 flex items-center gap-1.5 text-xs font-bold text-red-700 dark:text-red-400 group-hover:translate-x-0.5 transition-transform">
                       <span className="hidden sm:inline">
-                        {lang === 'ne' ? 'पात्रोमा हेर्नुहोस्' : 'View in Calendar'}
+                        {lang === 'ne' ? 'क्यालेन्डरमा हेर्नुहोस्' : 'View in Calendar'}
                       </span>
                       <ArrowRight className="w-4 h-4" />
                     </div>
@@ -548,7 +548,7 @@ export const CalendarSearchBar: React.FC<CalendarSearchBarProps> = ({
           {searchResults.length > 0 && (
             <div className="p-2.5 bg-stone-50 dark:bg-stone-950 border-t border-stone-200 dark:border-stone-800 text-center text-[11px] text-stone-500 dark:text-stone-400">
               {lang === 'ne' 
-                ? 'कुनै पनि परिणाममा थिचेर सिधै उक्त दिनको पात्रो र पञ्चाङ्ग खोल्नुहोस्।'
+                ? 'कुनै पनि परिणाममा थिचेर सिधै उक्त दिनको क्यालेन्डर र पञ्चाङ्ग खोल्नुहोस्।'
                 : 'Click any result to jump directly to that date and open its Panchanga details.'}
             </div>
           )}

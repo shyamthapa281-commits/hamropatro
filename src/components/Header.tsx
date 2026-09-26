@@ -184,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-1.5">
-                हाम्रो पात्रो
+                Nepali Calendar
                 <span className="text-xs bg-amber-400 text-stone-900 font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
                   BS {toNepaliDigits(todayBs.year)}
                 </span>

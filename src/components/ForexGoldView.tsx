@@ -16,40 +16,29 @@ import {
 } from 'lucide-react';
 import { Language, ForexRate, GoldSilverRate } from '../types';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
+import { 
+  getLiveForexRates, 
+  getLiveBullionRates, 
+  LIVE_BENCHMARK_FOREX, 
+  LIVE_BENCHMARK_BULLION 
+} from '../utils/liveMarketClient';
 
 interface ForexGoldViewProps {
   lang: Language;
 }
 
-const DEFAULT_FOREX_RATES: ForexRate[] = [
-  { currencyCode: 'USD', currencyNameNe: 'अमेरिकी डलर', currencyNameEn: 'U.S. Dollar', unit: 1, buyRate: 134.80, sellRate: 135.40, change: 0.15, flag: '🇺🇸' },
-  { currencyCode: 'EUR', currencyNameNe: 'युरोपियन युरो', currencyNameEn: 'European Euro', unit: 1, buyRate: 146.50, sellRate: 147.15, change: -0.22, flag: '🇪🇺' },
-  { currencyCode: 'GBP', currencyNameNe: 'युके पाउन्ड स्टर्लिङ', currencyNameEn: 'UK Pound Sterling', unit: 1, buyRate: 174.20, sellRate: 175.00, change: 0.35, flag: '🇬🇧' },
-  { currencyCode: 'AUD', currencyNameNe: 'अस्ट्रेलियन डलर', currencyNameEn: 'Australian Dollar', unit: 1, buyRate: 88.90, sellRate: 89.30, change: -0.10, flag: '🇦🇺' },
-  { currencyCode: 'CAD', currencyNameNe: 'क्यानेडियन डलर', currencyNameEn: 'Canadian Dollar', unit: 1, buyRate: 99.10, sellRate: 99.55, change: 0.05, flag: '🇨🇦' },
-  { currencyCode: 'JPY', currencyNameNe: 'जापानी येन', currencyNameEn: 'Japanese Yen (10)', unit: 10, buyRate: 9.10, sellRate: 9.14, change: 0.02, flag: '🇯🇵' },
-  { currencyCode: 'QAR', currencyNameNe: 'कतारी रियाल', currencyNameEn: 'Qatari Riyal', unit: 1, buyRate: 37.00, sellRate: 37.16, change: 0.00, flag: '🇶🇦' },
-  { currencyCode: 'AED', currencyNameNe: 'युएई दिर्हाम', currencyNameEn: 'UAE Dirham', unit: 1, buyRate: 36.70, sellRate: 36.86, change: 0.00, flag: '🇦🇪' },
-  { currencyCode: 'SAR', currencyNameNe: 'साउदी रियाल', currencyNameEn: 'Saudi Riyal', unit: 1, buyRate: 35.90, sellRate: 36.06, change: 0.00, flag: '🇸🇦' },
-  { currencyCode: 'INR', currencyNameNe: 'भारतीय रूपैयाँ', currencyNameEn: 'Indian Rupee (100)', unit: 100, buyRate: 160.00, sellRate: 160.15, change: 0.00, flag: '🇮🇳' },
-];
-
-const DEFAULT_BULLION_RATES: GoldSilverRate[] = [
-  { itemNe: 'छापावाल सुन (Fine Gold 9999)', itemEn: 'Fine Gold (24 Karat)', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: 168500, changeNpr: 500, isUp: true, date: 'Today' },
-  { itemNe: 'तेजाबी सुन (Tejabi Gold)', itemEn: 'Tejabi Gold (22 Karat)', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: 167800, changeNpr: 500, isUp: true, date: 'Today' },
-  { itemNe: 'छापावाल सुन (Fine Gold 10g)', itemEn: 'Fine Gold (10 Grams)', unitNe: 'प्रति १० ग्राम', unitEn: 'Per 10 Grams', rateNpr: 144460, changeNpr: 430, isUp: true, date: 'Today' },
-  { itemNe: 'चाँदी (Silver)', itemEn: 'Silver Standard', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: 2100, changeNpr: 15, isUp: true, date: 'Today' },
-];
-
 export const ForexGoldView: React.FC<ForexGoldViewProps> = ({ lang }) => {
   // Live Data States
-  const [forexRates, setForexRates] = useState<ForexRate[]>(DEFAULT_FOREX_RATES);
+  const [forexRates, setForexRates] = useState<ForexRate[]>(LIVE_BENCHMARK_FOREX);
   const [forexDate, setForexDate] = useState<string>('Today');
-  const [bullionRates, setBullionRates] = useState<GoldSilverRate[]>(DEFAULT_BULLION_RATES);
+  const [forexSource, setForexSource] = useState<string>('नेपाल राष्ट्र बैंक');
+  const [bullionRates, setBullionRates] = useState<GoldSilverRate[]>(LIVE_BENCHMARK_BULLION);
   const [bullionDate, setBullionDate] = useState<string>('Today');
+  const [bullionSource, setBullionSource] = useState<string>('सुनचाँदी व्यवसायी महासंघ');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
+  const [isLiveActive, setIsLiveActive] = useState<boolean>(true);
 
   // Currency Converter State
   const [amount, setAmount] = useState<number>(100);
@@ -65,27 +54,32 @@ export const ForexGoldView: React.FC<ForexGoldViewProps> = ({ lang }) => {
   const fetchLiveMarketData = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) {
       setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
     }
 
     try {
-      const [forexRes, bullionRes] = await Promise.allSettled([
-        fetch('/api/market/forex').then(r => r.ok ? r.json() : null),
-        fetch('/api/market/bullion').then(r => r.ok ? r.json() : null),
+      const [forexResult, bullionResult] = await Promise.all([
+        getLiveForexRates(),
+        getLiveBullionRates(),
       ]);
 
-      if (forexRes.status === 'fulfilled' && forexRes.value?.rates?.length) {
-        setForexRates(forexRes.value.rates);
-        setForexDate(forexRes.value.publishedDate || 'Today');
+      if (forexResult?.rates?.length) {
+        setForexRates(forexResult.rates);
+        setForexDate(forexResult.publishedDate || 'Today');
+        setForexSource(forexResult.source);
+        setIsLiveActive(forexResult.isLive);
       }
 
-      if (bullionRes.status === 'fulfilled' && bullionRes.value?.rates?.length) {
-        setBullionRates(bullionRes.value.rates);
-        setBullionDate(bullionRes.value.publishedDate || 'Today');
+      if (bullionResult?.rates?.length) {
+        setBullionRates(bullionResult.rates);
+        setBullionDate(bullionResult.publishedDate || 'Today');
+        setBullionSource(bullionResult.source);
       }
 
       setLastSyncTime(new Date().toLocaleTimeString(lang === 'ne' ? 'ne-NP' : 'en-US', { hour: '2-digit', minute: '2-digit' }));
-    } catch {
-      // Keeps reliable benchmark rates
+    } catch (err) {
+      console.warn('Live market sync error:', err);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -253,12 +247,13 @@ export const ForexGoldView: React.FC<ForexGoldViewProps> = ({ lang }) => {
                 <h3 className="text-base font-bold text-stone-900">
                   {lang === 'ne' ? 'नेपाल राष्ट्र बैंक विदेशी विनिमय दर' : 'Nepal Rastra Bank Official Forex Rates'}
                 </h3>
-                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-md">
-                  Official NRB Live
+                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                  {forexSource}
                 </span>
               </div>
               <p className="text-xs text-stone-500 mt-0.5">
-                {lang === 'ne' ? 'दैनिक खरिद तथा बिक्री दर (NPR)' : 'Daily Buying & Selling Rates in NPR'}
+                {lang === 'ne' ? 'दैनिक खरिद तथा बिक्री दर (नेपाली रुपैयाँ NPR)' : 'Daily Official Buying & Selling Rates in NPR'}
               </p>
             </div>
             {forexDate && (

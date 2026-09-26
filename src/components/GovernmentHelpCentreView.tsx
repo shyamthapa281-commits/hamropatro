@@ -32,7 +32,7 @@ interface GovernmentHelpCentreProps {
 }
 
 export const GovernmentHelpCentreView: React.FC<GovernmentHelpCentreProps> = ({ lang }) => {
-  const [activeTab, setActiveTab] = useState<'emergency' | 'map' | 'portals' | 'guide'>('map');
+  const [activeTab, setActiveTab] = useState<'emergency' | 'centers' | 'portals' | 'guide'>('centers');
   const [portalCategory, setPortalCategory] = useState<string>('all');
   const [portalSearch, setPortalSearch] = useState<string>('');
   const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
@@ -99,27 +99,27 @@ export const GovernmentHelpCentreView: React.FC<GovernmentHelpCentreProps> = ({ 
                 <span>{lang === 'ne' ? 'नेपाल सरकार डिजिटल सेवा केन्द्र' : 'Government of Nepal Citizen Services'}</span>
               </div>
               <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight">
-                {lang === 'ne' ? 'सरकारी सेवा पोर्टल, नक्सा तथा आपतकालीन सहायता' : 'Public Services Map, Government Portals & Help Centre'}
+                {lang === 'ne' ? 'सरकारी सेवा केन्द्र, गुगल दिशानिर्देश तथा आपतकालीन सहायता' : 'Public Services Directory, Google Directions & Help Centre'}
               </h2>
               <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-2xl leading-relaxed">
                 {lang === 'ne'
-                  ? 'सिंहदरबार, नेपाल प्रहरी, अस्पताल, राहदानी, राष्ट्रिय परिचयपत्र लगायतका सेवा केन्द्रहरूको प्रत्यक्ष नक्सा तथा २४ घण्टे राष्ट्रिय हटलाइनहरू।'
-                  : 'Interactive map of major government centers (Singha Durbar, Police, Hospitals, Passports, NID) and 24/7 national emergency hotlines.'}
+                  ? 'सिंहदरबार, नेपाल प्रहरी, अस्पताल, राहदानी, राष्ट्रिय परिचयपत्र लगायतका सेवा केन्द्रहरूको प्रत्यक्ष ठेगाना, गुगल म्याप्स नेभिगेसन तथा २४ घण्टे राष्ट्रिय हटलाइनहरू।'
+                  : 'Directory of major government centers (Singha Durbar, Police, Hospitals, Passports, NID) with Google Maps turn-by-turn directions and 24/7 hotlines.'}
               </p>
             </div>
 
             {/* Quick Banner Toggle Buttons */}
             <div className="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
               <button
-                onClick={() => setActiveTab('map')}
+                onClick={() => setActiveTab('centers')}
                 className={`flex-1 sm:flex-initial px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs ${
-                  activeTab === 'map'
+                  activeTab === 'centers'
                     ? 'bg-amber-400 text-stone-900 font-extrabold ring-2 ring-amber-300'
                     : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
                 }`}
               >
                 <MapPin className="w-4 h-4 text-amber-300" />
-                <span>{lang === 'ne' ? 'नक्सा हेर्नुहोस्' : 'Explore Map'}</span>
+                <span>{lang === 'ne' ? 'सेवा केन्द्र तथा दिशा' : 'Centers & Directions'}</span>
               </button>
               <button
                 onClick={() => setActiveTab('emergency')}
@@ -140,7 +140,7 @@ export const GovernmentHelpCentreView: React.FC<GovernmentHelpCentreProps> = ({ 
       {/* Main Mode Navigation (Tabs) */}
       <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none w-full">
         {[
-          { id: 'map', nameNe: 'सेवा केन्द्र नक्सा (Services Map)', nameEn: 'Interactive Map View', icon: MapPin },
+          { id: 'centers', nameNe: 'सेवा केन्द्र तथा गुगल दिशानिर्देश', nameEn: 'Centers & Directions', icon: MapPin },
           { id: 'emergency', nameNe: 'आपतकालीन हटलाइनहरू (Emergency Numbers)', nameEn: 'Emergency Hotlines', icon: PhoneCall },
           { id: 'portals', nameNe: 'सरकारी डिजिटल पोर्टलहरू (Official Sites)', nameEn: 'Government Portals', icon: Globe2 },
           { id: 'guide', nameNe: 'नागरिक सेवा मार्गनिर्देशिका (Citizen Guide)', nameEn: 'Citizen Help Guide', icon: Info },
@@ -164,8 +164,8 @@ export const GovernmentHelpCentreView: React.FC<GovernmentHelpCentreProps> = ({ 
         })}
       </div>
 
-      {/* Tab 0: Interactive Services Map */}
-      {activeTab === 'map' && (
+      {/* Tab 0: Public Service Centers Directory & Directions */}
+      {activeTab === 'centers' && (
         <div className="space-y-4">
           <GovernmentMapView lang={lang} />
         </div>

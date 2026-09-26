@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Language } from '../types';
 import { translateOffline, TranslationResult } from '../utils/nepaliTranslator';
+import { translateTextLive } from '../utils/liveTranslatorClient';
 
 interface InstantTranslatorProps {
   lang: Language;
@@ -148,45 +149,22 @@ export const InstantTranslator: React.FC<InstantTranslatorProps> = ({ lang }) =>
     const fromLang = dir === 'neToEn' ? 'ne' : 'en';
     const toLang = dir === 'neToEn' ? 'en' : 'ne';
 
-    // Fetch directly from Google Translate / Neural API
+    // Fetch translation using multi-tier neural & offline engine
     setIsLoading(true);
     try {
-      const res = await fetch('/api/translate/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text,
-          from: fromLang,
-          to: toLang,
-        }),
-      });
-      const data = await res.json();
-      if (data.success && data.result && data.result.translatedText) {
-        const accurateResult: TranslationResult = {
-          translatedText: data.result.translatedText,
-          transliteration: data.result.transliteration || '',
-          wordBreakdown: data.result.wordBreakdown || [],
-          grammarNote: data.result.grammarNote || `Google Translate (${fromLang.toUpperCase()} → ${toLang.toUpperCase()})`,
-          exampleUsage: data.result.exampleUsage || `Original: ${text} -> Translated: ${data.result.translatedText}`,
-          sourceText: text,
-          fromLang,
-          toLang,
-        };
-        setResult(accurateResult);
+      const accurateResult = await translateTextLive(text, fromLang, toLang);
+      setResult(accurateResult);
 
-        // Save to history
+      if (accurateResult?.translatedText) {
         saveToHistory({
           id: Date.now().toString(),
           sourceText: text,
-          translatedText: data.result.translatedText,
+          translatedText: accurateResult.translatedText,
           from: fromLang,
           to: toLang,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          provider: 'Google Translate',
+          provider: 'Neural / Google Translate',
         });
-      } else {
-        const fallback = translateOffline(text, fromLang, toLang);
-        setResult(fallback);
       }
     } catch (e) {
       const fallback = translateOffline(text, fromLang, toLang);
@@ -259,8 +237,9 @@ export const InstantTranslator: React.FC<InstantTranslatorProps> = ({ lang }) =>
 
           {/* Engine Badge */}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-800 rounded-2xl text-xs font-bold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <Globe className="w-4 h-4 text-blue-600 shrink-0" />
-            <span>Google Translate Engine</span>
+            <span>{lang === 'ne' ? 'प्रत्यक्ष गुगल/न्युरल अनुवाद' : 'Live Neural Translation Engine'}</span>
           </div>
         </div>
       </div>

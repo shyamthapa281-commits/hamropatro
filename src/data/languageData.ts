@@ -292,8 +292,8 @@ export const VOCABULARY_LIST: VocabularyCard[] = [
     roman: 'Panchanga',
     category: 'culture',
     partOfSpeech: 'Noun',
-    exampleNe: 'हाम्रो पात्रोले शुद्ध पञ्चाङ्ग गणना गर्दछ।',
-    exampleEn: 'Hamro Patro calculates pure Vedic astronomical timing.',
+    exampleNe: 'नेपाली क्यालेन्डरले शुद्ध पञ्चाङ्ग गणना गर्दछ।',
+    exampleEn: 'Nepali Calendar calculates pure Vedic astronomical timing.',
   },
   {
     id: 'v3',

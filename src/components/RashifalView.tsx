@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Sparkles, 
   Flame, 
@@ -11,19 +11,19 @@ import {
   Compass, 
   Mountain, 
   Wind, 
-  Waves,
-  Star,
-  CheckCircle2,
-  AlertCircle,
-  Gem,
-  BookOpen,
-  Send,
-  Loader2,
-  HelpCircle,
-  Copy,
-  Check,
-  RefreshCw,
-  Share2,
+  Waves, 
+  Star, 
+  CheckCircle2, 
+  AlertCircle, 
+  Gem, 
+  BookOpen, 
+  HelpCircle, 
+  Copy, 
+  Check, 
+  RefreshCw, 
+  Share2, 
+  Search,
+  RotateCcw,
   Image as ImageIcon
 } from 'lucide-react';
 import { 
@@ -32,19 +32,21 @@ import {
   DailyHoroscope, 
   HoroscopePeriod, 
   Language, 
-  NepaliDate,
-  KundaliQuestionResponse 
+  NepaliDate 
 } from '../types';
 import { RASHIS_DATA, MOCK_DAILY_HOROSCOPES } from '../data/mockAstrology';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
+import { DREAM_INTERPRETATIONS, DreamItem } from '../data/dharmaCultureData';
 import { HoroscopeShareModal } from './HoroscopeShareModal';
+import confetti from 'canvas-confetti';
 
 interface RashifalViewProps {
   lang: Language;
   todayBs?: NepaliDate;
+  onNavigate?: (tab: string) => void;
 }
 
-export const RashifalView: React.FC<RashifalViewProps> = ({ lang, todayBs }) => {
+export const RashifalView: React.FC<RashifalViewProps> = ({ lang, todayBs, onNavigate }) => {
   const [selectedRashiId, setSelectedRashiId] = useState<RashiId>('mesh');
   const [period, setPeriod] = useState<HoroscopePeriod>('daily');
   const [copiedMantra, setCopiedMantra] = useState<boolean>(false);
@@ -54,15 +56,13 @@ export const RashifalView: React.FC<RashifalViewProps> = ({ lang, todayBs }) => 
   const [shareModalTab, setShareModalTab] = useState<'image' | 'text'>('image');
   const [copiedRashiId, setCopiedRashiId] = useState<string | null>(null);
 
-  // AI Jyotish Consultation state
-  const [question, setQuestion] = useState<string>('');
-  const [birthDate, setBirthDate] = useState<string>('');
-  const [birthTime, setBirthTime] = useState<string>('');
-  const [birthPlace, setBirthPlace] = useState<string>('Kathmandu');
-  const [category, setCategory] = useState<'career' | 'marriage' | 'health' | 'finance' | 'general'>('general');
-  const [isAiConsulting, setIsAiConsulting] = useState<boolean>(false);
-  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
+  // Dream Interpretation quick search state
+  const [dreamSearchQuery, setDreamSearchQuery] = useState<string>('');
+  const [selectedDreamResult, setSelectedDreamResult] = useState<DreamItem>(DREAM_INTERPRETATIONS[0]);
+
+  // Japa Bead Counter for this Rashi's auspicious mantra
+  const [rashiJapaCount, setRashiJapaCount] = useState<number>(0);
+  const [rashiJapaRounds, setRashiJapaRounds] = useState<number>(0);
 
   const selectedRashi = RASHIS_DATA.find((r) => r.id === selectedRashiId) || RASHIS_DATA[0];
   const horoscope = MOCK_DAILY_HOROSCOPES[selectedRashiId] || MOCK_DAILY_HOROSCOPES.mesh;
@@ -72,6 +72,49 @@ export const RashifalView: React.FC<RashifalViewProps> = ({ lang, todayBs }) => 
     setCopiedMantra(true);
     setTimeout(() => setCopiedMantra(false), 2000);
   };
+
+  const handleRashiJapaClick = () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(528, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.3);
+    } catch {}
+
+    const next = rashiJapaCount + 1;
+    if (next >= 108) {
+      setRashiJapaCount(0);
+      setRashiJapaRounds((r) => r + 1);
+      confetti({
+        particleCount: 70,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#f59e0b', '#ef4444', '#10b981'],
+      });
+    } else {
+      setRashiJapaCount(next);
+    }
+  };
+
+  // Matched dreams for quick finder
+  const matchingDreams = useMemo(() => {
+    if (!dreamSearchQuery.trim()) return DREAM_INTERPRETATIONS.slice(0, 4);
+    const q = dreamSearchQuery.toLowerCase().trim();
+    return DREAM_INTERPRETATIONS.filter(
+      (d) =>
+        d.keywordNe.toLowerCase().includes(q) ||
+        d.keywordEn.toLowerCase().includes(q) ||
+        d.shortMeaningNe.toLowerCase().includes(q) ||
+        d.tags.some((t) => t.toLowerCase().includes(q))
+    ).slice(0, 4);
+  }, [dreamSearchQuery]);
 
   const openShareModal = (rashiToShare: RashiInfo, tab: 'image' | 'text' = 'image') => {
     setShareModalRashi(rashiToShare);
@@ -83,7 +126,7 @@ export const RashifalView: React.FC<RashifalViewProps> = ({ lang, todayBs }) => 
       ? (lang === 'ne' ? todayBs.formattedNe : todayBs.formattedEn)
       : (lang === 'ne' ? 'आजको दिन' : "Today's Date");
 
-    const text = `🌟 हाम्रो पात्रो • दैनिक वैदिक राशिफल (Daily Horoscope)
+    const text = `🌟 Nepali Calendar • दैनिक वैदिक राशिफल (Daily Horoscope)
 ${rashiToCopy.symbol} ${rashiToCopy.nameNe} (${rashiToCopy.nameEn}) | ${dateHeading}
 ⭐ शुभ योग: ${h.rating}/५ तारा
 
@@ -99,73 +142,12 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
 🌿 ज्योतिषीय उपाय: ${lang === 'ne' ? h.remedyNe : h.remedyEn}
 💎 शुभ रत्न: ${lang === 'ne' ? h.gemstoneNe : h.gemstoneEn}
 
-📱 थप विस्तृत पञ्चाङ्ग तथा राशिफलका लागि हाम्रो पात्रो (Hamro Patro) हेर्नुहोस्।`;
+📱 थप विस्तृत पञ्चाङ्ग तथा राशिफलका लागि Nepali Calendar हेर्नुहोस्।`;
 
     navigator.clipboard.writeText(text);
     setCopiedRashiId(rashiToCopy.id);
     setTimeout(() => setCopiedRashiId(null), 2500);
   };
-
-  const handleAskJyotish = async (e?: React.FormEvent, customQ?: string) => {
-    if (e) e.preventDefault();
-    const queryText = customQ || question;
-    if (!queryText.trim()) return;
-
-    setIsAiConsulting(true);
-    setAiError(null);
-    setAiAnswer(null);
-
-    try {
-      const response = await fetch('/api/astrology/kundali-ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rashiId: selectedRashi.nameNe + ` (${selectedRashi.nameEn})`,
-          birthDate,
-          birthTime,
-          birthPlace,
-          question: queryText,
-          category,
-          language: lang,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to consult AI Jyotish');
-      }
-
-      const data = await response.json();
-      setAiAnswer(data.answer);
-    } catch (err: any) {
-      console.error(err);
-      setAiError(
-        lang === 'ne' 
-          ? 'परामर्श प्राप्त गर्न समस्या भयो। कृपया पुन: प्रयास गर्नुहोस् वा प्रश्न छोट्याउनुहोस्।' 
-          : 'Failed to retrieve astrological reading. Please retry.'
-      );
-    } finally {
-      setIsAiConsulting(false);
-    }
-  };
-
-  const quickQuestions = [
-    {
-      textNe: 'मलाई यो वर्ष वैदेशिक यात्रा वा अध्ययनको अवसर कस्तो छ?',
-      textEn: 'What are my prospects for foreign study and travel this year?',
-    },
-    {
-      textNe: 'मेरो व्यापार वा जागिरमा पदोन्नतिको शुभ समय कहिले छ?',
-      textEn: 'When is the auspicious time for career growth or business expansion?',
-    },
-    {
-      textNe: 'आर्थिक उन्नतिको लागि मेरो राशिलाई कुन रत्न र उपाय उत्तम हुन्छ?',
-      textEn: 'Which gemstone and Vedic remedies are most beneficial for financial stability?',
-    },
-    {
-      textNe: 'दाम्पत्य जीवन र प्रेम सम्बन्धमा सुधार ल्याउने ज्योतिषीय सल्लाह के छ?',
-      textEn: 'What astrological advice can improve marital harmony and relationships?',
-    },
-  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
@@ -493,140 +475,207 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
           </div>
         </div>
 
-        {/* Right Column: AI Astrologer Consultation & Kundali Chat */}
+        {/* Right Column: Dream Interpretation (सपनाको फल) & Dharma Sanskriti Hub */}
         <div className="lg:col-span-4 space-y-6">
           
-          {/* AI Jyotish Box */}
+          {/* Dream Interpretation Quick Lookup Card */}
           <div className="bg-gradient-to-b from-stone-900 to-red-950 text-white rounded-3xl p-6 shadow-md border border-stone-800 relative overflow-hidden">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-2xl bg-amber-400 text-stone-900 flex items-center justify-center shadow-lg font-bold">
-                <Sparkles className="w-5 h-5" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-400 text-stone-900 flex items-center justify-center shadow-lg font-bold">
+                  <Moon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-white text-base">
+                    {lang === 'ne' ? 'सपनाको फल (Swapna Shastra)' : 'Dream Interpretation'}
+                  </h3>
+                  <p className="text-xs text-amber-200">
+                    {lang === 'ne' ? 'सपनाको अर्थ, शुभ-अशुभ संकेत र उपाय' : 'Vedic Dream Meanings & Remedies'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-extrabold text-white text-base">
-                  {lang === 'ne' ? 'हाम्रो AI ज्योतिषी परामर्श' : 'AI Vedic Astrologer'}
-                </h3>
-                <p className="text-xs text-amber-200">
-                  {lang === 'ne' ? 'कुण्डली, दशा, ग्रह शान्ति र भविष्य' : 'Kundali, Planetary Dosha & Upaya'}
-                </p>
-              </div>
+
+              {onNavigate && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate('dharma')}
+                  className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-xl text-[11px] font-bold border border-amber-400/40 cursor-pointer transition-colors"
+                >
+                  {lang === 'ne' ? 'सबै हेर्नुहोस् →' : 'View All →'}
+                </button>
+              )}
             </div>
 
-            <p className="text-xs text-stone-300 leading-relaxed mb-4">
+            <p className="text-xs text-stone-300 leading-relaxed mb-3">
               {lang === 'ne'
-                ? 'वैदिक ज्योतिष शास्त्र अनुसार आफ्नो राशि वा जन्म मिति सम्बन्धमा कुनै पनि प्रश्न सोध्नुहोस् र तुरुन्तै गहिरो फलादेश पाउनुहोस्।'
-                : 'Ask any question about your career, marriage, health, or planetary remedies grounded in Vedic Astrology.'}
+                ? 'राति वा बिहानीको समयमा देखेको सपनाको शास्त्रोक्त फल, संकेत र वैदिक शान्ति उपाय तुरुन्त खोज्नुहोस्:'
+                : 'Search any dream symbol to discover its traditional Vedic omen, psychological significance, and peace remedies:'}
             </p>
 
-            {/* Quick Question Chips */}
-            <div className="space-y-1.5 mb-4">
-              <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">
-                {lang === 'ne' ? 'नमुना प्रश्नहरू:' : 'Sample Questions:'}
-              </span>
-              {quickQuestions.map((q, idx) => (
+            {/* Quick Dream Search Input */}
+            <div className="relative mb-3">
+              <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder={lang === 'ne' ? 'सपना खोज्नुहोस् (उदा: सर्प, गाई, पानी, दाँत, सुन, उड्नु)...' : 'Search symbol (e.g. snake, cow, water, tooth)...'}
+                value={dreamSearchQuery}
+                onChange={(e) => setDreamSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-stone-800/90 text-white placeholder:text-stone-400 text-xs rounded-xl border border-stone-700 focus:outline-none focus:ring-1 focus:ring-amber-400"
+              />
+              {dreamSearchQuery && (
                 <button
-                  key={idx}
-                  onClick={() => {
-                    const qText = lang === 'ne' ? q.textNe : q.textEn;
-                    setQuestion(qText);
-                    handleAskJyotish(undefined, qText);
-                  }}
-                  className="w-full text-left text-xs bg-stone-800/80 hover:bg-stone-700/80 border border-stone-700/60 p-2 rounded-xl text-stone-200 transition-colors line-clamp-1"
+                  onClick={() => setDreamSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-white text-xs"
                 >
-                  ✨ {lang === 'ne' ? q.textNe : q.textEn}
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Quick Suggestion Chips */}
+            <div className="flex items-center gap-1.5 flex-wrap mb-4">
+              <span className="text-[10px] text-stone-400 font-bold uppercase block mr-1">
+                {lang === 'ne' ? 'प्रचलित:' : 'Quick:'}
+              </span>
+              {['सर्प', 'गाई', 'पानी', 'दाँत', 'मन्दिर', 'सुन'].map((chip) => (
+                <button
+                  key={chip}
+                  onClick={() => setDreamSearchQuery(chip)}
+                  className="px-2 py-0.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-amber-200 border border-stone-700 text-[11px] font-medium transition-colors"
+                >
+                  {chip}
                 </button>
               ))}
             </div>
 
-            {/* Consultation Input Form */}
-            <form onSubmit={handleAskJyotish} className="space-y-3">
-              <div>
-                <label className="text-[11px] text-stone-300 font-bold block mb-1">
-                  {lang === 'ne' ? 'तपाईंको प्रश्न:' : 'Your Question:'}
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder={lang === 'ne' ? 'उदाहरण: मेरो नयाँ व्यवसाय कहिले सुरु गर्दा उत्तम होला?' : 'e.g. When is the best time for my business launch?'}
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value)}
-                  className="w-full text-xs px-3 py-2 bg-stone-800/90 text-white rounded-xl border border-stone-700 focus:outline-none focus:ring-1 focus:ring-amber-400"
-                />
-              </div>
+            {/* Matching Dreams Mini List */}
+            <div className="space-y-2 mb-4">
+              {matchingDreams.map((d) => (
+                <div
+                  key={d.id}
+                  onClick={() => setSelectedDreamResult(d)}
+                  className={`p-2.5 rounded-xl border transition-all cursor-pointer text-xs ${
+                    selectedDreamResult.id === d.id
+                      ? 'bg-amber-500/20 border-amber-400/60 text-white'
+                      : 'bg-stone-800/60 hover:bg-stone-800 border-stone-700/60 text-stone-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between font-bold">
+                    <span>{lang === 'ne' ? d.keywordNe : d.keywordEn}</span>
+                    <span
+                      className={`text-[9px] px-1.5 py-0.2 rounded font-black ${
+                        d.category === 'auspicious'
+                          ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                          : d.category === 'cautionary'
+                          ? 'bg-rose-950 text-rose-300 border border-rose-800'
+                          : 'bg-stone-700 text-stone-300'
+                      }`}
+                    >
+                      {d.category === 'auspicious' ? 'शुभ' : d.category === 'cautionary' ? 'सतर्क' : 'सामान्य'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-amber-200/90 mt-0.5 line-clamp-1 font-medium">
+                    {lang === 'ne' ? d.shortMeaningNe : d.shortMeaningEn}
+                  </p>
+                </div>
+              ))}
+            </div>
 
-              {/* Optional Birth Details */}
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <label className="text-[10px] text-stone-400 block mb-0.5">
-                    {lang === 'ne' ? 'जन्म मिति (ऐच्छिक)' : 'Birth Date'}
-                  </label>
-                  <input
-                    type="date"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    className="w-full text-xs px-2 py-1.5 bg-stone-800 text-white rounded-lg border border-stone-700"
-                  />
+            {/* Selected Dream Details Box */}
+            {selectedDreamResult && (
+              <div className="p-3.5 bg-stone-800/90 rounded-2xl border border-amber-400/40 text-xs space-y-2">
+                <div className="flex items-center justify-between border-b border-stone-700 pb-1.5">
+                  <span className="font-extrabold text-amber-300">
+                    📖 {lang === 'ne' ? selectedDreamResult.keywordNe : selectedDreamResult.keywordEn}
+                  </span>
+                  <span className="text-[10px] text-stone-400">
+                    {lang === 'ne' ? selectedDreamResult.indicationNe : selectedDreamResult.indicationEn}
+                  </span>
                 </div>
-                <div>
-                  <label className="text-[10px] text-stone-400 block mb-0.5">
-                    {lang === 'ne' ? 'जन्म स्थान' : 'Birth Place'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Kathmandu"
-                    value={birthPlace}
-                    onChange={(e) => setBirthPlace(e.target.value)}
-                    className="w-full text-xs px-2 py-1.5 bg-stone-800 text-white rounded-lg border border-stone-700"
-                  />
+                <p className="text-stone-300 text-[11px] leading-relaxed">
+                  {lang === 'ne' ? selectedDreamResult.detailedInterpretationNe : selectedDreamResult.detailedInterpretationEn}
+                </p>
+                <div className="pt-1 text-[11px] text-amber-300/90 border-t border-stone-700/60">
+                  🌿 <strong>{lang === 'ne' ? 'शान्ति उपाय:' : 'Remedy:'}</strong> {lang === 'ne' ? selectedDreamResult.remedyNe : selectedDreamResult.remedyEn}
                 </div>
               </div>
+            )}
+
+            {/* Portal Link */}
+            {onNavigate && (
+              <button
+                type="button"
+                onClick={() => onNavigate('dharma')}
+                className="w-full mt-4 py-2 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>{lang === 'ne' ? 'धर्म संस्कृति तथा सम्पूर्ण सपनाको फल खोल्नुहोस्' : 'Explore Full Dharma & Dream Guide'}</span>
+              </button>
+            )}
+          </div>
+
+          {/* Daily Rashi Japa Counter (१०८ जप काउन्टर) */}
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-5 sm:p-6 shadow-sm border border-stone-200 dark:border-stone-800 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-2xl bg-red-100 dark:bg-red-950/70 text-red-700 dark:text-red-400 flex items-center justify-center font-bold">
+                <Flame className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider block">
+                  {selectedRashi.nameNe} {lang === 'ne' ? 'राशिको दैनिक जप' : 'Daily Japa'}
+                </span>
+                <h4 className="font-extrabold text-stone-900 dark:text-white text-sm">
+                  {lang === 'ne' ? '१०८ मन्त्र जप काउन्टर' : '108 Japa Beads Counter'}
+                </h4>
+              </div>
+            </div>
+
+            {/* Mantra Display */}
+            <div className="p-3 bg-amber-50 dark:bg-stone-800/80 rounded-2xl border border-amber-200 dark:border-stone-700 text-center">
+              <span className="text-[10px] text-stone-500 dark:text-stone-400 block mb-0.5">
+                {lang === 'ne' ? 'आज जप गर्ने शुभ मन्त्र:' : 'Auspicious Mantra for Today:'}
+              </span>
+              <p className="font-serif font-extrabold text-stone-900 dark:text-amber-200 text-sm">
+                "{horoscope.mantraNe}"
+              </p>
+            </div>
+
+            {/* Interactive Bead Clicker */}
+            <div className="flex items-center justify-between gap-3 bg-stone-50 dark:bg-stone-800/60 p-3 rounded-2xl border border-stone-100 dark:border-stone-800">
+              <button
+                type="button"
+                onClick={handleRashiJapaClick}
+                className="flex-1 py-3 bg-gradient-to-r from-red-700 to-amber-600 hover:from-red-600 hover:to-amber-500 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
+              >
+                <span>📿 {lang === 'ne' ? 'जप गर्नुहोस्' : 'Chant Bead'}</span>
+                <span className="px-2 py-0.5 rounded-full bg-white/20 text-white font-mono text-xs">
+                  {toNepaliDigits(rashiJapaCount)} / १०८
+                </span>
+              </button>
 
               <button
-                type="submit"
-                id="ai-jyotish-ask-btn"
-                disabled={isAiConsulting || !question.trim()}
-                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all disabled:opacity-50"
+                type="button"
+                onClick={() => setRashiJapaCount(0)}
+                className="p-2.5 rounded-xl text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 text-xs font-bold cursor-pointer"
+                title="Reset counter"
               >
-                {isAiConsulting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin text-stone-950" />
-                    <span>{lang === 'ne' ? 'ज्योतिष गणना हुँदैछ...' : 'Consulting Stars...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-3.5 h-3.5" />
-                    <span>{lang === 'ne' ? 'ज्योतिषीसँग सोध्नुहोस्' : 'Ask Astrologer'}</span>
-                  </>
-                )}
+                <RotateCcw className="w-3.5 h-3.5" />
               </button>
-            </form>
+            </div>
 
-            {/* Error Display */}
-            {aiError && (
-              <div className="mt-3 p-3 bg-red-900/60 border border-red-700 text-red-200 rounded-xl text-xs">
-                {aiError}
-              </div>
+            {rashiJapaRounds > 0 && (
+              <p className="text-center text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                🎉 {toNepaliDigits(rashiJapaRounds)} {lang === 'ne' ? 'माला पूरा भयो!' : 'Mala rounds completed!'}
+              </p>
             )}
 
-            {/* AI Result Card */}
-            {aiAnswer && (
-              <div className="mt-4 p-4 bg-stone-800/95 border border-amber-400/40 rounded-2xl text-xs space-y-2 text-stone-200">
-                <div className="flex items-center justify-between border-b border-stone-700 pb-2">
-                  <span className="font-bold text-amber-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    {lang === 'ne' ? 'ज्योतिषीय उत्तर र परामर्श:' : 'Astrological Reading:'}
-                  </span>
-                  <button
-                    onClick={() => setAiAnswer(null)}
-                    className="text-stone-400 hover:text-white cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div className="whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto text-stone-100 font-medium pr-1">
-                  {aiAnswer}
-                </div>
-              </div>
-            )}
+            {/* Quick Astrological Remedy Pill */}
+            <div className="pt-2 border-t border-stone-100 dark:border-stone-800 text-[11px] text-stone-600 dark:text-stone-300">
+              <span className="font-bold text-amber-800 dark:text-amber-400 block mb-0.5">
+                🌿 {lang === 'ne' ? 'दैनिक शान्ति उपाय:' : 'Planetary Remedy:'}
+              </span>
+              <p>{lang === 'ne' ? horoscope.remedyNe : horoscope.remedyEn}</p>
+            </div>
           </div>
 
         </div>

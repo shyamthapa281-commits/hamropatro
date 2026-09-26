@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
 import { CalendarView } from './components/CalendarView';
 import { RashifalView } from './components/RashifalView';
+import { DharmaSanskritiView } from './components/DharmaSanskritiView';
 import { NewsView } from './components/NewsView';
 import { WeatherView } from './components/WeatherView';
 import { WorldClockView } from './components/WorldClockView';
@@ -112,7 +113,11 @@ export function App() {
         )}
 
         {activeTab === 'rashifal' && (
-          <RashifalView lang={lang} todayBs={todayBs} />
+          <RashifalView lang={lang} todayBs={todayBs} onNavigate={handleNavigate} />
+        )}
+
+        {activeTab === 'dharma' && (
+          <DharmaSanskritiView lang={lang} onNavigate={handleNavigate} />
         )}
 
         {activeTab === 'news' && (

@@ -19,7 +19,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
               <div className="w-9 h-9 rounded-xl bg-red-700 text-white flex items-center justify-center font-extrabold shadow-md">
                 <Calendar className="w-5 h-5" />
               </div>
-              <span className="text-xl font-extrabold text-white">हाम्रो पात्रो (Hamro Patro)</span>
+              <span className="text-xl font-extrabold text-white">Nepali Calendar (नेपाली क्यालेन्डर)</span>
             </div>
             <p className="text-xs text-stone-400 leading-relaxed max-w-sm">
               {lang === 'ne'
@@ -44,7 +44,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   type="button"
                   id="footer-quick-weather"
                   onClick={() => onNavigate('weather')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer text-sky-400 font-medium flex items-center gap-1 text-left w-full"
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline flex items-center gap-1 text-left w-full"
                 >
                   <span>{lang === 'ne' ? '• मौसम पूर्वानुमान (नेपालका शहरहरू)' : '• Weather Forecast (Nepal Cities)'}</span>
                 </button>
@@ -54,7 +54,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   type="button"
                   id="footer-quick-worldclock"
                   onClick={() => onNavigate('worldclock')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer text-amber-300/90 font-medium flex items-center gap-1 text-left w-full"
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline flex items-center gap-1 text-left w-full"
                 >
                   <span>{lang === 'ne' ? '• विश्व घडी (नेपाल समय NPT)' : '• World Clock (Nepal Time NPT)'}</span>
                 </button>
@@ -64,7 +64,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   type="button"
                   id="footer-quick-rashifal"
                   onClick={() => onNavigate('rashifal')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer text-amber-200 font-medium flex items-center gap-1 text-left w-full"
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline flex items-center gap-1 text-left w-full"
                 >
                   <span>{lang === 'ne' ? '• दैनिक राशिफल र भविष्यफल' : '• Daily Rashifal (Horoscope)'}</span>
                 </button>
@@ -72,9 +72,19 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
               <li>
                 <button
                   type="button"
+                  id="footer-quick-dharma"
+                  onClick={() => onNavigate('dharma')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline flex items-center gap-1 text-left w-full"
+                >
+                  <span>{lang === 'ne' ? '• धर्म संस्कृति तथा सपनाको फल (Swapna Shastra)' : '• Dharma Sanskriti & Dream Interpretation'}</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
                   id="footer-quick-health"
                   onClick={() => onNavigate('health')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer text-rose-400 font-medium flex items-center gap-1 text-left w-full"
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline flex items-center gap-1 text-left w-full"
                 >
                   <span>{lang === 'ne' ? '• स्वास्थ्य तथा कल्याण (योग र ऋतुचर्या)' : '• Health & Wellness (Yoga & Ritucharya)'}</span>
                 </button>
@@ -84,7 +94,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   type="button"
                   id="footer-quick-games"
                   onClick={() => onNavigate('games')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer text-amber-300 font-semibold flex items-center gap-1 text-left w-full"
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline flex items-center gap-1 text-left w-full"
                 >
                   <span>{lang === 'ne' ? '• सुडोकू र खेल केन्द्र (Sudoku & Mind Games)' : '• Sudoku & Activity Games Centre'}</span>
                 </button>
@@ -94,9 +104,9 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   type="button"
                   id="footer-quick-calendar"
                   onClick={() => onNavigate('calendar')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full"
                 >
-                  {lang === 'ne' ? '• नेपाली पात्रो र पञ्चाङ्ग' : '• Nepali Calendar & Panchanga'}
+                  {lang === 'ne' ? '• नेपाली क्यालेन्डर र पञ्चाङ्ग' : '• Nepali Calendar & Panchanga'}
                 </button>
               </li>
               <li>
@@ -104,7 +114,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   type="button"
                   id="footer-quick-calculator"
                   onClick={() => onNavigate('calculator')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full"
                 >
                   {lang === 'ne' ? '• क्याल्कुलेटर र साइन्टिफिक' : '• Standard & Scientific Calculator'}
                 </button>
@@ -114,7 +124,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   type="button"
                   id="footer-quick-converter"
                   onClick={() => onNavigate('converter')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full"
                 >
                   {lang === 'ne' ? '• नाप, जग्गा र मिति रूपान्तरण' : '• Measurement & Date Converter'}
                 </button>
@@ -124,7 +134,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   type="button"
                   id="footer-quick-language"
                   onClick={() => onNavigate('language')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full"
                 >
                   {lang === 'ne' ? '• नेपाली-अंग्रेजी भाषा सिकाई' : '• Language Learning Hub'}
                 </button>
@@ -134,7 +144,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   type="button"
                   id="footer-quick-govhelp"
                   onClick={() => onNavigate('govhelp')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full"
                 >
                   {lang === 'ne' ? '• सरकारी सेवा र आपतकालीन हटलाइन' : '• Government Portals & Emergency'}
                 </button>
@@ -144,7 +154,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   type="button"
                   id="footer-quick-forex"
                   onClick={() => onNavigate('forex')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full"
                 >
                   {lang === 'ne' ? '• विनिमय दर र सुनको मूल्य' : '• Forex Rates & Bullion'}
                 </button>
@@ -154,7 +164,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   type="button"
                   id="footer-quick-festivals"
                   onClick={() => onNavigate('festivals')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer text-left w-full"
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full"
                 >
                   {lang === 'ne' ? '• नेपाली चाडपर्वहरू' : '• Nepali Festivals'}
                 </button>
@@ -181,7 +191,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
 
         {/* Bottom copyright */}
         <div className="pt-8 border-t border-stone-800 flex flex-wrap items-center justify-between gap-4 text-xs text-stone-500">
-          <p>© {new Date().getFullYear()} Hamro Patro. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Nepali Calendar. All rights reserved.</p>
           <p className="flex items-center gap-1">
             <span>Made with</span>
             <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" />

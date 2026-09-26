@@ -1,5 +1,5 @@
 /**
- * Hamro Patro Types & Interfaces
+ * Nepali Calendar Types & Interfaces
  */
 
 export type Language = 'ne' | 'en';

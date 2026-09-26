@@ -64,7 +64,7 @@ export const HoroscopeShareModal: React.FC<HoroscopeShareModalProps> = ({
     ? (lang === 'ne' ? todayBs.formattedNe : todayBs.formattedEn)
     : (lang === 'ne' ? 'आजको दिन' : "Today's Date");
 
-  const formattedText = `🌟 हाम्रो पात्रो • दैनिक वैदिक राशिफल (Daily Horoscope)
+  const formattedText = `🌟 Nepali Calendar • दैनिक वैदिक राशिफल (Daily Horoscope)
 ${rashi.symbol} ${rashi.nameNe} (${rashi.nameEn}) | ${dateHeading}
 ⭐ शुभ योग: ${horoscope.rating}/५ तारा
 
@@ -85,7 +85,7 @@ ${lang === 'ne' ? horoscope.predictionNe : horoscope.predictionEn}
 🌿 ज्योतिषीय उपाय: ${lang === 'ne' ? horoscope.remedyNe : horoscope.remedyEn}
 💎 शुभ रत्न: ${lang === 'ne' ? horoscope.gemstoneNe : horoscope.gemstoneEn}
 
-📱 थप विस्तृत पञ्चाङ्ग, राशिफल र समाचारका लागि हाम्रो पात्रो (Hamro Patro) हेर्नुहोस्।`;
+📱 थप विस्तृत पञ्चाङ्ग, राशिफल र समाचारका लागि Nepali Calendar हेर्नुहोस्।`;
 
   // Draw card on canvas
   useEffect(() => {
@@ -254,7 +254,7 @@ ${lang === 'ne' ? horoscope.predictionNe : horoscope.predictionEn}
       ctx.font = "bold 18px 'Mukta', 'Plus Jakarta Sans', sans-serif";
       ctx.textAlign = 'center';
       ctx.fillText(
-        lang === 'ne' ? 'हाम्रो पात्रो • दैनिक वैदिक राशिफल' : 'HAMRO PATRO • VEDIC HOROSCOPE',
+        lang === 'ne' ? 'Nepali Calendar • दैनिक वैदिक राशिफल' : 'NEPALI CALENDAR • VEDIC HOROSCOPE',
         width / 2,
         currentY + 27
       );
@@ -450,8 +450,8 @@ ${lang === 'ne' ? horoscope.predictionNe : horoscope.predictionEn}
       const footerY = height - margin - 22;
       ctx.fillText(
         lang === 'ne' 
-          ? 'हाम्रो पात्रो (Hamro Patro) बाट साझा गरिएको • सबै अधिकार सुरक्षित' 
-          : 'Shared via Hamro Patro • Nepal\'s Authentic Calendar & Astrology',
+          ? 'Nepali Calendar बाट साझा गरिएको • सबै अधिकार सुरक्षित' 
+          : 'Shared via Nepali Calendar • Nepal\'s Authentic Calendar & Astrology',
         width / 2,
         footerY
       );
@@ -484,7 +484,7 @@ ${lang === 'ne' ? horoscope.predictionNe : horoscope.predictionEn}
     const url = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = url;
-    a.download = `hamro-patro-${rashi.id}-horoscope.png`;
+    a.download = `nepali-calendar-${rashi.id}-horoscope.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -526,15 +526,15 @@ ${lang === 'ne' ? horoscope.predictionNe : horoscope.predictionEn}
     try {
       canvas.toBlob(async (blob) => {
         if (blob && navigator.canShare && navigator.canShare({ files: [new File([blob], 'horoscope.png', { type: 'image/png' })] })) {
-          const file = new File([blob], `hamro-patro-${rashi.id}-horoscope.png`, { type: 'image/png' });
+          const file = new File([blob], `nepali-calendar-${rashi.id}-horoscope.png`, { type: 'image/png' });
           await navigator.share({
-            title: `${rashi.nameNe} (${rashi.nameEn}) - दैनिक राशिफल | Hamro Patro`,
+            title: `${rashi.nameNe} (${rashi.nameEn}) - दैनिक राशिफल | Nepali Calendar`,
             text: formattedText,
             files: [file]
           });
         } else {
           await navigator.share({
-            title: `${rashi.nameNe} (${rashi.nameEn}) - दैनिक राशिफल | Hamro Patro`,
+            title: `${rashi.nameNe} (${rashi.nameEn}) - दैनिक राशिफल | Nepali Calendar`,
             text: formattedText
           });
         }
@@ -549,7 +549,7 @@ ${lang === 'ne' ? horoscope.predictionNe : horoscope.predictionEn}
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
   const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=https://hamropatro.app&quote=${encodedText}`;
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-    `🌟 ${rashi.nameNe} (${rashi.nameEn}) दैनिक राशिफल | Hamro Patro\n${(lang === 'ne' ? horoscope.predictionNe : horoscope.predictionEn).slice(0, 150)}...\n`
+    `🌟 ${rashi.nameNe} (${rashi.nameEn}) दैनिक राशिफल | Nepali Calendar\n${(lang === 'ne' ? horoscope.predictionNe : horoscope.predictionEn).slice(0, 150)}...\n`
   )}`;
   const viberUrl = `viber://forward?text=${encodedText}`;
   const telegramUrl = `https://t.me/share/url?url=https://hamropatro.app&text=${encodedText}`;
@@ -867,7 +867,7 @@ ${lang === 'ne' ? horoscope.predictionNe : horoscope.predictionEn}
 
         {/* Modal Bottom Close / Info Bar */}
         <div className="bg-stone-50 dark:bg-stone-900/90 px-5 py-3 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
-          <span>{lang === 'ne' ? 'हाम्रो पात्रो • दैनिक राशिफल सेयरिङ' : 'Hamro Patro • Daily Horoscope Sharing'}</span>
+          <span>{lang === 'ne' ? 'Nepali Calendar • दैनिक राशिफल सेयरिङ' : 'Nepali Calendar • Daily Horoscope Sharing'}</span>
           <button
             onClick={onClose}
             className="px-3.5 py-1.5 bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 font-bold rounded-xl text-xs transition-colors cursor-pointer"

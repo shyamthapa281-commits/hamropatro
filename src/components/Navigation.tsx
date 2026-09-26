@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   HeartPulse,
-  Gamepad2
+  Gamepad2,
+  BookOpen
 } from 'lucide-react';
 import { Language } from '../types';
 
@@ -37,7 +38,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   const navItems = [
     {
       id: 'calendar',
-      nameNe: 'पात्रो / पञ्चाङ्ग',
+      nameNe: 'क्यालेन्डर / पञ्चाङ्ग',
       nameEn: 'Calendar & Panchanga',
       icon: CalendarIcon,
     },
@@ -47,6 +48,14 @@ export const Navigation: React.FC<NavigationProps> = ({
       nameEn: 'Daily Rashifal',
       icon: Sparkles,
       badge: 'शुभ',
+    },
+    {
+      id: 'dharma',
+      nameNe: 'धर्म संस्कृति र सपना',
+      nameEn: 'Dharma & Dreams',
+      icon: BookOpen,
+      badgeNe: 'सपना फल',
+      badgeEn: 'Dreams',
     },
     {
       id: 'news',
@@ -118,11 +127,11 @@ export const Navigation: React.FC<NavigationProps> = ({
     },
     {
       id: 'govhelp',
-      nameNe: 'सरकारी सेवा तथा नक्सा',
-      nameEn: 'Gov Services & Map',
+      nameNe: 'सरकारी सेवा तथा दिशानिर्देश',
+      nameEn: 'Gov Services & Directions',
       icon: Building2,
-      badgeNe: 'नक्सा',
-      badgeEn: 'Map',
+      badgeNe: 'दिशा',
+      badgeEn: 'Directions',
     },
     {
       id: 'festivals',

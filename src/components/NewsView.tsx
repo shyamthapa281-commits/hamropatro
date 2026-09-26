@@ -284,14 +284,33 @@ export const NewsView: React.FC<NewsViewProps> = ({ lang }) => {
 
       if (!response.ok) throw new Error('AI summary failed');
       const data = await response.json();
-      setAiSummary(data.summary);
+      if (data?.summary) {
+        setAiSummary(data.summary);
+      } else {
+        throw new Error('No summary returned');
+      }
     } catch (error) {
-      console.error(error);
-      setAiSummary(
-        articleLang === 'ne'
-          ? 'समाचार सारांश तयार गर्न सकिएन। कृपया केही समयपछि प्रयास गर्नुहोस्।'
-          : 'Failed to generate AI summary. Please try again.'
-      );
+      // High-quality extractive key-takeaway summary fallback
+      const content = articleLang === 'ne' ? article.contentNe : article.contentEn;
+      const title = articleLang === 'ne' ? article.titleNe : article.titleEn;
+      const sentences = content
+        .split(/[।.\n]/)
+        .map(s => s.trim())
+        .filter(s => s.length > 20);
+
+      const topPoints = sentences.slice(0, 3);
+      if (topPoints.length > 0) {
+        const generated = articleLang === 'ne'
+          ? `📌 **${title}**\n\n` + topPoints.map(p => `• ${p}।`).join('\n')
+          : `📌 **${title}**\n\n` + topPoints.map(p => `• ${p}.`).join('\n');
+        setAiSummary(generated);
+      } else {
+        setAiSummary(
+          articleLang === 'ne'
+            ? `📌 **${title}**\n\n• ${content.slice(0, 200)}...`
+            : `📌 **${title}**\n\n• ${content.slice(0, 200)}...`
+        );
+      }
     } finally {
       setIsSummarizing(false);
     }
