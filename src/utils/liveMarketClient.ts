@@ -54,6 +54,15 @@ export const LIVE_BENCHMARK_BULLION: GoldSilverRate[] = [
 const FOREX_STORAGE_KEY = 'hamro_patro_forex_cache_v4';
 const BULLION_STORAGE_KEY = 'hamro_patro_bullion_cache_v4';
 
+// Runtime in-memory cache for instant zero-delay tab switching
+let inMemoryForex: { rates: ForexRate[]; publishedDate: string; source: string; isLive: boolean } | null = null;
+let lastForexFetchTime = 0;
+
+let inMemoryBullion: { rates: GoldSilverRate[]; publishedDate: string; source: string; isLive: boolean } | null = null;
+let lastBullionFetchTime = 0;
+
+const MARKET_CACHE_FRESH_MS = 5 * 60 * 1000; // 5 minutes fresh
+
 function parseNrbData(rawList: any[]): ForexRate[] {
   return rawList.map((item: any) => {
     const iso = (item.iso3 || '').toUpperCase();
@@ -160,6 +169,11 @@ export async function getLiveForexRates(): Promise<{
   source: string;
   isLive: boolean;
 }> {
+  // If runtime cache is fresh (< 5 mins), return immediately with 0 delay & 0 network calls
+  if (inMemoryForex && Date.now() - lastForexFetchTime < MARKET_CACHE_FRESH_MS) {
+    return inMemoryForex;
+  }
+
   let cachedData: any = null;
   try {
     const raw = localStorage.getItem(FOREX_STORAGE_KEY);
@@ -176,13 +190,16 @@ export async function getLiveForexRates(): Promise<{
     if (res.ok && contentType.includes('application/json')) {
       const data = await res.json();
       if (data?.rates?.length) {
-        try { localStorage.setItem(FOREX_STORAGE_KEY, JSON.stringify(data)); } catch {}
-        return {
+        const result = {
           rates: data.rates,
           publishedDate: data.publishedDate || 'Today',
           source: data.source || 'Nepal Rastra Bank (नेपाल राष्ट्र बैंक)',
           isLive: true
         };
+        inMemoryForex = result;
+        lastForexFetchTime = Date.now();
+        try { localStorage.setItem(FOREX_STORAGE_KEY, JSON.stringify(data)); } catch {}
+        return result;
       }
     }
   } catch {}
@@ -197,6 +214,8 @@ export async function getLiveForexRates(): Promise<{
         source: 'नेपाल राष्ट्र बैंक तथा अन्तर्राष्ट्रिय विनिमय बजार (Live Global)',
         isLive: true
       };
+      inMemoryForex = result;
+      lastForexFetchTime = Date.now();
       try { localStorage.setItem(FOREX_STORAGE_KEY, JSON.stringify(result)); } catch {}
       return result;
     }
@@ -221,6 +240,8 @@ export async function getLiveForexRates(): Promise<{
           source: 'नेपाल राष्ट्र बैंक (NRB Live Proxy)',
           isLive: true
         };
+        inMemoryForex = result;
+        lastForexFetchTime = Date.now();
         try { localStorage.setItem(FOREX_STORAGE_KEY, JSON.stringify(result)); } catch {}
         return result;
       }
@@ -229,21 +250,25 @@ export async function getLiveForexRates(): Promise<{
 
   // 4. Cached data
   if (cachedData?.rates?.length) {
-    return {
+    const result = {
       rates: cachedData.rates,
       publishedDate: cachedData.publishedDate || 'Today',
       source: cachedData.source || 'नेपाल राष्ट्र बैंक (क्यास)',
       isLive: false
     };
+    inMemoryForex = result;
+    return result;
   }
 
   // 5. Guaranteed verified benchmark
-  return {
+  const result = {
     rates: LIVE_BENCHMARK_FOREX,
     publishedDate: new Date().toLocaleDateString('ne-NP'),
     source: 'नेपाल राष्ट्र बैंक (प्रमाणित दर)',
     isLive: true
   };
+  inMemoryForex = result;
+  return result;
 }
 
 /**
@@ -386,6 +411,11 @@ export async function getLiveBullionRates(): Promise<{
   source: string;
   isLive: boolean;
 }> {
+  // If runtime cache is fresh (< 5 mins), return immediately with 0 delay & 0 network calls
+  if (inMemoryBullion && Date.now() - lastBullionFetchTime < MARKET_CACHE_FRESH_MS) {
+    return inMemoryBullion;
+  }
+
   let cachedData: any = null;
   try {
     const raw = localStorage.getItem(BULLION_STORAGE_KEY);
@@ -402,13 +432,16 @@ export async function getLiveBullionRates(): Promise<{
     if (res.ok && contentType.includes('application/json')) {
       const data = await res.json();
       if (data?.rates?.length) {
-        try { localStorage.setItem(BULLION_STORAGE_KEY, JSON.stringify(data)); } catch {}
-        return {
+        const result = {
           rates: data.rates,
           publishedDate: data.publishedDate || 'Today',
           source: data.source || 'FENEGOSIDA (सुनचाँदी व्यवसायी महासंघ)',
           isLive: true,
         };
+        inMemoryBullion = result;
+        lastBullionFetchTime = Date.now();
+        try { localStorage.setItem(BULLION_STORAGE_KEY, JSON.stringify(data)); } catch {}
+        return result;
       }
     }
   } catch {}
@@ -423,6 +456,8 @@ export async function getLiveBullionRates(): Promise<{
         source: 'नेपाल सुनचाँदी व्यवसायी महासंघ तथा अन्तर्राष्ट्रिय बजार (FENEGOSIDA Standard)',
         isLive: true,
       };
+      inMemoryBullion = result;
+      lastBullionFetchTime = Date.now();
       try { localStorage.setItem(BULLION_STORAGE_KEY, JSON.stringify(result)); } catch {}
       return result;
     }
@@ -446,6 +481,8 @@ export async function getLiveBullionRates(): Promise<{
           source: 'नेपाल सुनचाँदी व्यवसायी महासंघ (FENEGOSIDA Live)',
           isLive: true,
         };
+        inMemoryBullion = result;
+        lastBullionFetchTime = Date.now();
         try { localStorage.setItem(BULLION_STORAGE_KEY, JSON.stringify(result)); } catch {}
         return result;
       }
@@ -454,19 +491,23 @@ export async function getLiveBullionRates(): Promise<{
 
   // 4. Return cached rates if recently recorded
   if (cachedData?.rates?.length) {
-    return {
+    const result = {
       rates: cachedData.rates,
       publishedDate: cachedData.publishedDate || 'Today',
       source: cachedData.source || 'FENEGOSIDA (क्यास)',
       isLive: false,
     };
+    inMemoryBullion = result;
+    return result;
   }
 
   // 5. Guaranteed verified live FENEGOSIDA market benchmark
-  return {
+  const result = {
     rates: LIVE_BENCHMARK_BULLION,
     publishedDate: new Date().toLocaleDateString('ne-NP'),
     source: 'नेपाल सुनचाँदी व्यवसायी महासंघ (FENEGOSIDA)',
     isLive: true,
   };
+  inMemoryBullion = result;
+  return result;
 }

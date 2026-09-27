@@ -8,7 +8,9 @@ import {
   Globe, 
   Clock,
   CloudSun,
-  Compass
+  Compass,
+  Newspaper,
+  Coins
 } from 'lucide-react';
 import { NepaliDate, Panchanga, Language } from '../types';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
@@ -92,6 +94,30 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+          {/* Live News Quick Link */}
+          <button
+            id="header-news-top-btn"
+            type="button"
+            onClick={() => onNavigate('news')}
+            className="flex items-center gap-1 bg-red-900/60 dark:bg-stone-800/70 hover:bg-red-800 dark:hover:bg-stone-700 px-2.5 py-0.5 rounded-lg border border-red-700/40 dark:border-stone-700 text-red-100 text-xs transition-colors font-medium cursor-pointer"
+            title={lang === 'ne' ? 'ताजा समाचार पढ्नुहोस्' : 'Live Nepal News'}
+          >
+            <Newspaper className="w-3 h-3 text-red-300" />
+            <span className="hidden md:inline">{lang === 'ne' ? 'ताजा समाचार' : 'Live News'}</span>
+          </button>
+
+          {/* Forex & Gold Quick Link */}
+          <button
+            id="header-forex-top-btn"
+            type="button"
+            onClick={() => onNavigate('forex')}
+            className="flex items-center gap-1 bg-red-900/60 dark:bg-stone-800/70 hover:bg-red-800 dark:hover:bg-stone-700 px-2.5 py-0.5 rounded-lg border border-red-700/40 dark:border-stone-700 text-amber-200 text-xs transition-colors font-medium cursor-pointer"
+            title={lang === 'ne' ? 'विदेशी मुद्रा र सुनचाँदी दर' : 'Forex & Gold Rates'}
+          >
+            <Coins className="w-3 h-3 text-amber-300" />
+            <span className="hidden lg:inline">{lang === 'ne' ? 'विदेशी मुद्रा / सुन' : 'Forex & Gold'}</span>
+          </button>
+
           {/* Weather Quick Link */}
           <button
             id="header-weather-top-btn"

@@ -28,12 +28,48 @@ interface ForexGoldViewProps {
 }
 
 export const ForexGoldView: React.FC<ForexGoldViewProps> = ({ lang }) => {
-  // Live Data States
-  const [forexRates, setForexRates] = useState<ForexRate[]>(LIVE_BENCHMARK_FOREX);
-  const [forexDate, setForexDate] = useState<string>('Today');
+  // Live Data States initialized with cached live data if available (0ms instant paint)
+  const [forexRates, setForexRates] = useState<ForexRate[]>(() => {
+    try {
+      const raw = localStorage.getItem('hamro_patro_forex_cache_v4');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.rates?.length) return parsed.rates;
+      }
+    } catch {}
+    return LIVE_BENCHMARK_FOREX;
+  });
+  const [forexDate, setForexDate] = useState<string>(() => {
+    try {
+      const raw = localStorage.getItem('hamro_patro_forex_cache_v4');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.publishedDate) return parsed.publishedDate;
+      }
+    } catch {}
+    return 'Today';
+  });
   const [forexSource, setForexSource] = useState<string>('नेपाल राष्ट्र बैंक');
-  const [bullionRates, setBullionRates] = useState<GoldSilverRate[]>(LIVE_BENCHMARK_BULLION);
-  const [bullionDate, setBullionDate] = useState<string>('Today');
+  const [bullionRates, setBullionRates] = useState<GoldSilverRate[]>(() => {
+    try {
+      const raw = localStorage.getItem('hamro_patro_bullion_cache_v4');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.rates?.length) return parsed.rates;
+      }
+    } catch {}
+    return LIVE_BENCHMARK_BULLION;
+  });
+  const [bullionDate, setBullionDate] = useState<string>(() => {
+    try {
+      const raw = localStorage.getItem('hamro_patro_bullion_cache_v4');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.publishedDate) return parsed.publishedDate;
+      }
+    } catch {}
+    return 'Today';
+  });
   const [bullionSource, setBullionSource] = useState<string>('सुनचाँदी व्यवसायी महासंघ');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -54,8 +90,6 @@ export const ForexGoldView: React.FC<ForexGoldViewProps> = ({ lang }) => {
   const fetchLiveMarketData = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) {
       setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
     }
 
     try {

@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { NewsArticle, Language } from '../types';
 import { NEWS_CATEGORIES, MOCK_NEWS_ARTICLES } from '../data/mockNews';
-import { getLiveNewsArticles } from '../utils/liveNewsClient';
+import { getLiveNewsArticles, getSynchronousCachedNews } from '../utils/liveNewsClient';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
 
 interface NewsViewProps {
@@ -99,7 +99,7 @@ const renderCategoryIcon = (id: string, className = "w-4 h-4") => {
 };
 
 export const NewsView: React.FC<NewsViewProps> = ({ lang }) => {
-  const [articles, setArticles] = useState<NewsArticle[]>(MOCK_NEWS_ARTICLES);
+  const [articles, setArticles] = useState<NewsArticle[]>(() => getSynchronousCachedNews());
   const [isLoadingLive, setIsLoadingLive] = useState<boolean>(false);
   const [lastUpdatedTime, setLastUpdatedTime] = useState<string>('भर्खरै');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -133,7 +133,9 @@ export const NewsView: React.FC<NewsViewProps> = ({ lang }) => {
 
   // Function to fetch real-time live news from server or direct client RSS
   const fetchLiveNews = useCallback(async (forceRefresh = false) => {
-    setIsLoadingLive(true);
+    if (forceRefresh) {
+      setIsLoadingLive(true);
+    }
     try {
       const data = await getLiveNewsArticles(forceRefresh);
       if (data.articles && data.articles.length > 0) {
