@@ -155,6 +155,10 @@ export interface ForexRate {
   sellRate: number;
   change: number; // +0.15, -0.08
   flag: string;
+  date?: string;
+  isLive?: boolean;
+  publishedOn?: string;
+  modifiedOn?: string;
 }
 
 export interface GoldSilverRate {
