@@ -35,6 +35,7 @@ import {
   NepaliDate 
 } from '../types';
 import { RASHIS_DATA, MOCK_DAILY_HOROSCOPES } from '../data/mockAstrology';
+import { getDynamicHoroscope } from '../utils/horoscopeEngine';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
 import { DREAM_INTERPRETATIONS, DreamItem } from '../data/dharmaCultureData';
 import { HoroscopeShareModal } from './HoroscopeShareModal';
@@ -65,7 +66,9 @@ export const RashifalView: React.FC<RashifalViewProps> = ({ lang, todayBs, onNav
   const [rashiJapaRounds, setRashiJapaRounds] = useState<number>(0);
 
   const selectedRashi = RASHIS_DATA.find((r) => r.id === selectedRashiId) || RASHIS_DATA[0];
-  const horoscope = MOCK_DAILY_HOROSCOPES[selectedRashiId] || MOCK_DAILY_HOROSCOPES.mesh;
+  const horoscope = useMemo(() => {
+    return getDynamicHoroscope(selectedRashiId, period, todayBs, lang);
+  }, [selectedRashiId, period, todayBs, lang]);
 
   const handleCopyMantra = () => {
     navigator.clipboard.writeText(horoscope.mantraNe);
@@ -126,11 +129,11 @@ export const RashifalView: React.FC<RashifalViewProps> = ({ lang, todayBs, onNav
       ? (lang === 'ne' ? todayBs.formattedNe : todayBs.formattedEn)
       : (lang === 'ne' ? 'आजको दिन' : "Today's Date");
 
-    const text = `🌟 Nepali Calendar • दैनिक वैदिक राशिफल (Daily Horoscope)
-${rashiToCopy.symbol} ${rashiToCopy.nameNe} (${rashiToCopy.nameEn}) | ${dateHeading}
+    const text = `🌟 Nepali Calendar • वैदिक राशिफल (Horoscope)
+${rashiToCopy.symbol} ${rashiToCopy.nameNe} (${rashiToCopy.nameEn}) | ${h.date}
 ⭐ शुभ योग: ${h.rating}/५ तारा
 
-📖 आजको फलादेश:
+📖 फलादेश:
 ${lang === 'ne' ? h.predictionNe : h.predictionEn}
 
 🎨 भाग्यशाली रङ: ${lang === 'ne' ? h.luckyColorNe : h.luckyColorEn}
@@ -138,7 +141,7 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
 🧭 शुभ दिशा: ${lang === 'ne' ? h.luckyDirectionNe : h.luckyDirectionEn}
 ⏰ शुभ समय: ${h.favorableTime}
 
-🕉️ दैनिक जप मन्त्र: "${h.mantraNe}"
+🕉️ जप मन्त्र: "${h.mantraNe}"
 🌿 ज्योतिषीय उपाय: ${lang === 'ne' ? h.remedyNe : h.remedyEn}
 💎 शुभ रत्न: ${lang === 'ne' ? h.gemstoneNe : h.gemstoneEn}
 
@@ -307,7 +310,7 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
               <div>
                 <h4 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-2 flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-red-700" />
-                  {lang === 'ne' ? 'आजको पूर्ण फलादेश (Daily Planetary Insight)' : 'Detailed Horoscope Reading'}
+                  {horoscope.date}
                 </h4>
                 <p className="text-stone-700 text-base sm:text-lg leading-relaxed bg-stone-50 p-5 rounded-2xl border border-stone-100">
                   {lang === 'ne' ? horoscope.predictionNe : horoscope.predictionEn}
@@ -702,7 +705,7 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {RASHIS_DATA.map((r) => {
-            const h = MOCK_DAILY_HOROSCOPES[r.id] || MOCK_DAILY_HOROSCOPES.mesh;
+            const h = getDynamicHoroscope(r.id, period, todayBs, lang);
             const isSelected = r.id === selectedRashiId;
             const isCopied = copiedRashiId === r.id;
 
@@ -832,7 +835,7 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
           isOpen={true}
           onClose={() => setShareModalRashi(null)}
           rashi={shareModalRashi}
-          horoscope={MOCK_DAILY_HOROSCOPES[shareModalRashi.id] || MOCK_DAILY_HOROSCOPES.mesh}
+          horoscope={getDynamicHoroscope(shareModalRashi.id, period, todayBs, lang)}
           lang={lang}
           todayBs={todayBs}
           initialTab={shareModalTab}

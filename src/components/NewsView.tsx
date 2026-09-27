@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { NewsArticle, Language } from '../types';
 import { NEWS_CATEGORIES, MOCK_NEWS_ARTICLES } from '../data/mockNews';
+import { getLiveNewsArticles } from '../utils/liveNewsClient';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
 
 interface NewsViewProps {
@@ -130,13 +131,11 @@ export const NewsView: React.FC<NewsViewProps> = ({ lang }) => {
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
-  // Function to fetch real-time live news from server
+  // Function to fetch real-time live news from server or direct client RSS
   const fetchLiveNews = useCallback(async (forceRefresh = false) => {
     setIsLoadingLive(true);
     try {
-      const response = await fetch(`/api/news/live${forceRefresh ? '?refresh=true' : ''}`);
-      if (!response.ok) throw new Error('Live news fetch failed');
-      const data = await response.json();
+      const data = await getLiveNewsArticles(forceRefresh);
       if (data.articles && data.articles.length > 0) {
         setArticles(data.articles);
         setLastUpdatedTime(new Date().toLocaleTimeString(lang === 'ne' ? 'ne-NP' : 'en-US', { hour: '2-digit', minute: '2-digit' }));
