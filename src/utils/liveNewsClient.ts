@@ -99,6 +99,9 @@ async function fetchDirectRssFeeds(): Promise<NewsArticle[]> {
   const feeds = [
     { url: 'https://www.onlinekhabar.com/feed', name: 'OnlineKhabar' },
     { url: 'https://www.ratopati.com/feed', name: 'Ratopati' },
+    { url: 'https://www.setopati.com/feed', name: 'Setopati' },
+    { url: 'https://feeds.bbci.co.uk/nepali/rss.xml', name: 'BBC Nepali' },
+    { url: 'https://kathmandupost.com/rss', name: 'Kathmandu Post' },
   ];
 
   const articles: NewsArticle[] = [];
@@ -106,7 +109,7 @@ async function fetchDirectRssFeeds(): Promise<NewsArticle[]> {
   for (const feed of feeds) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 3500);
+      const timer = setTimeout(() => controller.abort(), 4000);
       const gatewayUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`;
       const res = await fetch(gatewayUrl, { signal: controller.signal });
       clearTimeout(timer);
@@ -114,7 +117,7 @@ async function fetchDirectRssFeeds(): Promise<NewsArticle[]> {
       if (res.ok) {
         const json = await res.json();
         if (json?.status === 'ok' && Array.isArray(json.items) && json.items.length > 0) {
-          const parsed = parseRss2Json(json.items.slice(0, 8), feed.name);
+          const parsed = parseRss2Json(json.items.slice(0, 15), feed.name);
           articles.push(...parsed);
         }
       }

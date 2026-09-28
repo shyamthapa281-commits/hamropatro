@@ -24,7 +24,15 @@ import {
   Share2, 
   Search,
   RotateCcw,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Send,
+  Loader2,
+  MessageSquare,
+  Briefcase,
+  Heart,
+  Coins,
+  HeartPulse,
+  UserCheck
 } from 'lucide-react';
 import { 
   RashiId, 
@@ -39,6 +47,7 @@ import { getDynamicHoroscope } from '../utils/horoscopeEngine';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
 import { DREAM_INTERPRETATIONS, DreamItem } from '../data/dharmaCultureData';
 import { HoroscopeShareModal } from './HoroscopeShareModal';
+import { generateAstrologyReading } from '../utils/aiFallbackEngine';
 import confetti from 'canvas-confetti';
 
 interface RashifalViewProps {
@@ -50,6 +59,7 @@ interface RashifalViewProps {
 export const RashifalView: React.FC<RashifalViewProps> = ({ lang, todayBs, onNavigate }) => {
   const [selectedRashiId, setSelectedRashiId] = useState<RashiId>('mesh');
   const [period, setPeriod] = useState<HoroscopePeriod>('daily');
+  const [dayOffset, setDayOffset] = useState<number>(0); // -1 = yesterday, 0 = today, 1 = tomorrow
   const [copiedMantra, setCopiedMantra] = useState<boolean>(false);
 
   // Sharing state
@@ -65,10 +75,20 @@ export const RashifalView: React.FC<RashifalViewProps> = ({ lang, todayBs, onNav
   const [rashiJapaCount, setRashiJapaCount] = useState<number>(0);
   const [rashiJapaRounds, setRashiJapaRounds] = useState<number>(0);
 
+  // Jyotish Kundali Consultation state
+  const [jyotishCategory, setJyotishCategory] = useState<'career' | 'marriage' | 'finance' | 'health' | 'general'>('career');
+  const [jyotishQuestion, setJyotishQuestion] = useState<string>('');
+  const [jyotishBirthDate, setJyotishBirthDate] = useState<string>('');
+  const [jyotishBirthTime, setJyotishBirthTime] = useState<string>('');
+  const [jyotishBirthPlace, setJyotishBirthPlace] = useState<string>('');
+  const [jyotishAnswer, setJyotishAnswer] = useState<string | null>(null);
+  const [isAskingJyotish, setIsAskingJyotish] = useState<boolean>(false);
+  const [copiedJyotishAnswer, setCopiedJyotishAnswer] = useState<boolean>(false);
+
   const selectedRashi = RASHIS_DATA.find((r) => r.id === selectedRashiId) || RASHIS_DATA[0];
   const horoscope = useMemo(() => {
-    return getDynamicHoroscope(selectedRashiId, period, todayBs, lang);
-  }, [selectedRashiId, period, todayBs, lang]);
+    return getDynamicHoroscope(selectedRashiId, period, todayBs, lang, period === 'daily' ? dayOffset : 0);
+  }, [selectedRashiId, period, todayBs, lang, dayOffset]);
 
   const handleCopyMantra = () => {
     navigator.clipboard.writeText(horoscope.mantraNe);
@@ -152,6 +172,52 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
     setTimeout(() => setCopiedRashiId(null), 2500);
   };
 
+  const handleAskJyotish = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!jyotishQuestion.trim()) return;
+
+    setIsAskingJyotish(true);
+    setJyotishAnswer(null);
+
+    try {
+      const res = await fetch('/api/astrology/kundali-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rashiId: selectedRashiId,
+          birthDate: jyotishBirthDate,
+          birthTime: jyotishBirthTime,
+          birthPlace: jyotishBirthPlace,
+          question: jyotishQuestion.trim(),
+          category: jyotishCategory,
+          language: lang,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.answer) {
+          setJyotishAnswer(data.answer);
+          setIsAskingJyotish(false);
+          return;
+        }
+      }
+    } catch {}
+
+    // Fallback to offline/static Vedic Reading engine
+    const fallback = generateAstrologyReading({
+      rashiId: selectedRashiId,
+      birthDate: jyotishBirthDate,
+      birthTime: jyotishBirthTime,
+      birthPlace: jyotishBirthPlace,
+      question: jyotishQuestion.trim(),
+      category: jyotishCategory,
+      language: lang,
+    });
+    setJyotishAnswer(fallback);
+    setIsAskingJyotish(false);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
       {/* Top Banner */}
@@ -178,27 +244,54 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
 
       {/* 12 Rashis Selector Grid */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <h3 className="text-base font-bold text-stone-900 flex items-center gap-2">
             <span>{lang === 'ne' ? '१२ राशि चयन गर्नुहोस्:' : 'Select Your Zodiac Sign (Rashi):'}</span>
           </h3>
-          <div className="flex items-center bg-stone-100 p-1 rounded-xl border border-stone-200 text-xs font-bold">
-            {(['daily', 'weekly', 'monthly', 'yearly'] as HoroscopePeriod[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  period === p
-                    ? 'bg-red-700 text-white shadow-xs'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                {p === 'daily' && (lang === 'ne' ? 'दैनिक' : 'Daily')}
-                {p === 'weekly' && (lang === 'ne' ? 'साप्ताहिक' : 'Weekly')}
-                {p === 'monthly' && (lang === 'ne' ? 'मासिक' : 'Monthly')}
-                {p === 'yearly' && (lang === 'ne' ? 'वार्षिक' : 'Yearly')}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Day Selector for Daily Rashifal */}
+            {period === 'daily' && (
+              <div className="flex items-center bg-amber-50 p-1 rounded-xl border border-amber-200 text-xs font-bold shadow-xs">
+                {[
+                  { offset: -1, labelNe: 'हिजो', labelEn: 'Yesterday' },
+                  { offset: 0, labelNe: 'आज', labelEn: 'Today' },
+                  { offset: 1, labelNe: 'भोलि', labelEn: 'Tomorrow' },
+                ].map((item) => (
+                  <button
+                    key={item.offset}
+                    type="button"
+                    onClick={() => setDayOffset(item.offset)}
+                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                      dayOffset === item.offset
+                        ? 'bg-amber-600 text-white shadow-xs font-extrabold'
+                        : 'text-amber-900 hover:text-amber-950 hover:bg-amber-100/60'
+                    }`}
+                  >
+                    {lang === 'ne' ? item.labelNe : item.labelEn}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Period Switcher */}
+            <div className="flex items-center bg-stone-100 p-1 rounded-xl border border-stone-200 text-xs font-bold">
+              {(['daily', 'weekly', 'monthly', 'yearly'] as HoroscopePeriod[]).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    period === p
+                      ? 'bg-red-700 text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  {p === 'daily' && (lang === 'ne' ? 'दैनिक' : 'Daily')}
+                  {p === 'weekly' && (lang === 'ne' ? 'साप्ताहिक' : 'Weekly')}
+                  {p === 'monthly' && (lang === 'ne' ? 'मासिक' : 'Monthly')}
+                  {p === 'yearly' && (lang === 'ne' ? 'वार्षिक' : 'Yearly')}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -312,9 +405,9 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
                   <BookOpen className="w-4 h-4 text-red-700" />
                   {horoscope.date}
                 </h4>
-                <p className="text-stone-700 text-base sm:text-lg leading-relaxed bg-stone-50 p-5 rounded-2xl border border-stone-100">
+                <div className="text-stone-700 text-base sm:text-lg leading-relaxed bg-stone-50 p-5 rounded-2xl border border-stone-100 whitespace-pre-line">
                   {lang === 'ne' ? horoscope.predictionNe : horoscope.predictionEn}
-                </p>
+                </div>
               </div>
 
               {/* Multi-Metric Scores Bar */}
@@ -684,6 +777,252 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
         </div>
       </div>
 
+      {/* Hamro Jyotish: Interactive Vedic Kundali Consultation & Astrological Guidance */}
+      <div className="mt-8 mb-12 bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-stone-200 dark:border-stone-800">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-stone-100 dark:border-stone-800">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-amber-950/70 rounded-full border border-amber-300/40 dark:border-amber-800/60 text-amber-900 dark:text-amber-300 text-xs font-bold uppercase tracking-wider mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>{lang === 'ne' ? 'हाम्रो ज्योतिषी तथा कुण्डली परामर्श' : 'Hamro Jyotish & Kundali Guidance'}</span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-extrabold text-stone-900 dark:text-white">
+              {lang === 'ne'
+                ? `श्री ${selectedRashi.nameNe} राशिका लागि प्रत्यक्ष ज्योतिषीय परामर्श`
+                : `Personalized Astrological Consultation for ${selectedRashi.nameEn}`}
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 mt-1">
+              {lang === 'ne'
+                ? 'जन्म विवरण, गोचर ग्रह स्थिति र बृहत् पराशर सिद्धान्त अनुसार कार्यक्षेत्र, विवाह, आर्थिक लाभ र स्वास्थ्य सम्बन्धी सटीक मार्गदर्शन।'
+                : 'Direct Vedic astrological readings, transits, career horizons, marital compatibility, and customized planetary remedies.'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 bg-amber-50 dark:bg-stone-800/80 px-3.5 py-2 rounded-2xl border border-amber-200 dark:border-stone-700">
+            <span className="text-2xl">{selectedRashi.symbol}</span>
+            <div className="text-left">
+              <span className="text-xs font-extrabold text-amber-950 dark:text-amber-200 block">
+                {selectedRashi.nameNe} ({selectedRashi.nameEn})
+              </span>
+              <span className="text-[10px] text-stone-500 dark:text-stone-400 font-medium">
+                {lang === 'ne' ? `स्वामी: ${selectedRashi.rulingPlanet}` : `Ruler: ${selectedRashi.rulingPlanet}`}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Category Selector Tabs */}
+        <div className="mb-5">
+          <label className="text-xs font-bold text-stone-700 dark:text-stone-300 block mb-2">
+            {lang === 'ne' ? '१. परामर्शको विषय रोज्नुहोस्:' : '1. Select Consultation Topic:'}
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {[
+              { id: 'career', icon: Briefcase, labelNe: 'कार्यक्षेत्र र जागिर', labelEn: 'Career & Job' },
+              { id: 'marriage', icon: Heart, labelNe: 'विवाह र सम्बन्ध', labelEn: 'Marriage & Love' },
+              { id: 'finance', icon: Coins, labelNe: 'आर्थिक र लगानी', labelEn: 'Finance & Wealth' },
+              { id: 'health', icon: HeartPulse, labelNe: 'स्वास्थ्य र दीर्घायु', labelEn: 'Health & Vitality' },
+              { id: 'general', icon: Sparkles, labelNe: 'समग्र मार्गदर्शन', labelEn: 'General Guidance' },
+            ].map((cat) => {
+              const Icon = cat.icon;
+              const isSelected = jyotishCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setJyotishCategory(cat.id as any)}
+                  className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
+                      : 'bg-stone-50 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-750'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-amber-600 dark:text-amber-400'}`} />
+                  <span className="text-center">{lang === 'ne' ? cat.labelNe : cat.labelEn}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Optional Birth Information Box */}
+        <div className="mb-5 p-4 bg-stone-50 dark:bg-stone-800/50 rounded-2xl border border-stone-200 dark:border-stone-800">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
+              <UserCheck className="w-3.5 h-3.5 text-amber-600" />
+              {lang === 'ne' ? 'जन्म विवरण (कुण्डली मिलानका लागि ऐच्छिक):' : 'Birth Details (Optional for enhanced precision):'}
+            </span>
+            <span className="text-[10px] text-stone-400 font-medium">
+              {lang === 'ne' ? 'थाहा नभए खाली छोड्न सक्नुहुन्छ' : 'Can leave blank if unknown'}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-[11px] text-stone-500 dark:text-stone-400 block mb-1">
+                {lang === 'ne' ? 'जन्म मिति (ई.सं. वा वि.सं.)' : 'Birth Date'}
+              </label>
+              <input
+                type="text"
+                value={jyotishBirthDate}
+                onChange={(e) => setJyotishBirthDate(e.target.value)}
+                placeholder={lang === 'ne' ? 'उदा: 2055-04-12' : 'e.g. 1998-07-28'}
+                className="w-full px-3 py-2 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] text-stone-500 dark:text-stone-400 block mb-1">
+                {lang === 'ne' ? 'जन्म समय' : 'Birth Time'}
+              </label>
+              <input
+                type="text"
+                value={jyotishBirthTime}
+                onChange={(e) => setJyotishBirthTime(e.target.value)}
+                placeholder={lang === 'ne' ? 'उदा: बिहान ०८:३०' : 'e.g. 08:30 AM'}
+                className="w-full px-3 py-2 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] text-stone-500 dark:text-stone-400 block mb-1">
+                {lang === 'ne' ? 'जन्म स्थान / जिल्ला' : 'Birth Place'}
+              </label>
+              <input
+                type="text"
+                value={jyotishBirthPlace}
+                onChange={(e) => setJyotishBirthPlace(e.target.value)}
+                placeholder={lang === 'ne' ? 'उदा: काठमाडौं, पोखरा, बुटवल' : 'e.g. Kathmandu, Pokhara'}
+                className="w-full px-3 py-2 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Sample Questions */}
+        <div className="mb-4">
+          <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 block mb-1.5">
+            {lang === 'ne' ? 'सामान्य प्रश्नहरू (सिधै छान्नुहोस्):' : 'Quick Vedic Questions (Click to insert):'}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {[
+              lang === 'ne' ? 'आगामी ६ महिनामा मेरो कार्यक्षेत्र र जागिरको योग कस्तो छ?' : 'What does my career trajectory look like in the next 6 months?',
+              lang === 'ne' ? 'के नयाँ व्यवसाय वा लगानी सुरु गर्न अहिलेको समय अनुकूल छ?' : 'Is the current planetary transit favorable for new business investments?',
+              lang === 'ne' ? 'विवाह तथा पारिवारिक सम्बन्धको योग कहिले बन्छ?' : 'When is an auspicious timing indicated for marriage and relationship stability?',
+              lang === 'ne' ? 'मेरो राशिका लागि कुन रत्न र वैदिक मन्त्र सर्वाधिक लाभदायी छ?' : 'Which gemstone and Vedic chant are most empowering for my zodiac sign?',
+            ].map((q, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setJyotishQuestion(q)}
+                className="text-xs px-3 py-1.5 bg-stone-100 hover:bg-amber-100 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-xl border border-stone-200 dark:border-stone-700 transition-colors cursor-pointer"
+              >
+                💬 {q}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Question Textarea & Submit */}
+        <form onSubmit={handleAskJyotish} className="space-y-4">
+          <div>
+            <textarea
+              rows={3}
+              value={jyotishQuestion}
+              onChange={(e) => setJyotishQuestion(e.target.value)}
+              placeholder={
+                lang === 'ne'
+                  ? 'आफ्नो जिज्ञासा वा समस्या यहाँ लेख्नुहोस् (उदा: विदेश यात्रा, जागिर परिवर्तन, स्वास्थ्य वा लगानीबारे)...'
+                  : 'Type your astrological question here (e.g., job change, higher education, property purchase, relationship guidance)...'
+              }
+              className="w-full p-4 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-2xl text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-xs resize-none"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs text-stone-500 dark:text-stone-400">
+              🕉️ {lang === 'ne' ? 'बृहत् पराशर होरा शास्त्र र वैदिक गोचर सिद्धान्तमा आधारित' : 'Based on Brihat Parashara Hora Shastra & Vedic Gochara'}
+            </span>
+
+            <button
+              type="submit"
+              disabled={isAskingJyotish || !jyotishQuestion.trim()}
+              className="px-6 py-2.5 bg-gradient-to-r from-amber-600 via-amber-700 to-red-700 hover:from-amber-500 hover:to-red-600 text-white font-extrabold rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-md disabled:opacity-50 transition-all cursor-pointer"
+            >
+              {isAskingJyotish ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>{lang === 'ne' ? 'कुण्डली विश्लेषण हुँदैछ...' : 'Analyzing Celestial Charts...'}</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>{lang === 'ne' ? 'ज्योतिषीय परामर्श लिनुहोस्' : 'Get Astrological Guidance'}</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Display Jyotish Answer Card */}
+        {jyotishAnswer && (
+          <div className="mt-6 p-6 bg-gradient-to-br from-amber-50/80 via-stone-50 to-orange-50/50 dark:from-stone-850 dark:via-stone-900 dark:to-stone-850 rounded-3xl border border-amber-300/80 dark:border-stone-700 shadow-sm space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-amber-200/60 dark:border-stone-800">
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 font-bold">
+                  🕉️
+                </span>
+                <div>
+                  <h4 className="font-extrabold text-stone-900 dark:text-white text-sm sm:text-base">
+                    {lang === 'ne' ? 'हाम्रो ज्योतिषीको वैदिक परामर्श' : 'Hamro Jyotish Astrological Guidance'}
+                  </h4>
+                  <span className="text-[11px] text-stone-500 dark:text-stone-400">
+                    {lang === 'ne' ? `${selectedRashi.nameNe} राशि • गोचर विश्लेषण` : `${selectedRashi.nameEn} Zodiac • Transit Analysis`}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(jyotishAnswer);
+                    setCopiedJyotishAnswer(true);
+                    setTimeout(() => setCopiedJyotishAnswer(false), 2000);
+                  }}
+                  className="px-3 py-1.5 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-xl text-xs font-bold border border-stone-200 dark:border-stone-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  {copiedJyotishAnswer ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{lang === 'ne' ? 'कपी गरियो' : 'Copied'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>{lang === 'ne' ? 'परामर्श कपी' : 'Copy Reading'}</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setJyotishAnswer(null)}
+                  className="p-1.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 rounded-xl cursor-pointer"
+                  title="Close"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="text-stone-800 dark:text-stone-200 text-sm sm:text-base leading-relaxed whitespace-pre-line space-y-3 font-sans">
+              {jyotishAnswer}
+            </div>
+
+            <div className="pt-3 border-t border-amber-200/60 dark:border-stone-800 flex flex-wrap items-center justify-between text-xs text-stone-500 dark:text-stone-400">
+              <span>{lang === 'ne' ? 'भाग्य र पुरुषार्थ दुवैको संयोजनले सफलता मिल्छ।' : 'Destiny and purposeful action together create lasting prosperity.'}</span>
+              <span className="font-semibold text-amber-700 dark:text-amber-400">✨ शुभम् भवतु!</span>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* All 12 Signs Horoscope Cards Grid with Share on Each Card */}
       <div className="mt-12 pt-8 border-t border-stone-200 dark:border-stone-800">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -705,7 +1044,7 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {RASHIS_DATA.map((r) => {
-            const h = getDynamicHoroscope(r.id, period, todayBs, lang);
+            const h = getDynamicHoroscope(r.id, period, todayBs, lang, period === 'daily' ? dayOffset : 0);
             const isSelected = r.id === selectedRashiId;
             const isCopied = copiedRashiId === r.id;
 
@@ -835,7 +1174,7 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
           isOpen={true}
           onClose={() => setShareModalRashi(null)}
           rashi={shareModalRashi}
-          horoscope={getDynamicHoroscope(shareModalRashi.id, period, todayBs, lang)}
+          horoscope={getDynamicHoroscope(shareModalRashi.id, period, todayBs, lang, period === 'daily' ? dayOffset : 0)}
           lang={lang}
           todayBs={todayBs}
           initialTab={shareModalTab}

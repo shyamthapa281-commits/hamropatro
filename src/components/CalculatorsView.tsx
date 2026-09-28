@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Calculator as CalcIcon, 
   RotateCcw, 
@@ -10,7 +10,13 @@ import {
   History, 
   Globe, 
   Delete,
-  CheckCircle2
+  CheckCircle2,
+  Coins,
+  Percent,
+  Landmark,
+  Receipt,
+  TrendingUp,
+  PieChart
 } from 'lucide-react';
 import { Language } from '../types';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
@@ -21,7 +27,7 @@ interface CalculatorsViewProps {
 }
 
 export const CalculatorsView: React.FC<CalculatorsViewProps> = ({ lang }) => {
-  const [calcMode, setCalcMode] = useState<'standard' | 'scientific'>('standard');
+  const [calcMode, setCalcMode] = useState<'standard' | 'scientific' | 'loanEmi' | 'goldSilver' | 'vatDiscount'>('standard');
   const [displayValue, setDisplayValue] = useState<string>('0');
   const [expression, setExpression] = useState<string>('');
   const [angleMode, setAngleMode] = useState<'deg' | 'rad'>('deg');
@@ -29,6 +35,96 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({ lang }) => {
   const [historyList, setHistoryList] = useState<{ expr: string; result: string }[]>([]);
   const [memory, setMemory] = useState<number>(0);
   const [copied, setCopied] = useState<boolean>(false);
+
+  // Nepali Loan EMI State
+  const [loanAmount, setLoanAmount] = useState<number>(1000000);
+  const [loanInterestRate, setLoanInterestRate] = useState<number>(10.5);
+  const [loanTenureYears, setLoanTenureYears] = useState<number>(5);
+
+  // Gold & Silver Calculator State
+  const [metalType, setMetalType] = useState<'fineGold' | 'tejabiGold' | 'silver'>('fineGold');
+  const [ratePerTola, setRatePerTola] = useState<number>(165000);
+  const [weightTola, setWeightTola] = useState<number>(1);
+  const [weightLal, setWeightLal] = useState<number>(0);
+  const [makingCharge, setMakingCharge] = useState<number>(3500);
+  const [jartiPercent, setJartiPercent] = useState<number>(1.5);
+
+  // VAT & Discount Calculator State
+  const [billAmount, setBillAmount] = useState<number>(10000);
+  const [discountPercent, setDiscountPercent] = useState<number>(10);
+  const [vatPercent, setVatPercent] = useState<number>(13);
+  const [isReverseVat, setIsReverseVat] = useState<boolean>(false);
+
+  // Loan EMI Calculation
+  const loanResult = useMemo(() => {
+    const p = Math.max(0, loanAmount);
+    const monthlyRate = Math.max(0, loanInterestRate) / 12 / 100;
+    const months = Math.max(1, loanTenureYears * 12);
+    if (monthlyRate === 0) {
+      const emi = p / months;
+      return { emi: Math.round(emi), totalPayment: p, totalInterest: 0, principalPercent: 100, interestPercent: 0, months };
+    }
+    const factor = Math.pow(1 + monthlyRate, months);
+    const emi = (p * monthlyRate * factor) / (factor - 1);
+    const totalPayment = emi * months;
+    const totalInterest = Math.max(0, totalPayment - p);
+    const principalPercent = Math.max(1, Math.min(99, Math.round((p / totalPayment) * 100)));
+    const interestPercent = 100 - principalPercent;
+    return {
+      emi: Math.round(emi),
+      totalPayment: Math.round(totalPayment),
+      totalInterest: Math.round(totalInterest),
+      principalPercent,
+      interestPercent,
+      months,
+    };
+  }, [loanAmount, loanInterestRate, loanTenureYears]);
+
+  // Gold & Silver Calculation
+  const goldResult = useMemo(() => {
+    // 1 Tola = 100 Lal = 11.664 Grams
+    const totalTolas = Math.max(0, weightTola) + (Math.max(0, weightLal) / 100);
+    const totalGrams = totalTolas * 11.664;
+    const baseCost = totalTolas * Math.max(0, ratePerTola);
+    const jartiCost = baseCost * (Math.max(0, jartiPercent) / 100);
+    const totalCost = baseCost + jartiCost + Math.max(0, makingCharge);
+    return {
+      totalTolas: Math.round(totalTolas * 1000) / 1000,
+      totalGrams: Math.round(totalGrams * 100) / 100,
+      baseCost: Math.round(baseCost),
+      jartiCost: Math.round(jartiCost),
+      makingCharge: Math.max(0, makingCharge),
+      totalCost: Math.round(totalCost),
+    };
+  }, [weightTola, weightLal, ratePerTola, jartiPercent, makingCharge]);
+
+  // VAT & Discount Calculation
+  const vatResult = useMemo(() => {
+    if (isReverseVat) {
+      const rate = Math.max(0, vatPercent) / 100;
+      const baseBeforeVat = billAmount / (1 + rate);
+      const vatAmount = billAmount - baseBeforeVat;
+      return {
+        grossBill: billAmount,
+        discountAmount: 0,
+        taxableAmount: Math.round(baseBeforeVat),
+        vatAmount: Math.round(vatAmount),
+        finalPayable: billAmount,
+      };
+    } else {
+      const discount = billAmount * (Math.max(0, discountPercent) / 100);
+      const taxable = Math.max(0, billAmount - discount);
+      const vat = taxable * (Math.max(0, vatPercent) / 100);
+      const finalPayable = taxable + vat;
+      return {
+        grossBill: billAmount,
+        discountAmount: Math.round(discount),
+        taxableAmount: Math.round(taxable),
+        vatAmount: Math.round(vat),
+        finalPayable: Math.round(finalPayable),
+      };
+    }
+  }, [billAmount, discountPercent, vatPercent, isReverseVat]);
 
   // Sync language toggle
   useEffect(() => {
@@ -252,29 +348,65 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({ lang }) => {
       </div>
 
       {/* Mode Navigation Tabs */}
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-2 bg-stone-200/80 p-1 rounded-2xl">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-1.5 bg-stone-200/80 dark:bg-stone-800 p-1.5 rounded-2xl">
           <button
             id="calc-mode-standard-btn"
             onClick={() => setCalcMode('standard')}
-            className={`px-5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
               calcMode === 'standard'
                 ? 'bg-red-700 text-white shadow-xs'
-                : 'text-stone-700 hover:text-stone-900'
+                : 'text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
             }`}
           >
-            {lang === 'ne' ? 'साधारण क्याल्कुलेटर (Standard)' : 'Standard Calculator'}
+            {lang === 'ne' ? 'साधारण (Math)' : 'Standard'}
           </button>
           <button
             id="calc-mode-scientific-btn"
             onClick={() => setCalcMode('scientific')}
-            className={`px-5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
               calcMode === 'scientific'
                 ? 'bg-red-700 text-white shadow-xs'
-                : 'text-stone-700 hover:text-stone-900'
+                : 'text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
             }`}
           >
-            {lang === 'ne' ? 'वैज्ञानिक क्याल्कुलेटर (Scientific)' : 'Scientific Calculator'}
+            {lang === 'ne' ? 'वैज्ञानिक (Scientific)' : 'Scientific'}
+          </button>
+          <button
+            id="calc-mode-loan-btn"
+            onClick={() => setCalcMode('loanEmi')}
+            className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1 cursor-pointer ${
+              calcMode === 'loanEmi'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+            }`}
+          >
+            <Landmark className="w-3.5 h-3.5" />
+            <span>{lang === 'ne' ? 'ऋण किस्ता (EMI)' : 'Loan EMI'}</span>
+          </button>
+          <button
+            id="calc-mode-gold-btn"
+            onClick={() => setCalcMode('goldSilver')}
+            className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1 cursor-pointer ${
+              calcMode === 'goldSilver'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+            }`}
+          >
+            <Coins className="w-3.5 h-3.5" />
+            <span>{lang === 'ne' ? 'सुनचाँदी (Gold)' : 'Gold & Silver'}</span>
+          </button>
+          <button
+            id="calc-mode-vat-btn"
+            onClick={() => setCalcMode('vatDiscount')}
+            className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1 cursor-pointer ${
+              calcMode === 'vatDiscount'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+            }`}
+          >
+            <Receipt className="w-3.5 h-3.5" />
+            <span>{lang === 'ne' ? 'भ्याट र छुट (VAT)' : 'VAT & Discount'}</span>
           </button>
         </div>
 
@@ -300,11 +432,12 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({ lang }) => {
         )}
       </div>
 
-      {/* Calculator & History Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Main Calculator Body */}
-        <div className={`${calcMode === 'scientific' ? 'lg:col-span-8' : 'lg:col-span-7'} bg-stone-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-stone-800`}>
+      {/* Calculator & History Grid (Standard & Scientific) */}
+      {(calcMode === 'standard' || calcMode === 'scientific') && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Main Calculator Body */}
+          <div className={`${calcMode === 'scientific' ? 'lg:col-span-8' : 'lg:col-span-7'} bg-stone-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-stone-800`}>
           
           {/* Calculator Screen Display */}
           <div className="bg-stone-950/90 rounded-2xl p-5 mb-6 border border-stone-800/80 text-right space-y-1">
@@ -605,6 +738,434 @@ export const CalculatorsView: React.FC<CalculatorsViewProps> = ({ lang }) => {
 
         </div>
       </div>
+      )}
+
+      {/* Nepali Loan & EMI Calculator */}
+      {calcMode === 'loanEmi' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="lg:col-span-7 bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-stone-200 dark:border-stone-800 space-y-6">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-amber-950/70 rounded-full border border-amber-300/40 text-amber-900 dark:text-amber-300 text-xs font-bold uppercase tracking-wider mb-2">
+                <Landmark className="w-3.5 h-3.5 text-amber-600" />
+                <span>{lang === 'ne' ? 'ऋण किस्ता क्याल्कुलेटर' : 'Nepali Loan EMI'}</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-stone-900 dark:text-white">
+                {lang === 'ne' ? 'घर, गाडी तथा व्यक्तिगत ऋणको मासिक किस्ता' : 'Home, Auto & Personal Loan EMI'}
+              </h3>
+            </div>
+
+            {/* Loan Amount */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-stone-700 dark:text-stone-300">
+                  {lang === 'ne' ? 'ऋण रकम (Loan Amount)' : 'Principal Loan Amount (NPR)'}
+                </label>
+                <span className="text-sm font-mono font-extrabold text-amber-700 dark:text-amber-400">
+                  रु. {useNepaliDigits ? toNepaliDigits(loanAmount.toLocaleString('en-IN')) : loanAmount.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="50000"
+                max="20000000"
+                step="50000"
+                value={loanAmount}
+                onChange={(e) => setLoanAmount(Number(e.target.value))}
+                className="w-full h-2 bg-stone-200 dark:bg-stone-700 rounded-lg appearance-none cursor-pointer accent-amber-600"
+              />
+              <div className="flex flex-wrap gap-2 pt-1">
+                {[
+                  { label: '५ लाख', val: 500000 },
+                  { label: '१० लाख', val: 1000000 },
+                  { label: '२५ लाख', val: 2500000 },
+                  { label: '५० लाख', val: 5000000 },
+                  { label: '१ करोड', val: 10000000 },
+                ].map((preset) => (
+                  <button
+                    key={preset.val}
+                    type="button"
+                    onClick={() => setLoanAmount(preset.val)}
+                    className="text-xs px-2.5 py-1 bg-stone-100 dark:bg-stone-800 hover:bg-amber-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-lg border border-stone-200 dark:border-stone-700 transition-colors cursor-pointer"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Interest Rate */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-stone-700 dark:text-stone-300">
+                  {lang === 'ne' ? 'वार्षिक ब्याजदर (Annual Interest Rate %)' : 'Annual Interest Rate (%)'}
+                </label>
+                <span className="text-sm font-mono font-extrabold text-amber-700 dark:text-amber-400">
+                  {useNepaliDigits ? toNepaliDigits(loanInterestRate) : loanInterestRate}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min="5"
+                max="20"
+                step="0.25"
+                value={loanInterestRate}
+                onChange={(e) => setLoanInterestRate(Number(e.target.value))}
+                className="w-full h-2 bg-stone-200 dark:bg-stone-700 rounded-lg appearance-none cursor-pointer accent-amber-600"
+              />
+            </div>
+
+            {/* Tenure */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-stone-700 dark:text-stone-300">
+                  {lang === 'ne' ? 'ऋण अवधि (Loan Tenure)' : 'Tenure (Years)'}
+                </label>
+                <span className="text-sm font-mono font-extrabold text-amber-700 dark:text-amber-400">
+                  {useNepaliDigits ? toNepaliDigits(loanTenureYears) : loanTenureYears} {lang === 'ne' ? 'वर्ष' : 'Years'} ({useNepaliDigits ? toNepaliDigits(loanResult.months) : loanResult.months} {lang === 'ne' ? 'महिना' : 'Months'})
+                </span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="30"
+                step="1"
+                value={loanTenureYears}
+                onChange={(e) => setLoanTenureYears(Number(e.target.value))}
+                className="w-full h-2 bg-stone-200 dark:bg-stone-700 rounded-lg appearance-none cursor-pointer accent-amber-600"
+              />
+            </div>
+          </div>
+
+          {/* Results Summary Card */}
+          <div className="lg:col-span-5 bg-gradient-to-br from-amber-500/10 via-stone-50 to-orange-500/10 dark:from-stone-900 dark:via-stone-900 dark:to-stone-850 rounded-3xl p-6 sm:p-8 border border-amber-300 dark:border-stone-800 shadow-sm space-y-6">
+            <div className="text-center p-6 bg-amber-500/15 dark:bg-amber-950/40 rounded-2xl border border-amber-300/60 dark:border-amber-800/60">
+              <span className="text-xs font-bold text-amber-900 dark:text-amber-300 block mb-1">
+                {lang === 'ne' ? 'मासिक किस्ता (Monthly EMI):' : 'Estimated Monthly EMI:'}
+              </span>
+              <div className="text-3xl sm:text-4xl font-extrabold font-mono text-amber-800 dark:text-amber-200">
+                रु. {useNepaliDigits ? toNepaliDigits(loanResult.emi.toLocaleString('en-IN')) : loanResult.emi.toLocaleString('en-IN')}
+              </div>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="flex justify-between py-2 border-b border-stone-200 dark:border-stone-800">
+                <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'मूल सावाँ रकम (Principal):' : 'Principal Amount:'}</span>
+                <span className="font-bold text-stone-900 dark:text-white font-mono">
+                  रु. {useNepaliDigits ? toNepaliDigits(loanAmount.toLocaleString('en-IN')) : loanAmount.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-stone-200 dark:border-stone-800">
+                <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'कुल तिर्नुपर्ने ब्याज (Total Interest):' : 'Total Interest:'}</span>
+                <span className="font-bold text-red-600 dark:text-red-400 font-mono">
+                  रु. {useNepaliDigits ? toNepaliDigits(loanResult.totalInterest.toLocaleString('en-IN')) : loanResult.totalInterest.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 font-bold text-sm">
+                <span className="text-stone-800 dark:text-stone-200">{lang === 'ne' ? 'कुल भुक्तानी (Total Payment):' : 'Total Payable:'}</span>
+                <span className="text-emerald-700 dark:text-emerald-400 font-mono">
+                  रु. {useNepaliDigits ? toNepaliDigits(loanResult.totalPayment.toLocaleString('en-IN')) : loanResult.totalPayment.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+
+            {/* Proportion Bar */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-[11px] font-bold">
+                <span className="text-amber-700 dark:text-amber-400">{lang === 'ne' ? 'सावाँ' : 'Principal'}: {loanResult.principalPercent}%</span>
+                <span className="text-red-600 dark:text-red-400">{lang === 'ne' ? 'ब्याज' : 'Interest'}: {loanResult.interestPercent}%</span>
+              </div>
+              <div className="w-full h-3 rounded-full overflow-hidden flex bg-stone-200 dark:bg-stone-800">
+                <div style={{ width: `${loanResult.principalPercent}%` }} className="bg-amber-600" />
+                <div style={{ width: `${loanResult.interestPercent}%` }} className="bg-red-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gold & Silver Rate & Weight Calculator */}
+      {calcMode === 'goldSilver' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="lg:col-span-7 bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-stone-200 dark:border-stone-800 space-y-5">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-amber-950/70 rounded-full border border-amber-300/40 text-amber-900 dark:text-amber-300 text-xs font-bold uppercase tracking-wider mb-2">
+                <Coins className="w-3.5 h-3.5 text-amber-600" />
+                <span>{lang === 'ne' ? 'सुनचाँदी मूल्य तथा गहना हिसाब' : 'Gold & Silver Jeweller Calculator'}</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-stone-900 dark:text-white">
+                {lang === 'ne' ? 'तोला, लाल, ज्याला र जर्ती हिसाब' : 'Tola, Lal, Making Charge & Wastage'}
+              </h3>
+            </div>
+
+            {/* Metal Selector */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: 'fineGold', labelNe: 'छापावाल सुन', labelEn: 'Fine Gold', defaultRate: 165000 },
+                { id: 'tejabiGold', labelNe: 'तेजाबी सुन', labelEn: 'Tejabi Gold', defaultRate: 164200 },
+                { id: 'silver', labelNe: 'चाँदी', labelEn: 'Silver', defaultRate: 2000 },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => {
+                    setMetalType(m.id as any);
+                    setRatePerTola(m.defaultRate);
+                  }}
+                  className={`p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${
+                    metalType === m.id
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                      : 'bg-stone-50 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700'
+                  }`}
+                >
+                  {lang === 'ne' ? m.labelNe : m.labelEn}
+                </button>
+              ))}
+            </div>
+
+            {/* Rate Input */}
+            <div>
+              <label className="text-xs font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                {lang === 'ne' ? 'प्रति तोला दर (Rate per Tola - NPR):' : 'Rate per Tola (NPR):'}
+              </label>
+              <input
+                type="number"
+                value={ratePerTola}
+                onChange={(e) => setRatePerTola(Number(e.target.value))}
+                className="w-full px-4 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl font-mono text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            {/* Weight: Tola & Lal */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                  {lang === 'ne' ? 'तोला (Tola):' : 'Tola:'}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={weightTola}
+                  onChange={(e) => setWeightTola(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl font-mono text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                  {lang === 'ne' ? 'लाल (Lal - १०० लाल = १ तोला):' : 'Lal (100 Lal = 1 Tola):'}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="99"
+                  value={weightLal}
+                  onChange={(e) => setWeightLal(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl font-mono text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+            </div>
+
+            {/* Making charge & Jarti */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                  {lang === 'ne' ? 'ज्याला (Making Charge - NPR):' : 'Making Charge (NPR):'}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={makingCharge}
+                  onChange={(e) => setMakingCharge(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl font-mono text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                  {lang === 'ne' ? 'जर्ती (Wastage %):' : 'Wastage (Jarti %):'}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="20"
+                  step="0.5"
+                  value={jartiPercent}
+                  onChange={(e) => setJartiPercent(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl font-mono text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Results Receipt */}
+          <div className="lg:col-span-5 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-stone-900 dark:to-stone-850 rounded-3xl p-6 sm:p-8 border border-amber-300 dark:border-stone-800 shadow-sm space-y-5">
+            <div className="text-center p-5 bg-amber-500/20 dark:bg-amber-950/40 rounded-2xl border border-amber-400/50">
+              <span className="text-xs font-bold text-amber-900 dark:text-amber-300 block mb-1">
+                {lang === 'ne' ? 'कुल मूल्य (Total Payable):' : 'Net Total Amount:'}
+              </span>
+              <div className="text-3xl sm:text-4xl font-extrabold font-mono text-amber-900 dark:text-amber-200">
+                रु. {useNepaliDigits ? toNepaliDigits(goldResult.totalCost.toLocaleString('en-IN')) : goldResult.totalCost.toLocaleString('en-IN')}
+              </div>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="flex justify-between py-2 border-b border-stone-200 dark:border-stone-800">
+                <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'कुल तौल:' : 'Total Weight:'}</span>
+                <span className="font-bold text-stone-900 dark:text-white font-mono">
+                  {goldResult.totalTolas} {lang === 'ne' ? 'तोला' : 'Tola'} ({goldResult.totalGrams} {lang === 'ne' ? 'ग्राम' : 'g'})
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-stone-200 dark:border-stone-800">
+                <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'धातुको मूल्य:' : 'Pure Metal Cost:'}</span>
+                <span className="font-bold text-stone-900 dark:text-white font-mono">
+                  रु. {goldResult.baseCost.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-stone-200 dark:border-stone-800">
+                <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'जर्ती रकम:' : 'Jarti (Wastage):'}</span>
+                <span className="font-bold text-stone-900 dark:text-white font-mono">
+                  रु. {goldResult.jartiCost.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-stone-200 dark:border-stone-800">
+                <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'कालीगढ ज्याला:' : 'Making Charge:'}</span>
+                <span className="font-bold text-stone-900 dark:text-white font-mono">
+                  रु. {goldResult.makingCharge.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-stone-500 dark:text-stone-400 text-center">
+              १ तोला = १०० लाल = ११.६६४ ग्राम (नेपाल सुनचाँदी व्यवसायी महासंघ मानक)
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* VAT & Discount Calculator */}
+      {calcMode === 'vatDiscount' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="lg:col-span-7 bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-stone-200 dark:border-stone-800 space-y-5">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-amber-950/70 rounded-full border border-amber-300/40 text-amber-900 dark:text-amber-300 text-xs font-bold uppercase tracking-wider mb-2">
+                <Receipt className="w-3.5 h-3.5 text-amber-600" />
+                <span>{lang === 'ne' ? 'नेपाली १३% भ्याट तथा छुट क्याल्कुलेटर' : 'Nepal 13% VAT & Discount'}</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-stone-900 dark:text-white">
+                {lang === 'ne' ? 'बिल, छुट र मूल्य अभिवृद्धि कर (VAT) हिसाब' : 'Invoice, Discount & VAT Breakdown'}
+              </h3>
+            </div>
+
+            {/* Mode switch: Normal or Reverse */}
+            <div className="flex items-center bg-stone-100 dark:bg-stone-800 p-1 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setIsReverseVat(false)}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  !isReverseVat ? 'bg-amber-600 text-white shadow-xs' : 'text-stone-600 dark:text-stone-300'
+                }`}
+              >
+                {lang === 'ne' ? 'सामान्य हिसाब (रकम + छुट + भ्याट)' : 'Standard (Amount + VAT)'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsReverseVat(true)}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  isReverseVat ? 'bg-amber-600 text-white shadow-xs' : 'text-stone-600 dark:text-stone-300'
+                }`}
+              >
+                {lang === 'ne' ? 'उल्टो हिसाब (भ्याट सहितको कुल बिलबाट)' : 'Reverse (Extract VAT from Bill)'}
+              </button>
+            </div>
+
+            {/* Bill Amount */}
+            <div>
+              <label className="text-xs font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                {isReverseVat
+                  ? (lang === 'ne' ? 'भ्याट सहितको कुल बिल रकम (Gross Bill Amount):' : 'Gross Bill Amount (Inclusive of VAT):')
+                  : (lang === 'ne' ? 'सुरुको रकम (Base Amount - NPR):' : 'Base Amount (NPR):')}
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={billAmount}
+                onChange={(e) => setBillAmount(Number(e.target.value))}
+                className="w-full px-4 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl font-mono text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            {!isReverseVat && (
+              <div>
+                <label className="text-xs font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                  {lang === 'ne' ? 'छुट प्रतिशत (Discount %):' : 'Discount Percentage (%):'}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl font-mono text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-bold text-stone-700 dark:text-stone-300 block mb-1">
+                {lang === 'ne' ? 'भ्याट प्रतिशत (नेपाल सरकार मानक १३%):' : 'VAT Rate (Nepal Standard 13%):'}
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="50"
+                value={vatPercent}
+                onChange={(e) => setVatPercent(Number(e.target.value))}
+                className="w-full px-4 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl font-mono text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+          </div>
+
+          {/* Result Card */}
+          <div className="lg:col-span-5 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-stone-900 dark:to-stone-850 rounded-3xl p-6 sm:p-8 border border-amber-300 dark:border-stone-800 shadow-sm space-y-5">
+            <div className="text-center p-5 bg-amber-500/20 dark:bg-amber-950/40 rounded-2xl border border-amber-400/50">
+              <span className="text-xs font-bold text-amber-900 dark:text-amber-300 block mb-1">
+                {lang === 'ne' ? 'अन्तिम तिर्नुपर्ने रकम (Final Payable):' : 'Final Payable Amount:'}
+              </span>
+              <div className="text-3xl sm:text-4xl font-extrabold font-mono text-amber-900 dark:text-amber-200">
+                रु. {useNepaliDigits ? toNepaliDigits(vatResult.finalPayable.toLocaleString('en-IN')) : vatResult.finalPayable.toLocaleString('en-IN')}
+              </div>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="flex justify-between py-2 border-b border-stone-200 dark:border-stone-800">
+                <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'सुरुको बिल रकम:' : 'Initial Amount:'}</span>
+                <span className="font-bold text-stone-900 dark:text-white font-mono">
+                  रु. {vatResult.grossBill.toLocaleString('en-IN')}
+                </span>
+              </div>
+              {!isReverseVat && (
+                <div className="flex justify-between py-2 border-b border-stone-200 dark:border-stone-800">
+                  <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'छुट रकम:' : 'Discount Deducted:'}</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                    - रु. {vatResult.discountAmount.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between py-2 border-b border-stone-200 dark:border-stone-800">
+                <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'भ्याट लाग्ने आधार रकम:' : 'Taxable Base Amount:'}</span>
+                <span className="font-bold text-stone-900 dark:text-white font-mono">
+                  रु. {vatResult.taxableAmount.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-stone-200 dark:border-stone-800">
+                <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? '१३% भ्याट कर रकम:' : '13% VAT Amount:'}</span>
+                <span className="font-bold text-red-600 dark:text-red-400 font-mono">
+                  + रु. {vatResult.vatAmount.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
