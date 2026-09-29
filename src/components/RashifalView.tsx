@@ -172,40 +172,15 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
     setTimeout(() => setCopiedRashiId(null), 2500);
   };
 
-  const handleAskJyotish = async (e?: React.FormEvent) => {
+  const handleAskJyotish = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!jyotishQuestion.trim()) return;
 
     setIsAskingJyotish(true);
     setJyotishAnswer(null);
 
-    try {
-      const res = await fetch('/api/astrology/kundali-ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rashiId: selectedRashiId,
-          birthDate: jyotishBirthDate,
-          birthTime: jyotishBirthTime,
-          birthPlace: jyotishBirthPlace,
-          question: jyotishQuestion.trim(),
-          category: jyotishCategory,
-          language: lang,
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.answer) {
-          setJyotishAnswer(data.answer);
-          setIsAskingJyotish(false);
-          return;
-        }
-      }
-    } catch {}
-
-    // Fallback to offline/static Vedic Reading engine
-    const fallback = generateAstrologyReading({
+    // Instant Vedic Astrology calculation based on planetary transits & Rashi characteristics
+    const reading = generateAstrologyReading({
       rashiId: selectedRashiId,
       birthDate: jyotishBirthDate,
       birthTime: jyotishBirthTime,
@@ -214,8 +189,11 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
       category: jyotishCategory,
       language: lang,
     });
-    setJyotishAnswer(fallback);
-    setIsAskingJyotish(false);
+
+    setTimeout(() => {
+      setJyotishAnswer(reading);
+      setIsAskingJyotish(false);
+    }, 300);
   };
 
   return (

@@ -44,52 +44,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     const info = RASHI_DATA[rashiKey] || RASHI_DATA.mesh;
     const isNe = language === 'ne';
 
-    // If Cloudflare has GEMINI_API_KEY configured, attempt Gemini API directly via fetch
-    if (context.env?.GEMINI_API_KEY) {
-      try {
-        const systemPrompt = `You are "Hamro Jyotish" (हाम्रो ज्योतिषी), a revered, deeply knowledgeable, compassionate, and authentic Vedic Astrologer in Nepal.
-Your role is to offer insightful, spiritually grounding, culturally rich, and practical Vedic astrological guidance according to Brihat Parashara Hora Shastra, Nepali Panchanga, and planetary transit (Gochara) principles.
-Language: Respond primarily in ${isNe ? 'pure and elegant Nepali (देवनागरी)' : 'clear, insightful English'} with astrological terms clearly explained.`;
-
-        const userPrompt = `User Details:
-- Zodiac / Rashi: ${info.nameNe} (${info.nameEn})
-- Birth Date: ${birthDate || 'Unspecified'}
-- Birth Time: ${birthTime || 'Unspecified'}
-- Birth Place: ${birthPlace || 'Nepal'}
-- Category: ${category}
-User's Question: "${question}"
-Please provide a structured, comprehensive Vedic astrological answer with planetary analysis, advice, remedies, lucky elements, and gemstones.`;
-
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${context.env.GEMINI_API_KEY}`;
-        const geminiRes = await fetch(geminiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: userPrompt }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            generationConfig: { temperature: 0.7, maxOutputTokens: 1200 },
-          }),
-        });
-
-        if (geminiRes.ok) {
-          const geminiData: any = await geminiRes.json();
-          const generatedText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (generatedText) {
-            return new Response(
-              JSON.stringify({
-                success: true,
-                answer: generatedText,
-                rashiId,
-                timestamp: new Date().toISOString(),
-              }),
-              { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' } }
-            );
-          }
-        }
-      } catch {}
-    }
-
-    // High quality deterministic Vedic Jyotish fallback reading
+    // High quality deterministic Vedic Jyotish reading (Brihat Parashara Hora Shastra)
     let answer = '';
     if (isNe) {
       answer = `### 🕉️ वैदिक ज्योतिष परामर्श तथा कुण्डली विश्लेषण

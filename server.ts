@@ -1,7 +1,6 @@
 import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
-import { GoogleGenAI } from '@google/genai';
 import { XMLParser } from 'fast-xml-parser';
 import { createServer as createViteServer } from 'vite';
 import { translateOffline } from './src/utils/nepaliTranslator';
@@ -10,63 +9,9 @@ import { generateAstrologyReading, generateNewsSummary, generateCustomPrediction
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 app.use(express.json());
-
-// Initialize GoogleGenAI client with user-agent telemetry as instructed in gemini-api skill
-const getGenAI = () => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  return new GoogleGenAI({
-    apiKey: apiKey || '',
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      },
-    },
-  });
-};
-
-// Resilient AI generation with multi-model failover & silent fallback
-async function callGeminiSafe(opts: {
-  contents: string;
-  systemInstruction?: string;
-  temperature?: number;
-  responseMimeType?: string;
-  tools?: any[];
-  timeoutMs?: number;
-}): Promise<string | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
-
-  const modelsToTry = ['gemini-3.7-flash', 'gemini-flash-latest'];
-  for (const model of modelsToTry) {
-    try {
-      const ai = getGenAI();
-      const aiPromise = ai.models.generateContent({
-        model,
-        contents: opts.contents,
-        config: {
-          systemInstruction: opts.systemInstruction,
-          temperature: opts.temperature ?? 0.4,
-          ...(opts.responseMimeType ? { responseMimeType: opts.responseMimeType } : {}),
-          ...(opts.tools ? { tools: opts.tools } : {}),
-        },
-      });
-
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('AI generation timed out')), opts.timeoutMs || 4500)
-      );
-
-      const response: any = await Promise.race([aiPromise, timeoutPromise]);
-      const text = response?.text?.trim();
-      if (text) return text;
-    } catch {
-      // Continue to next model fallback or return null
-    }
-  }
-  return null;
-}
 
 // XML Parser for RSS feeds
 const xmlParser = new XMLParser({
@@ -387,69 +332,13 @@ app.get('/api/news/live', async (req, res) => {
   }
 });
 
-// Real-Time Google Search Grounded Live Headlines / Topic Search
+// Real-Time Verified Live News Search across aggregated feeds
 app.post('/api/news/live-search', async (req, res) => {
-  const { query = 'Nepal latest breaking news', language = 'ne' } = req.body;
-  const q = (query || '').toLowerCase();
+  const { query = 'Nepal', language = 'ne' } = req.body;
+  const q = (query || '').toLowerCase().trim();
 
-  const prompt = `Search the live web for the latest true, verified recent news and breaking headlines in Nepal regarding: "${query}".
-Fetch 5 real, accurate, and current news stories happening in Nepal right now.
-
-For each story provide:
-1. titleNe: Authentic title in Nepali (देवनागरी)
-2. titleEn: English headline
-3. summaryNe: 2-3 sentence accurate summary in Nepali
-4. summaryEn: 2-3 sentence accurate summary in English
-5. source: Name of the verified news outlet (e.g. Kantipur, OnlineKhabar, Setopati, Ratopati, Kathmandu Post, BBC Nepali, Nagarik)
-6. sourceUrl: Real URL or main site URL
-7. category: One of ['national', 'politics', 'economy', 'sports', 'technology', 'entertainment', 'world']
-8. publishedAt: e.g. "५ मिनेट अगाडि" or "२० मिनेट अगाडि"
-9. tags: 3 relevant keywords/hashtags
-
-Output ONLY a valid JSON array of objects with the exact schema above.`;
-
-  const aiText = await callGeminiSafe({
-    contents: prompt,
-    systemInstruction: 'You are a real-time Nepali news verification and aggregator engine with live Google Search grounding. Return ONLY valid JSON array with real, factual, current Nepali news.',
-    tools: [{ googleSearch: {} }],
-    responseMimeType: 'application/json',
-    timeoutMs: 5000,
-  });
-
-  let stories: any[] = [];
-  if (aiText) {
-    try {
-      const parsed = JSON.parse(aiText);
-      if (Array.isArray(parsed)) {
-        stories = parsed;
-      } else if (parsed && typeof parsed === 'object') {
-        stories = parsed.articles || parsed.stories || [];
-      }
-    } catch {
-      stories = [];
-    }
-  }
-
-  if (stories.length > 0) {
-    return res.json({
-      success: true,
-      query,
-      timestamp: new Date().toISOString(),
-      articles: stories.map((s: any, idx: number) => ({
-        ...s,
-        id: `search-live-${idx}-${Date.now()}`,
-        imageUrl: s.imageUrl || 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&auto=format&fit=crop&q=80',
-        contentNe: s.summaryNe,
-        contentEn: s.summaryEn,
-        readTimeMin: 3,
-        isLive: true,
-        isBreaking: idx === 0,
-      })),
-    });
-  }
-
-  // Fallback: search in live news cache articles
-  const fallbackResults = liveNewsCache.articles.filter((art: any) => 
+  // Instant high-speed search across real RSS articles
+  const matchingResults = liveNewsCache.articles.filter((art: any) => 
     art.titleNe?.toLowerCase().includes(q) ||
     art.titleEn?.toLowerCase().includes(q) ||
     art.summaryNe?.toLowerCase().includes(q) ||
@@ -461,8 +350,7 @@ Output ONLY a valid JSON array of objects with the exact schema above.`;
     success: true,
     query,
     timestamp: new Date().toISOString(),
-    articles: fallbackResults.length > 0 ? fallbackResults : liveNewsCache.articles.slice(0, 8),
-    isFallback: true,
+    articles: matchingResults.length > 0 ? matchingResults : liveNewsCache.articles.slice(0, 10),
   });
 });
 
@@ -860,58 +748,15 @@ app.post('/api/translate/google', async (req, res) => {
   });
 });
 
-// AI Vedic Astrology / Kundali Consultation endpoint
-app.post('/api/astrology/kundali-ai', async (req, res) => {
+// Vedic Astrology Consultation endpoint (Instant & Deterministic)
+app.post('/api/astrology/kundali-ai', (req, res) => {
   const { rashiId, birthDate, birthTime, birthPlace, question, category, language = 'ne' } = req.body;
 
   if (!question) {
     return res.status(400).json({ error: 'Question is required' });
   }
 
-  const systemPrompt = `You are "Hamro Jyotish" (हाम्रो ज्योतिषी), a revered, deeply knowledgeable, compassionate, and authentic Vedic Astrologer in Nepal.
-Your role is to offer insightful, spiritually grounding, culturally rich, and practical Vedic astrological guidance according to Brihat Parashara Hora Shastra, Nepali Panchanga, and planetary transit (Gochara) principles.
-
-Guidelines:
-- Language: Respond primarily in ${language === 'ne' ? 'pure and elegant Nepali (देवनागरी)' : 'clear, insightful English'} with astrological terms clearly explained.
-- Provide:
-  1. Detailed analysis of the planetary influence related to the question.
-  2. Concrete, practical advice and timelines.
-  3. Auspicious days, colors, and numbers.
-  4. Specific Vedic remedies (ज्योतिषीय उपाय / Upaya) such as specific mantras, charity (दान), or lifestyle habits.
-  5. Recommended gemstone (रत्न) with instructions on metal and finger.
-- Tone: Calming, respectful, optimistic, and deeply rooted in Nepali Vedic tradition.`;
-
-  const userPrompt = `
-User Details:
-- Zodiac / Rashi: ${rashiId || 'Not specified'}
-- Birth Date: ${birthDate || 'Not specified'}
-- Birth Time: ${birthTime || 'Not specified'}
-- Birth Place: ${birthPlace || 'Nepal'}
-- Category: ${category || 'General'}
-
-User's Question:
-"${question}"
-
-Please provide a structured, comprehensive Vedic astrological answer for this native.`;
-
-  const answerText = await callGeminiSafe({
-    contents: userPrompt,
-    systemInstruction: systemPrompt,
-    temperature: 0.7,
-    timeoutMs: 5000,
-  });
-
-  if (answerText) {
-    return res.json({
-      success: true,
-      answer: answerText,
-      rashiId,
-      timestamp: new Date().toISOString(),
-    });
-  }
-
-  // Authentic Vedic Fallback Astrology Generation
-  const fallbackAnswer = generateAstrologyReading({
+  const answer = generateAstrologyReading({
     rashiId,
     birthDate,
     birthTime,
@@ -923,87 +768,29 @@ Please provide a structured, comprehensive Vedic astrological answer for this na
 
   res.json({
     success: true,
-    answer: fallbackAnswer,
+    answer,
     rashiId,
-    isFallback: true,
     timestamp: new Date().toISOString(),
   });
 });
 
-// AI News Summarizer & Fact Briefing endpoint
-app.post('/api/news/ai-summary', async (req, res) => {
-  const { title, content, language = 'ne' } = req.body;
-
-  if (!title && !content) {
-    return res.status(400).json({ error: 'Title or content required' });
-  }
-
-  const prompt = `You are the chief editorial AI analyst for Hamro Patro News (हाम्रो समाचार).
-Analyze this Nepali news article and provide a 3-bullet executive summary, key takeaways, and potential impact for Nepali citizens.
-Language: ${language === 'ne' ? 'Nepali (नेपाली देवनागरी)' : 'English'}
-
-Article Title: ${title}
-Article Content: ${content || title}
-
-Format your output in clean Markdown with:
-### 📌 मुख्य बुँदाहरू (Key Highlights)
-- Bullet 1
-- Bullet 2
-- Bullet 3
-
-### 💡 प्रभाव र विश्लेषण (Impact & Context)
-(Brief 2-3 sentence context explaining what this means for Nepal and general readers)`;
-
-  const summaryText = await callGeminiSafe({
-    contents: prompt,
-    systemInstruction: 'You are an objective, insightful Nepali news analyst and editor.',
-    temperature: 0.4,
-    timeoutMs: 4500,
-  });
-
-  if (summaryText) {
-    return res.json({
-      success: true,
-      summary: summaryText,
-    });
-  }
-
-  // Instant local semantic summary
-  const fallbackSummary = generateNewsSummary(title, content, language === 'ne' ? 'ne' : 'en');
+// News Summarizer & Key Points endpoint (Instant & Deterministic)
+app.post('/api/news/ai-summary', (req, res) => {
+  const { title = '', content = '', language = 'ne' } = req.body;
+  const summary = generateNewsSummary(title, content, language === 'ne' ? 'ne' : 'en');
   res.json({
     success: true,
-    summary: fallbackSummary,
-    isFallback: true,
+    summary,
   });
 });
 
-// Dynamic Daily Rashifal with AI planetary commentary
-app.post('/api/astrology/custom-prediction', async (req, res) => {
-  const { rashiName, period = 'daily', language = 'ne' } = req.body;
-
-  const prompt = `Generate an authentic, rich Vedic Rashifal prediction for ${rashiName} for ${period} timeline in ${language === 'ne' ? 'Nepali (नेपाली भाषा)' : 'English'}.
-Include planetary transit highlights (e.g. Jupiter/Saturn/Mars positioning), Career score (%), Love score (%), Finance score (%), Health score (%), Lucky number, Lucky color, and a traditional Vedic remedy (उपाय).`;
-
-  const predictionText = await callGeminiSafe({
-    contents: prompt,
-    systemInstruction: 'You are an authentic Nepali Vedic Astrologer at Hamro Patro.',
-    temperature: 0.7,
-    timeoutMs: 4500,
-  });
-
-  if (predictionText) {
-    return res.json({
-      success: true,
-      prediction: predictionText,
-    });
-  }
-
-  // Deterministic astrological reading
-  const fallbackPred = generateCustomPrediction(rashiName || 'मेष', period || 'daily', language === 'ne' ? 'ne' : 'en');
+// Dynamic Daily/Weekly/Monthly/Yearly Vedic Rashifal Prediction
+app.post('/api/astrology/custom-prediction', (req, res) => {
+  const { rashiName = 'मेष', period = 'daily', language = 'ne' } = req.body;
+  const prediction = generateCustomPrediction(rashiName, period, language === 'ne' ? 'ne' : 'en');
   res.json({
     success: true,
-    prediction: fallbackPred,
-    isFallback: true,
+    prediction,
   });
 });
 
@@ -1084,89 +871,16 @@ function getFallbackLanguageResponse(text: string, mode: string, from: string, t
   return 'भाषा सिकाई सहायक तयार छ।';
 }
 
-// AI Nepali <-> English Language Tutor & Translator endpoint
+// Nepali <-> English Language Tutor & Translator endpoint (Deterministic & Instant)
 app.post('/api/language/learn-ai', async (req, res) => {
-  const { text, mode = 'translate', from = 'ne', to = 'en', topic } = req.body;
-
-  if (!text && mode !== 'generate_dialogue' && mode !== 'quiz_explanation') {
-    return res.status(400).json({ error: 'Text input is required' });
-  }
-
-  let prompt = '';
-  let googleBaseResult: any = null;
+  const { text = '', mode = 'translate', from = 'ne', to = 'en', topic } = req.body;
 
   if (mode === 'translate') {
-    googleBaseResult = await fetchGoogleTranslationDirect(text, (from as 'ne' | 'en') || 'ne', (to as 'ne' | 'en') || 'en');
-    prompt = `You are a bilingual Nepali and English linguistic expert and educator.
-The verified accurate translation of "${text}" from ${from === 'ne' ? 'Nepali (नेपाली)' : 'English'} to ${to === 'ne' ? 'Nepali (नेपाली)' : 'English'} is: "${googleBaseResult.translatedText}".
-
-Analyze this phrase and provide the response in clean JSON format matching this schema:
-{
-  "translatedText": "${googleBaseResult.translatedText}",
-  "transliteration": "${googleBaseResult.transliteration || 'Romanized phonetic pronunciation (e.g. Namaste, sanchai hunuhunchha?)'}",
-  "wordBreakdown": [
-    { "word": "original word", "meaning": "meaning in target language", "partOfSpeech": "Noun/Verb/Adjective/Honorific/Postposition" }
-  ],
-  "grammarNote": "Brief 1-2 sentence tip explaining sentence structure (SOV vs SVO), verb tense, and cultural formality level (e.g. Hajur vs Tapai vs Timi)",
-  "exampleUsage": "A helpful practical example sentence using this concept"
-}`;
-  } else if (mode === 'grammar_help') {
-    prompt = `You are a friendly Nepali-English language teacher. Explain the grammar rule or sentence construction for: "${text}".
-Include:
-1. Clear explanation comparing Nepali SOV (Subject-Object-Verb) with English SVO (Subject-Verb-Object).
-2. Honorific tiers (हजुर / तपाईं / तिमी / तँ).
-3. 2-3 real-world conversational examples with Devanagari, Romanized phonetics, and English translation.`;
-  } else if (mode === 'generate_dialogue') {
-    prompt = `Generate a realistic, practical 6-line conversational dialogue between 2 people on the topic "${topic || 'Ordering food in a restaurant in Kathmandu'}" with:
-- Speaker name
-- Nepali Devanagari text
-- Romanized pronunciation
-- English translation
-- Key vocabulary highlights`;
-  }
-
-  const isTranslate = mode === 'translate';
-  const outputText = await callGeminiSafe({
-    contents: prompt,
-    systemInstruction: 'You are an encouraging, expert Nepali-English language learning assistant. Always provide accurate Devanagari script, phonetics, and natural English.',
-    temperature: 0.3,
-    responseMimeType: isTranslate ? 'application/json' : undefined,
-    timeoutMs: 4000,
-  });
-
-  if (outputText && outputText.trim()) {
-    if (isTranslate) {
-      try {
-        const parsed = JSON.parse(outputText.replace(/```json/gi, '').replace(/```/g, '').trim());
-        // Guarantee the ground-truth translation is preserved
-        if (!parsed.translatedText && googleBaseResult?.translatedText) {
-          parsed.translatedText = googleBaseResult.translatedText;
-        }
-        return res.json({
-          success: true,
-          result: parsed,
-          mode,
-          timestamp: new Date().toISOString(),
-        });
-      } catch {
-        // Safe json parse fallback
-      }
-    }
-    return res.json({
-      success: true,
-      result: outputText,
-      mode,
-      timestamp: new Date().toISOString(),
-    });
-  }
-
-  // Instant offline linguistic engine fallback
-  if (isTranslate && googleBaseResult) {
+    const googleBaseResult = await fetchGoogleTranslationDirect(text, (from as 'ne' | 'en') || 'ne', (to as 'ne' | 'en') || 'en');
     return res.json({
       success: true,
       result: googleBaseResult,
       mode,
-      isFallback: true,
       timestamp: new Date().toISOString(),
     });
   }
@@ -1176,7 +890,6 @@ Include:
     success: true,
     result: fallbackResult,
     mode,
-    isFallback: true,
     timestamp: new Date().toISOString(),
   });
 });

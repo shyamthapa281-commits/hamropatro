@@ -267,54 +267,28 @@ export const NewsView: React.FC<NewsViewProps> = ({ lang }) => {
     }
   };
 
-  // AI Summary Handler
-  const handleGenerateAiSummary = async (article: NewsArticle) => {
+  // Executive Summary & Key Takeaways Handler (Pure, instant client-side summary)
+  const handleGenerateAiSummary = (article: NewsArticle) => {
     setIsSummarizing(true);
     setAiSummary(null);
 
-    try {
-      const response = await fetch('/api/news/ai-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: articleLang === 'ne' ? article.titleNe : article.titleEn,
-          content: articleLang === 'ne' ? article.contentNe : article.contentEn,
-          language: articleLang,
-        }),
-      });
+    const content = articleLang === 'ne' ? article.contentNe : article.contentEn;
+    const title = articleLang === 'ne' ? article.titleNe : article.titleEn;
+    const sentences = content
+      .split(/[।.\n]/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 18);
 
-      if (!response.ok) throw new Error('AI summary failed');
-      const data = await response.json();
-      if (data?.summary) {
-        setAiSummary(data.summary);
-      } else {
-        throw new Error('No summary returned');
-      }
-    } catch (error) {
-      // High-quality extractive key-takeaway summary fallback
-      const content = articleLang === 'ne' ? article.contentNe : article.contentEn;
-      const title = articleLang === 'ne' ? article.titleNe : article.titleEn;
-      const sentences = content
-        .split(/[।.\n]/)
-        .map(s => s.trim())
-        .filter(s => s.length > 20);
+    const topPoints = sentences.slice(0, 3);
+    const generated =
+      topPoints.length > 0
+        ? `📌 **${title}**\n\n` + topPoints.map((p) => `• ${p}${articleLang === 'ne' ? '।' : '.'}`).join('\n')
+        : `📌 **${title}**\n\n• ${content.slice(0, 220)}...`;
 
-      const topPoints = sentences.slice(0, 3);
-      if (topPoints.length > 0) {
-        const generated = articleLang === 'ne'
-          ? `📌 **${title}**\n\n` + topPoints.map(p => `• ${p}।`).join('\n')
-          : `📌 **${title}**\n\n` + topPoints.map(p => `• ${p}.`).join('\n');
-        setAiSummary(generated);
-      } else {
-        setAiSummary(
-          articleLang === 'ne'
-            ? `📌 **${title}**\n\n• ${content.slice(0, 200)}...`
-            : `📌 **${title}**\n\n• ${content.slice(0, 200)}...`
-        );
-      }
-    } finally {
+    setTimeout(() => {
+      setAiSummary(generated);
       setIsSummarizing(false);
-    }
+    }, 200);
   };
 
   const handleShare = () => {
@@ -844,7 +818,7 @@ export const NewsView: React.FC<NewsViewProps> = ({ lang }) => {
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <span className="text-xs font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                    {lang === 'ne' ? 'हाम्रो AI समाचार विश्लेषण र सारांश' : 'AI Analysis & Executive Summary'}
+                    {lang === 'ne' ? 'मुख्य बुँदा र द्रुत सारांश' : 'Key Highlights & Quick Summary'}
                   </span>
                   <button
                     id="generate-ai-news-summary-btn"
