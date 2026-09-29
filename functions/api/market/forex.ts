@@ -67,7 +67,7 @@ export const onRequestGet = async () => {
             headers: {
               'Content-Type': 'application/json; charset=utf-8',
               'Access-Control-Allow-Origin': '*',
-              'Cache-Control': 'public, max-age=300',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
             },
           }
         );
@@ -143,7 +143,7 @@ export const onRequestGet = async () => {
               headers: {
                 'Content-Type': 'application/json; charset=utf-8',
                 'Access-Control-Allow-Origin': '*',
-                'Cache-Control': 'public, max-age=300',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
               },
             }
           );

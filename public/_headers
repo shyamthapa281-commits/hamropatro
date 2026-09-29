@@ -1,8 +1,22 @@
-# Cloudflare Pages Headers
+# Cloudflare Pages Headers Configuration
+
+# Global Security Headers
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
 
-# Static assets caching
+# Ensure HTML always checks for fresh deployment
+/
+  Cache-Control: no-cache, must-revalidate
+/index.html
+  Cache-Control: no-cache, must-revalidate
+/200.html
+  Cache-Control: no-cache, must-revalidate
+
+# Dynamic API Routes: Always fetch live real-time content
+/api/*
+  Cache-Control: no-cache, no-store, must-revalidate, max-age=0
+
+# Static Hashed Assets Caching (Safe to cache long term)
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

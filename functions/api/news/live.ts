@@ -248,7 +248,7 @@ export const onRequestGet = async () => {
           headers: {
             'Content-Type': 'application/json; charset=utf-8',
             'Access-Control-Allow-Origin': '*',
-            'Cache-Control': 'public, max-age=120, s-maxage=120',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
           },
         }
       );
