@@ -21,7 +21,6 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3000
 
 # Copy built artifacts and dependencies
 COPY package*.json ./
@@ -29,6 +28,8 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 
-EXPOSE 3000
+# Standard Cloud Run container port
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["node", "dist/server.cjs"]
