@@ -34,11 +34,30 @@ export interface FestivalDefinition {
 
 export const FESTIVAL_DEFINITIONS: FestivalDefinition[] = [
   {
+    id: 'ghatasthapana',
+    nameNe: 'घटस्थापना (बडादशैं प्रारम्भ)',
+    nameEn: 'Ghatasthapana (Dashain Starts)',
+    bsMonth: 6, // Ashwin
+    bsDay: 25,  // Ashwin 25 in 2083 (October 11, 2026)
+    importance: 'major',
+    taglineNe: 'नवरात्र प्रारम्भ, घट स्थापना गरी जौको पवित्र पहेँलो जमरा राख्ने पावन दिन',
+    taglineEn: 'The sacred inaugural day of Dashain Navaratri: Kalash ritual and sowing of auspicious golden Jamara',
+    descriptionNe: 'घटस्थापना बडादशैंको पहिलो र अत्यन्त महत्वपूर्ण दिन हो। यस दिन बिहानै स्नान गरी पूजाकोठा वा दशैंघरमा विधिपूर्वक माटो वा तामाको कलश (घट) स्थापना गरिन्छ। बालुवा वा माटोमा जौ, गहुँ र मकै छरेर नौ दिनसम्म पूजा गरी विजयादशमीका लागि पवित्र जमरा उमार्ने परम्परा छ। यसै दिनदेखि ९ दिनसम्म शैलपुत्री लगायत नवदुर्गाको विशेष आराधना गरिन्छ।',
+    descriptionEn: 'Ghatasthapana marks the grand commencement of Bada Dashain. Devotees invoke Goddess Durga by establishing a sacred brass Kalash filled with holy water and sowing barley seeds in fertile soil to cultivate holy golden sprouts (Jamara) for Vijaya Dashami.',
+    ritualsNe: ['बिहानै स्नान गरी दशैंघर वा पूजाकोठा चोख्याउने', 'विधिपूर्वक माटोको वेदी बनाई कलश (घट) स्थापना गर्ने', 'पवित्र बालुवामा जौ-गहुँ छरेर जमरा राख्ने', 'शैलपुत्री देवीको पूजा र दुर्गा सप्तशती (चण्डी) पाठ आरम्भ', '९ दिनसम्म अखण्ड दीप प्रज्वलन'],
+    ritualsEn: ['Morning holy purification of prayer room (Dashain Ghar)', 'Ritual Kalash installation with holy water, mango leaves, and coconut', 'Sowing barley seeds in sacred sand beds for golden Jamara', 'Invoking Goddess Shailaputri and chanting Durga Saptashati (Chandi)', 'Lighting perpetual oil lamps (Akhanda Jyoti) for Navaratri'],
+    recipeOrHighlightNe: 'ताजा फलफूल, पञ्चामृत, दूध-खीर, र चोखो शाकाहारी नैवेद्य',
+    recipeOrHighlightEn: 'Fresh seasonal fruits, holy Panchamrit, milk pudding, and pure sattvic offerings',
+    imageTheme: 'from-amber-600 via-rose-700 to-red-700',
+    seasonNe: 'शरद ऋतु (Autumn)',
+    seasonEn: 'Autumn Season',
+  },
+  {
     id: 'dashain',
     nameNe: 'बडादशैं (विजयादशमी)',
     nameEn: 'Bada Dashain (Vijaya Dashami)',
-    bsMonth: 6, // Ashwin
-    bsDay: 26,  // Vijaya Dashami main day
+    bsMonth: 7, // Kartik
+    bsDay: 4,   // Vijaya Dashami main day (Kartik 4 in 2083 / Oct 21, 2026)
     importance: 'major',
     taglineNe: 'नेपालीहरूको महानतम राष्ट्रिय चाड, देवी दुर्गाको विजय उत्सव र मान्यजनको आशीर्वाद',
     taglineEn: 'The grandest 15-day national festival celebrating the victory of Good over Evil with sacred Tika & Jamara',
@@ -364,6 +383,110 @@ function formatAdDateRange(start: Date, end: Date): string {
 }
 
 /**
+ * Year-specific date coordinates for major lunar festivals in Bikram Sambat (2080-2084 BS)
+ */
+export const FESTIVAL_YEAR_DATES: Record<number, Record<string, { bsMonth: number; bsDay: number; bsDayEnd?: number }>> = {
+  // 2083 BS (2026-2027 AD)
+  2083: {
+    ghatasthapana: { bsMonth: 6, bsDay: 25 }, // Ashwin 25 (Oct 11, 2026)
+    dashain: { bsMonth: 7, bsDay: 4 },        // Vijaya Dashami: Kartik 4 (Oct 21, 2026)
+    tihar: { bsMonth: 7, bsDay: 22, bsDayEnd: 25 }, // Laxmi Puja (Kartik 22) - Bhai Tika (Kartik 25)
+    chhath: { bsMonth: 7, bsDay: 29 },       // Kartik 29 (Nov 15, 2026)
+    teej: { bsMonth: 5, bsDay: 29 },         // Bhadra 29 (Sep 14, 2026)
+    janai_purnima: { bsMonth: 5, bsDay: 12 },// Bhadra 12 (Aug 28, 2026)
+    krishna_janmashtami: { bsMonth: 5, bsDay: 19 }, // Bhadra 19 (Sep 4, 2026)
+    kushe_aunsi: { bsMonth: 5, bsDay: 25 },  // Bhadra 25 (Sep 10, 2026)
+    indra_jatra: { bsMonth: 6, bsDay: 9 },   // Ashwin 9 (Sep 25, 2026)
+    matatirtha: { bsMonth: 1, bsDay: 4 },    // Baishakh 4 (Apr 17, 2026)
+    buddha_jayanti: { bsMonth: 1, bsDay: 18 }, // Baishakh 18 (May 1, 2026)
+    maghe_sankranti: { bsMonth: 10, bsDay: 1 },
+    shivaratri: { bsMonth: 11, bsDay: 22 },  // Falgun 22 (Mar 6, 2027)
+    holi: { bsMonth: 12, bsDay: 7, bsDayEnd: 8 }, // Chaitra 7-8 (Mar 21-22, 2027)
+    tamu_lhosar: { bsMonth: 9, bsDay: 15 },
+    sonam_lhosar: { bsMonth: 10, bsDay: 24 },
+    gyalpo_lhosar: { bsMonth: 11, bsDay: 24 },
+    saraswati_puja: { bsMonth: 10, bsDay: 28 },
+    udhauli_yomari: { bsMonth: 9, bsDay: 9 },
+  },
+  // 2082 BS (2025-2026 AD)
+  2082: {
+    ghatasthapana: { bsMonth: 6, bsDay: 6 },
+    dashain: { bsMonth: 6, bsDay: 16 },
+    tihar: { bsMonth: 7, bsDay: 3, bsDayEnd: 6 },
+    chhath: { bsMonth: 7, bsDay: 10 },
+    teej: { bsMonth: 5, bsDay: 10 },
+    janai_purnima: { bsMonth: 4, bsDay: 24 },
+    krishna_janmashtami: { bsMonth: 4, bsDay: 31 },
+    kushe_aunsi: { bsMonth: 5, bsDay: 7 },
+    indra_jatra: { bsMonth: 5, bsDay: 20 },
+    matatirtha: { bsMonth: 1, bsDay: 14 },
+    buddha_jayanti: { bsMonth: 1, bsDay: 29 },
+    maghe_sankranti: { bsMonth: 10, bsDay: 1 },
+    shivaratri: { bsMonth: 11, bsDay: 4 },
+    holi: { bsMonth: 11, bsDay: 19, bsDayEnd: 20 },
+    tamu_lhosar: { bsMonth: 9, bsDay: 15 },
+    sonam_lhosar: { bsMonth: 10, bsDay: 6 },
+    saraswati_puja: { bsMonth: 10, bsDay: 10 },
+    udhauli_yomari: { bsMonth: 8, bsDay: 18 },
+  },
+  // 2081 BS (2024-2025 AD)
+  2081: {
+    ghatasthapana: { bsMonth: 6, bsDay: 17 },
+    dashain: { bsMonth: 6, bsDay: 27 },
+    tihar: { bsMonth: 7, bsDay: 15, bsDayEnd: 18 },
+    chhath: { bsMonth: 7, bsDay: 22 },
+    teej: { bsMonth: 5, bsDay: 21 },
+    janai_purnima: { bsMonth: 5, bsDay: 3 },
+    krishna_janmashtami: { bsMonth: 5, bsDay: 10 },
+    kushe_aunsi: { bsMonth: 5, bsDay: 17 },
+    indra_jatra: { bsMonth: 5, bsDay: 31 },
+    matatirtha: { bsMonth: 1, bsDay: 26 },
+    buddha_jayanti: { bsMonth: 2, bsDay: 10 },
+    maghe_sankranti: { bsMonth: 10, bsDay: 1 },
+    shivaratri: { bsMonth: 11, bsDay: 14 },
+    holi: { bsMonth: 11, bsDay: 29, bsDayEnd: 30 },
+    tamu_lhosar: { bsMonth: 9, bsDay: 15 },
+    sonam_lhosar: { bsMonth: 10, bsDay: 16 },
+    gyalpo_lhosar: { bsMonth: 11, bsDay: 16 },
+    saraswati_puja: { bsMonth: 10, bsDay: 21 },
+    udhauli_yomari: { bsMonth: 8, bsDay: 30 },
+  },
+  // 2084 BS (2027-2028 AD)
+  2084: {
+    ghatasthapana: { bsMonth: 6, bsDay: 14 },
+    dashain: { bsMonth: 6, bsDay: 24 },
+    tihar: { bsMonth: 7, bsDay: 13, bsDayEnd: 16 },
+    chhath: { bsMonth: 7, bsDay: 20 },
+    teej: { bsMonth: 5, bsDay: 18 },
+    janai_purnima: { bsMonth: 5, bsDay: 1 },
+    krishna_janmashtami: { bsMonth: 5, bsDay: 8 },
+    kushe_aunsi: { bsMonth: 5, bsDay: 14 },
+    indra_jatra: { bsMonth: 5, bsDay: 29 },
+    matatirtha: { bsMonth: 1, bsDay: 23 },
+    buddha_jayanti: { bsMonth: 2, bsDay: 6 },
+    maghe_sankranti: { bsMonth: 10, bsDay: 1 },
+    shivaratri: { bsMonth: 11, bsDay: 12 },
+    holi: { bsMonth: 11, bsDay: 27, bsDayEnd: 28 },
+    tamu_lhosar: { bsMonth: 9, bsDay: 15 },
+    sonam_lhosar: { bsMonth: 10, bsDay: 25 },
+    saraswati_puja: { bsMonth: 11, bsDay: 1 },
+    udhauli_yomari: { bsMonth: 8, bsDay: 28 },
+  },
+};
+
+export function getFestivalDates(defId: string, year: number): { bsMonth: number; bsDay: number; bsDayEnd?: number } {
+  if (FESTIVAL_YEAR_DATES[year]?.[defId]) {
+    return FESTIVAL_YEAR_DATES[year][defId];
+  }
+  const defaultDef = FESTIVAL_DEFINITIONS.find(d => d.id === defId);
+  return {
+    bsMonth: defaultDef?.bsMonth || 1,
+    bsDay: defaultDef?.bsDay || 1,
+    bsDayEnd: defaultDef?.bsDayEnd,
+  };
+}
+
+/**
  * Dynamically generate live festival information with genuine dates,
  * current live Bikram Sambat year, accurate Gregorian AD year, and exact live countdown.
  */
@@ -375,14 +498,15 @@ export function getLiveFestivals(currentBsDate?: NepaliDate): FestivalInfo[] {
   todayAd.setHours(0, 0, 0, 0);
 
   return FESTIVAL_DEFINITIONS.map((def) => {
-    // Check if festival in current BS year has passed or is upcoming
-    const festAdThisYear = bsToAd(todayBs.year, def.bsMonth, def.bsDay);
+    const datesThisYear = getFestivalDates(def.id, todayBs.year);
+    const festAdThisYear = bsToAd(todayBs.year, datesThisYear.bsMonth, datesThisYear.bsDay);
     festAdThisYear.setHours(0, 0, 0, 0);
 
     const diffMs = festAdThisYear.getTime() - todayAd.getTime();
     const diffDaysThisYear = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
     let targetYear = todayBs.year;
+    let targetDates = datesThisYear;
     let daysRemaining = diffDaysThisYear;
     let isPassedThisYear = false;
     let effectiveAdDate = festAdThisYear;
@@ -392,23 +516,24 @@ export function getLiveFestivals(currentBsDate?: NepaliDate): FestivalInfo[] {
       // Next celebration will occur in the upcoming BS year (todayBs.year + 1).
       isPassedThisYear = true;
       targetYear = todayBs.year + 1;
-      const festAdNextYear = bsToAd(targetYear, def.bsMonth, def.bsDay);
+      targetDates = getFestivalDates(def.id, targetYear);
+      const festAdNextYear = bsToAd(targetYear, targetDates.bsMonth, targetDates.bsDay);
       festAdNextYear.setHours(0, 0, 0, 0);
       daysRemaining = Math.round((festAdNextYear.getTime() - todayAd.getTime()) / (1000 * 60 * 60 * 24));
       effectiveAdDate = festAdNextYear;
     }
 
     // Build Nepali BS Date string
-    const monthNameNe = BS_MONTH_NAMES_NE[def.bsMonth - 1] || '';
-    const dayStrNe = def.bsDayEnd 
-      ? `${toNepaliDigits(def.bsDay)}-${toNepaliDigits(def.bsDayEnd)}`
-      : toNepaliDigits(def.bsDay);
+    const monthNameNe = BS_MONTH_NAMES_NE[targetDates.bsMonth - 1] || '';
+    const dayStrNe = targetDates.bsDayEnd 
+      ? `${toNepaliDigits(targetDates.bsDay)}-${toNepaliDigits(targetDates.bsDayEnd)}`
+      : toNepaliDigits(targetDates.bsDay);
     const bsDate = `${toNepaliDigits(targetYear)} ${monthNameNe} ${dayStrNe} गते`;
 
     // Build Gregorian AD Date string
     let adDate = '';
-    if (def.bsDayEnd) {
-      const endAd = bsToAd(targetYear, def.bsMonth, def.bsDayEnd);
+    if (targetDates.bsDayEnd) {
+      const endAd = bsToAd(targetYear, targetDates.bsMonth, targetDates.bsDayEnd);
       adDate = formatAdDateRange(effectiveAdDate, endAd);
     } else {
       adDate = formatAdDate(effectiveAdDate);

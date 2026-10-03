@@ -153,7 +153,7 @@ export const CalendarSearchBar: React.FC<CalendarSearchBarProps> = ({
         const curAdDate = bsToAd(currentYear, m, d);
         const dOfWeek = curAdDate.getDay();
         const isSat = dOfWeek === 6;
-        const events = getEventsForBsDate(m, d);
+        const events = getEventsForBsDate(m, d, currentYear);
         const isHoliday = isSat || events.some(e => e.isHoliday);
         const isToday = (todayBs.year === currentYear && todayBs.month === m && todayBs.day === d);
         const panchanga = getPanchangaForDate(currentYear, m, d);
