@@ -15,6 +15,9 @@ import { CalculatorsView } from './components/CalculatorsView';
 import { LanguageLearningView } from './components/LanguageLearningView';
 import { ActivityCentreView } from './components/ActivityCentreView';
 import { GovernmentHelpCentreView } from './components/GovernmentHelpCentreView';
+import { SupportWorkView } from './components/SupportWorkView';
+import { NrnBankingIpoView } from './components/NrnBankingIpoView';
+import { KundaliGunMilanView } from './components/KundaliGunMilanView';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { RadioPlayer } from './components/RadioPlayer';
 import { Footer } from './components/Footer';
@@ -116,6 +119,10 @@ export function App() {
           <RashifalView lang={lang} todayBs={todayBs} onNavigate={handleNavigate} />
         )}
 
+        {activeTab === 'kundali' && (
+          <KundaliGunMilanView lang={lang} onNavigate={handleNavigate} />
+        )}
+
         {activeTab === 'dharma' && (
           <DharmaSanskritiView lang={lang} onNavigate={handleNavigate} />
         )}
@@ -133,7 +140,11 @@ export function App() {
         )}
 
         {activeTab === 'forex' && (
-          <ForexGoldView lang={lang} />
+          <ForexGoldView lang={lang} onNavigate={handleNavigate} />
+        )}
+
+        {activeTab === 'nrn-banking' && (
+          <NrnBankingIpoView lang={lang} onNavigate={handleNavigate} />
         )}
 
         {activeTab === 'calculator' && (
@@ -162,6 +173,10 @@ export function App() {
 
         {activeTab === 'festivals' && (
           <FestivalsView lang={lang} todayBs={todayBs} />
+        )}
+
+        {activeTab === 'support' && (
+          <SupportWorkView lang={lang} onNavigate={handleNavigate} />
         )}
       </main>
 

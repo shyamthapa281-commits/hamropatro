@@ -25,7 +25,7 @@ export const ActivityCentreView: React.FC<ActivityCentreViewProps> = ({ lang }) 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       {/* Activity Centre Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-800 via-rose-900 to-stone-900 text-white p-6 sm:p-8 shadow-md">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-sky-700 via-sky-800 to-blue-950 text-white p-6 sm:p-8 shadow-md">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-amber-300 text-xs font-bold tracking-wide border border-white/10">
@@ -35,7 +35,7 @@ export const ActivityCentreView: React.FC<ActivityCentreViewProps> = ({ lang }) 
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
               {lang === 'ne' ? 'खेल तथा क्रियाकलाप केन्द्र' : 'Activity & Mind Games Centre'}
             </h1>
-            <p className="text-stone-200 text-xs sm:text-sm leading-relaxed">
+            <p className="text-sky-100 text-xs sm:text-sm leading-relaxed">
               {lang === 'ne'
                 ? 'नेपाली तथा अङ्ग्रेजी अङ्कमा सुडोकू, नेपालको परम्परागत बाघचाल र तार्किक गाउँ खाने कथा खेलेर आफ्नो दिमागलाई ताजा र सक्रिय राख्नुहोस्।'
                 : 'Boost cognitive agility and relax with full-featured Sudoku (English & Devanagari numerals), traditional Nepali Bagh-Chal board game against AI, and cultural logic riddles.'}
@@ -64,7 +64,7 @@ export const ActivityCentreView: React.FC<ActivityCentreViewProps> = ({ lang }) 
           onClick={() => setCurrentTab('sudoku')}
           className={`px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer shrink-0 border ${
             currentTab === 'sudoku'
-              ? 'bg-red-700 text-white border-red-800 shadow-xs'
+              ? 'bg-sky-600 text-white border-sky-700 shadow-xs'
               : 'bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-200 border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800'
           }`}
         >
@@ -72,7 +72,7 @@ export const ActivityCentreView: React.FC<ActivityCentreViewProps> = ({ lang }) 
           <span>{lang === 'ne' ? 'सुडोकू (Sudoku)' : 'Sudoku'}</span>
           <span
             className={`text-[10px] px-1.5 py-0.5 rounded-md ${
-              currentTab === 'sudoku' ? 'bg-amber-400 text-stone-950 font-extrabold' : 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300'
+              currentTab === 'sudoku' ? 'bg-amber-400 text-stone-950 font-extrabold' : 'bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300'
             }`}
           >
             {lang === 'ne' ? 'लोकप्रिय' : 'Popular'}
@@ -83,7 +83,7 @@ export const ActivityCentreView: React.FC<ActivityCentreViewProps> = ({ lang }) 
           onClick={() => setCurrentTab('baghchal')}
           className={`px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer shrink-0 border ${
             currentTab === 'baghchal'
-              ? 'bg-red-700 text-white border-red-800 shadow-xs'
+              ? 'bg-sky-600 text-white border-sky-700 shadow-xs'
               : 'bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-200 border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800'
           }`}
         >
@@ -102,7 +102,7 @@ export const ActivityCentreView: React.FC<ActivityCentreViewProps> = ({ lang }) 
           onClick={() => setCurrentTab('brain')}
           className={`px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all active:scale-95 cursor-pointer shrink-0 border ${
             currentTab === 'brain'
-              ? 'bg-red-700 text-white border-red-800 shadow-xs'
+              ? 'bg-sky-600 text-white border-sky-700 shadow-xs'
               : 'bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-200 border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800'
           }`}
         >

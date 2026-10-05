@@ -48,6 +48,8 @@ import {
 import { NEPALI_SEASONS_WELLNESS } from '../data/healthWellnessData';
 import { DailyMotivationCard } from './DailyMotivationCard';
 import { CalendarSearchBar } from './CalendarSearchBar';
+import { Year12MonthView } from './Year12MonthView';
+import { DayDetailModal } from './DayDetailModal';
 
 interface CalendarViewProps {
   todayBs: NepaliDate;
@@ -68,6 +70,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
   const [currentYear, setCurrentYear] = useState<number>(todayBs.year);
   const [currentMonth, setCurrentMonth] = useState<number>(todayBs.month);
   const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
+  const [calendarViewMode, setCalendarViewMode] = useState<'month' | 'year12'>('month');
+  const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
   const [highlightedDayKey, setHighlightedDayKey] = useState<string | null>(null);
   const [searchNotification, setSearchNotification] = useState<string | null>(null);
 
@@ -107,8 +111,45 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
     setNewNoteText('');
   };
 
+  const handleAddNoteFromModal = (key: string, text: string) => {
+    const newNote: UserNote = {
+      id: Date.now().toString(),
+      bsDateKey: key,
+      text: text.trim(),
+      createdAt: new Date().toLocaleTimeString(),
+    };
+    saveNotes([...notes, newNote]);
+  };
+
   const handleDeleteNote = (id: string) => {
     saveNotes(notes.filter(n => n.id !== id));
+  };
+
+  const handleSelectDay = (day: CalendarDay) => {
+    setSelectedDay(day);
+    setShowDetailModal(true);
+  };
+
+  const handleOpenMonthFromYear12 = (month: number) => {
+    setCurrentMonth(month);
+    setCalendarViewMode('month');
+  };
+
+  const handleOpenMonthFromModal = (year: number, month: number, day: number) => {
+    setCurrentYear(year);
+    setCurrentMonth(month);
+    setCalendarViewMode('month');
+    const targetGrid = generateMonthGrid(year, month);
+    const found = targetGrid.find(d => d.isCurrentMonth && d.bsDay === day);
+    if (found) {
+      setSelectedDay(found);
+    }
+    setTimeout(() => {
+      const cell = document.getElementById(`cal-cell-${year}-${month}-${day}`);
+      if (cell) {
+        cell.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 150);
   };
 
   // Month navigation
@@ -142,10 +183,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
   const handleSelectDateFromSearch = (year: number, month: number, day: number) => {
     setCurrentYear(year);
     setCurrentMonth(month);
+    setCalendarViewMode('month');
     const targetGrid = generateMonthGrid(year, month);
     const foundDay = targetGrid.find(d => d.isCurrentMonth && d.bsDay === day);
     if (foundDay) {
       setSelectedDay(foundDay);
+      setShowDetailModal(true);
     }
     const key = `${year}-${month}-${day}`;
     setHighlightedDayKey(key);
@@ -229,54 +272,124 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
         </div>
       )}
 
-      {/* Calendar Controls & Quick Panchanga Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* Main Calendar Card (Left/Center: 8 or 9 cols) */}
-        <div className="lg:col-span-8 bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-200 dark:border-stone-800 overflow-hidden transition-colors">
-          {/* Header Bar with Month/Year picker and Navigation */}
-          <div className="bg-gradient-to-r from-red-700 to-red-800 dark:from-stone-950 dark:to-red-950 text-white p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border-b border-red-900/30 dark:border-stone-800">
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                    <span>{monthName}</span>
-                    <span className="text-amber-300">{yearLabel}</span>
-                  </h2>
+      {/* View Mode Switcher (Month View vs. 12-Month Year View) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 bg-white dark:bg-stone-900 p-2.5 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs">
+        <div className="flex items-center bg-stone-100 dark:bg-stone-800 p-1 rounded-xl border border-stone-200 dark:border-stone-700">
+          <button
+            type="button"
+            id="calendar-toggle-month-view"
+            onClick={() => setCalendarViewMode('month')}
+            className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              calendarViewMode === 'month'
+                ? 'bg-sky-600 text-white shadow-xs font-extrabold ring-1 ring-sky-700'
+                : 'text-stone-600 dark:text-stone-300 hover:text-sky-600 dark:hover:text-sky-400'
+            }`}
+          >
+            <CalendarIcon className="w-3.5 h-3.5" />
+            <span>{lang === 'ne' ? 'महिना दृश्य (Month View)' : 'Month View'}</span>
+          </button>
+
+          <button
+            type="button"
+            id="calendar-toggle-year12-view"
+            onClick={() => setCalendarViewMode('year12')}
+            className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              calendarViewMode === 'year12'
+                ? 'bg-sky-600 text-white shadow-xs font-extrabold ring-1 ring-sky-700'
+                : 'text-stone-600 dark:text-stone-300 hover:text-sky-600 dark:hover:text-sky-400'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>{lang === 'ne' ? '१२ महिना दृश्य (12 Month View)' : '12 Month View'}</span>
+            <span className="text-[10px] bg-amber-400 text-stone-950 font-black px-1.5 py-0.2 rounded-md uppercase">
+              {lang === 'ne' ? 'नयाँ' : 'New'}
+            </span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
+          <span className="font-extrabold text-stone-800 dark:text-stone-200">
+            {lang === 'ne' ? `वि.सं. ${toNepaliDigits(currentYear)}` : `BS ${currentYear}`}
+          </span>
+          <span>•</span>
+          <span>
+            {calendarViewMode === 'month'
+              ? (lang === 'ne' ? `${monthName} महिनाको पञ्चाङ्ग` : `${monthName} Almanac`)
+              : (lang === 'ne' ? '१२ वटै महिना क्यालेन्डर' : 'Full 12 Months Almanac')}
+          </span>
+        </div>
+      </div>
+
+      {calendarViewMode === 'year12' ? (
+        <Year12MonthView
+          year={currentYear}
+          lang={lang}
+          todayBs={todayBs}
+          selectedDay={selectedDay}
+          onSelectDay={handleSelectDay}
+          onOpenMonth={handleOpenMonthFromYear12}
+          onSelectYear={(yr) => setCurrentYear(yr)}
+        />
+      ) : (
+        /* Calendar Controls & Quick Panchanga Summary */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* Main Calendar Card (Left/Center: 8 or 9 cols) */}
+          <div className="lg:col-span-8 bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-200 dark:border-stone-800 overflow-hidden transition-colors">
+            {/* Header Bar with Month/Year picker and Navigation */}
+            <div className="bg-gradient-to-r from-sky-600 to-sky-700 dark:from-stone-950 dark:to-sky-950 text-white p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border-b border-sky-800/30 dark:border-stone-800">
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                      <span>{monthName}</span>
+                      <span className="text-amber-300">{yearLabel}</span>
+                    </h2>
+                  </div>
+                  <span className="text-xs text-sky-100 dark:text-stone-300 font-medium">{adMonthRange}</span>
                 </div>
-                <span className="text-xs text-red-100 dark:text-stone-300 font-medium">{adMonthRange}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  id="calendar-header-switch-12m-btn"
+                  onClick={() => setCalendarViewMode('year12')}
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold rounded-lg border border-white/30 transition-colors cursor-pointer"
+                  title={lang === 'ne' ? '१२ महिना वार्षिक दृश्य हेर्नुहोस्' : 'View Full 12 Month Calendar'}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <span>{lang === 'ne' ? '१२ महिना' : '12 Months'}</span>
+                </button>
+
+                <button
+                  id="calendar-jump-today-btn"
+                  onClick={handleJumpToday}
+                  className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold rounded-lg border border-white/30 transition-colors cursor-pointer"
+                >
+                  {lang === 'ne' ? 'आज' : 'Today'}
+                </button>
+
+                <div className="flex items-center bg-sky-900/60 dark:bg-stone-800 rounded-xl p-0.5 border border-sky-500/40 dark:border-stone-700">
+                  <button
+                    id="calendar-prev-month-btn"
+                    onClick={handlePrevMonth}
+                    className="p-1.5 hover:bg-sky-800/80 dark:hover:bg-stone-700 rounded-lg text-white transition-colors cursor-pointer"
+                    title="अघिल्लो महिना (Previous Month)"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    id="calendar-next-month-btn"
+                    onClick={handleNextMonth}
+                    className="p-1.5 hover:bg-sky-800/80 dark:hover:bg-stone-700 rounded-lg text-white transition-colors cursor-pointer"
+                    title="पछिल्लो महिना (Next Month)"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                id="calendar-jump-today-btn"
-                onClick={handleJumpToday}
-                className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold rounded-lg border border-white/30 transition-colors cursor-pointer"
-              >
-                {lang === 'ne' ? 'आज' : 'Today'}
-              </button>
-
-              <div className="flex items-center bg-red-900/60 dark:bg-stone-800 rounded-xl p-0.5 border border-red-600/40 dark:border-stone-700">
-                <button
-                  id="calendar-prev-month-btn"
-                  onClick={handlePrevMonth}
-                  className="p-1.5 hover:bg-red-800/80 dark:hover:bg-stone-700 rounded-lg text-white transition-colors cursor-pointer"
-                  title="अघिल्लो महिना (Previous Month)"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  id="calendar-next-month-btn"
-                  onClick={handleNextMonth}
-                  className="p-1.5 hover:bg-red-800/80 dark:hover:bg-stone-700 rounded-lg text-white transition-colors cursor-pointer"
-                  title="पछिल्लो महिना (Next Month)"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
 
           {/* Days of Week Header */}
           <div className="grid grid-cols-7 bg-stone-100/80 dark:bg-stone-950 border-b border-stone-200 dark:border-stone-800 text-center py-2.5 text-xs font-bold uppercase tracking-wider">
@@ -309,16 +422,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
                 <div
                   key={idx}
                   id={`cal-cell-${day.bsYear}-${day.bsMonth}-${day.bsDay}`}
-                  onClick={() => setSelectedDay(day)}
+                  onClick={() => handleSelectDay(day)}
                   className={`min-h-[102px] sm:min-h-[116px] md:min-h-[124px] p-1.5 sm:p-2 cursor-pointer transition-all duration-150 relative flex flex-col justify-between select-none group ${
                     isHighlighted
-                      ? 'bg-amber-100/90 dark:bg-amber-950/80 ring-4 ring-red-600 dark:ring-red-400 z-10 scale-[1.02] shadow-md'
+                      ? 'bg-amber-100/90 dark:bg-amber-950/80 ring-4 ring-sky-500 dark:ring-sky-400 z-10 scale-[1.02] shadow-md'
                       : !day.isCurrentMonth
                       ? 'bg-stone-50/50 dark:bg-stone-950/40 text-stone-300 dark:text-stone-700 opacity-60'
                       : day.isToday
                       ? 'bg-amber-50/90 dark:bg-amber-950/40 ring-2 ring-inset ring-amber-500'
                       : isSelected
-                      ? 'bg-red-50/80 dark:bg-red-950/50 ring-2 ring-inset ring-red-600 dark:ring-red-500'
+                      ? 'bg-sky-50/80 dark:bg-sky-950/50 ring-2 ring-inset ring-sky-500 dark:ring-sky-400'
                       : day.isSaturday || day.isHoliday
                       ? 'bg-red-50/20 dark:bg-red-950/20 hover:bg-red-50/50 dark:hover:bg-red-950/30'
                       : 'bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800/80'
@@ -441,8 +554,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
                   onClick={() => setCurrentYear(yr)}
                   className={`px-2.5 py-1 rounded-md font-semibold text-xs transition-colors cursor-pointer ${
                     currentYear === yr
-                      ? 'bg-red-700 text-white shadow-xs'
-                      : 'bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-800 hover:border-red-300 dark:hover:border-stone-700'
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'bg-white dark:bg-stone-900 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-800 hover:border-sky-300 dark:hover:border-stone-700'
                   }`}
                 >
                   {toNepaliDigits(yr)}
@@ -463,7 +576,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
             <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-xs border border-stone-200 dark:border-stone-800 p-4 transition-colors">
               <div className="flex items-center justify-between mb-3 border-b border-stone-100 dark:border-stone-800 pb-2">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-red-600 dark:text-red-400" />
+                  <Sparkles className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                   <h3 className="font-extrabold text-stone-900 dark:text-white text-xs sm:text-sm uppercase tracking-wider">
                     {lang === 'ne' ? 'द्रुत सेवाहरू' : 'Quick Features'}
                   </h3>
@@ -496,11 +609,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
                       type="button"
                       id={`calendar-quick-nav-${item.id}`}
                       onClick={() => onNavigate(item.id)}
-                      className="group flex flex-col items-center justify-center p-2 rounded-xl border border-red-200/60 dark:border-red-950 bg-red-50/50 hover:bg-red-100/70 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-700 dark:text-red-300 transition-all duration-150 cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
+                      className="group flex flex-col items-center justify-center p-2 rounded-xl border border-sky-200/60 dark:border-sky-950 bg-sky-50/50 hover:bg-sky-100/70 dark:bg-sky-950/30 dark:hover:bg-sky-900/40 text-sky-700 dark:text-sky-300 transition-all duration-150 cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
                       title={lang === 'ne' ? `${item.labelNe} हेर्नुहोस्` : `Open ${item.labelEn}`}
                     >
-                      <IconComp className="w-4 h-4 mb-1 shrink-0 text-red-700 dark:text-red-300 group-hover:scale-110 transition-transform" />
-                      <span className="text-[10.5px] font-bold leading-tight truncate w-full text-center text-red-700 dark:text-red-300">
+                      <IconComp className="w-4 h-4 mb-1 shrink-0 text-sky-600 dark:text-sky-300 group-hover:scale-110 transition-transform" />
+                      <span className="text-[10.5px] font-bold leading-tight truncate w-full text-center text-sky-700 dark:text-sky-300">
                         {lang === 'ne' ? item.labelNe : item.labelEn}
                       </span>
                     </button>
@@ -514,7 +627,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
           <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-200 dark:border-stone-800 p-5 transition-colors">
             <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3 mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-400 flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-950/80 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold">
                   <Compass className="w-4 h-4" />
                 </div>
                 <div>
@@ -682,11 +795,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
                     value={newNoteText}
                     onChange={(e) => setNewNoteText(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
-                    className="flex-1 text-xs px-2.5 py-1.5 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500"
+                    className="flex-1 text-xs px-2.5 py-1.5 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500"
                   />
                   <button
                     onClick={handleAddNote}
-                    className="px-2.5 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     {lang === 'ne' ? 'थप्नुहोस्' : 'Add'}
@@ -700,7 +813,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
           <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-200 dark:border-stone-800 p-5 transition-colors">
             <h3 className="font-bold text-stone-900 dark:text-white text-sm mb-3 flex items-center justify-between">
               <span>{lang === 'ne' ? `यस महिनाका मुख्य चाडपर्वहरू (${monthName})` : `Festivals in ${monthName}`}</span>
-              <span className="text-xs bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-300 font-bold px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 font-bold px-2 py-0.5 rounded-full">
                 {monthHolidays.length}
               </span>
             </h3>
@@ -714,10 +827,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
                 monthHolidays.map((ev, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between p-2 rounded-xl bg-stone-50 dark:bg-stone-800/60 hover:bg-red-50/50 dark:hover:bg-stone-800 border border-stone-100 dark:border-stone-700/60 transition-colors text-xs"
+                    className="flex items-center justify-between p-2 rounded-xl bg-stone-50 dark:bg-stone-800/60 hover:bg-sky-50/50 dark:hover:bg-stone-800 border border-stone-100 dark:border-stone-700/60 transition-colors text-xs"
                   >
                     <div className="flex items-center gap-2">
-                      <span className="w-7 h-7 rounded-lg bg-red-700 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-2xs">
+                      <span className="w-7 h-7 rounded-lg bg-sky-600 text-white font-black flex items-center justify-center text-sm shrink-0 shadow-2xs">
                         {ev.dayNumNe}
                       </span>
                       <span className="font-medium text-stone-800 dark:text-stone-200">
@@ -800,6 +913,20 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
 
         </div>
       </div>
+      )}
+
+      {/* Comprehensive Day Detail Modal */}
+      <DayDetailModal
+        day={selectedDay}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        lang={lang}
+        notes={notes}
+        onAddNote={handleAddNoteFromModal}
+        onDeleteNote={handleDeleteNote}
+        onOpenMonthView={handleOpenMonthFromModal}
+        onNavigate={onNavigate}
+      />
     </div>
   );
 };

@@ -15,7 +15,10 @@ import {
   ChevronRight,
   HeartPulse,
   Gamepad2,
-  BookOpen
+  BookOpen,
+  Heart,
+  TrendingUp,
+  Compass
 } from 'lucide-react';
 import { Language } from '../types';
 
@@ -48,6 +51,14 @@ export const Navigation: React.FC<NavigationProps> = ({
       nameEn: 'Daily Rashifal',
       icon: Sparkles,
       badge: 'शुभ',
+    },
+    {
+      id: 'kundali',
+      nameNe: 'कुण्डली तथा गुण मिलान',
+      nameEn: 'Kundali & Gun Milan',
+      icon: Compass,
+      badgeNe: '३६ गुण',
+      badgeEn: '36 Gunas',
     },
     {
       id: 'dharma',
@@ -86,6 +97,14 @@ export const Navigation: React.FC<NavigationProps> = ({
       nameNe: 'विदेशी मुद्रा र सुन',
       nameEn: 'Forex & Gold',
       icon: Coins,
+    },
+    {
+      id: 'nrn-banking',
+      nameNe: 'NRN बैंकिङ र IPO',
+      nameEn: 'NRN Banking & IPO',
+      icon: TrendingUp,
+      badgeNe: '१०% कोटा',
+      badgeEn: '10% Quota',
     },
     {
       id: 'calculator',
@@ -139,6 +158,14 @@ export const Navigation: React.FC<NavigationProps> = ({
       nameEn: 'Festivals',
       icon: Flame,
     },
+    {
+      id: 'support',
+      nameNe: 'सहयोग गर्नुहोस्',
+      nameEn: 'Support Our Work',
+      icon: Heart,
+      badgeNe: '❤️ सहयोग',
+      badgeEn: '❤️ Donate',
+    },
   ];
 
   const updateScrollButtons = () => {
@@ -176,7 +203,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         {showLeftArrow && (
           <button
             onClick={() => scroll('left')}
-            className="flex absolute left-1 sm:left-2 z-10 w-7 h-7 sm:w-8 sm:h-8 items-center justify-center rounded-full bg-white/95 dark:bg-stone-800/95 text-stone-700 dark:text-stone-200 hover:text-red-700 dark:hover:text-red-400 shadow-md border border-stone-200 dark:border-stone-700 transition-all cursor-pointer hover:scale-105 active:scale-95"
+            className="flex absolute left-1 sm:left-2 z-10 w-7 h-7 sm:w-8 sm:h-8 items-center justify-center rounded-full bg-white/95 dark:bg-stone-800/95 text-stone-700 dark:text-stone-200 hover:text-sky-600 dark:hover:text-sky-400 shadow-md border border-stone-200 dark:border-stone-700 transition-all cursor-pointer hover:scale-105 active:scale-95"
             aria-label="Scroll left"
             title="Scroll left"
           >
@@ -201,8 +228,8 @@ export const Navigation: React.FC<NavigationProps> = ({
                 onClick={() => onSelectTab(item.id)}
                 className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 select-none cursor-pointer shrink-0 ${
                   isActive
-                    ? 'bg-red-700 text-white shadow-sm ring-1 ring-red-800 dark:ring-red-600'
-                    : 'text-stone-700 dark:text-stone-200 hover:text-red-700 dark:hover:text-amber-300 hover:bg-red-50/80 dark:hover:bg-stone-800 bg-stone-50/60 dark:bg-stone-800/40 border border-transparent dark:border-stone-800/60'
+                    ? 'bg-sky-600 text-white shadow-sm ring-1 ring-sky-700 dark:ring-sky-500'
+                    : 'text-stone-700 dark:text-stone-200 hover:text-sky-600 dark:hover:text-amber-300 hover:bg-sky-50/80 dark:hover:bg-stone-800 bg-stone-50/60 dark:bg-stone-800/40 border border-transparent dark:border-stone-800/60'
                 }`}
               >
                 <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-300' : 'text-stone-500 dark:text-stone-400'}`} />
@@ -212,7 +239,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                     className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider ${
                       isActive
                         ? 'bg-amber-400 text-stone-950'
-                        : 'bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300'
+                        : 'bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300'
                     }`}
                   >
                     {lang === 'ne' ? item.badgeNe : item.badgeEn}
@@ -236,7 +263,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         {showRightArrow && (
           <button
             onClick={() => scroll('right')}
-            className="flex absolute right-1 sm:right-2 z-10 w-7 h-7 sm:w-8 sm:h-8 items-center justify-center rounded-full bg-white/95 dark:bg-stone-800/95 text-stone-700 dark:text-stone-200 hover:text-red-700 dark:hover:text-red-400 shadow-md border border-stone-200 dark:border-stone-700 transition-all cursor-pointer hover:scale-105 active:scale-95"
+            className="flex absolute right-1 sm:right-2 z-10 w-7 h-7 sm:w-8 sm:h-8 items-center justify-center rounded-full bg-white/95 dark:bg-stone-800/95 text-stone-700 dark:text-stone-200 hover:text-sky-600 dark:hover:text-sky-400 shadow-md border border-stone-200 dark:border-stone-700 transition-all cursor-pointer hover:scale-105 active:scale-95"
             aria-label="Scroll right"
             title="Scroll right"
           >

@@ -105,9 +105,9 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({ lang, todayBs }) =
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 transition-colors">
       {/* Hero Header */}
-      <div className="bg-gradient-to-r from-red-800 via-rose-800 to-amber-800 text-white rounded-3xl p-6 sm:p-8 shadow-md mb-6 flex flex-wrap items-center justify-between gap-6">
+      <div className="bg-gradient-to-r from-sky-700 via-cyan-800 to-blue-900 text-white rounded-3xl p-6 sm:p-8 shadow-md mb-6 flex flex-wrap items-center justify-between gap-6">
         <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-900/60 rounded-full border border-red-400/30 text-amber-200 text-xs font-bold uppercase tracking-wider mb-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-900/60 rounded-full border border-sky-400/30 text-amber-200 text-xs font-bold uppercase tracking-wider mb-3">
             <Flame className="w-3.5 h-3.5 text-amber-300" />
             <span>{lang === 'ne' ? 'नेपाली चाडपर्व तथा सांस्कृतिक धरोहर' : 'Nepali Cultural Festivals & Heritage'}</span>
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mx-1"></span>
@@ -118,7 +118,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({ lang, todayBs }) =
               ? `चालू वि.सं. ${currentBsYearStr} का प्रमुख नेपाली चाडपर्वहरू` 
               : `Major Nepali Festivals & Live Countdowns (${currentAdYearStr}-${currentAdYearStr + 1})`}
           </h2>
-          <p className="text-xs sm:text-sm text-red-100 mt-2 leading-relaxed">
+          <p className="text-xs sm:text-sm text-sky-100 mt-2 leading-relaxed">
             {lang === 'ne'
               ? 'बडादशैं, तिहार, छठ, महाशिवरात्रि, होली, ल्होसार, तीज लगायत सम्पूर्ण पर्वहरूको प्रत्यक्ष चालु मिति, शुद्ध वैदिक विधि, परिकार र दिन गन्ती।'
               : 'Real-time live dates, authentic rituals, culinary traditions, and exact day countdowns for Nepal’s sacred celebrations.'}
@@ -177,7 +177,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({ lang, todayBs }) =
               onClick={() => setFilter(t)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
                 filter === t
-                  ? 'bg-red-700 text-white shadow-xs'
+                  ? 'bg-sky-600 text-white shadow-xs'
                   : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700 hover:bg-stone-200 dark:hover:bg-stone-700'
               }`}
             >
@@ -216,14 +216,14 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({ lang, todayBs }) =
                   onClick={() => setSelectedFestival(fest)}
                   className={`rounded-3xl p-5 border cursor-pointer transition-all duration-200 flex flex-col justify-between select-none relative overflow-hidden ${
                     isSelected
-                      ? 'border-red-600 ring-2 ring-red-500 shadow-md bg-red-50/30 dark:bg-red-950/20'
-                      : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800 hover:border-red-300 dark:hover:border-red-800 hover:shadow-xs'
+                      ? 'border-sky-500 ring-2 ring-sky-400 shadow-md bg-sky-50/30 dark:bg-sky-950/20'
+                      : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800 hover:border-sky-300 dark:hover:border-sky-800 hover:shadow-xs'
                   }`}
                 >
                   {/* Card Header: Live BS & AD Dates */}
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2.5">
-                      <span className="bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/60 font-extrabold text-[11px] px-2.5 py-0.5 rounded-lg">
+                      <span className="bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-900/60 font-extrabold text-[11px] px-2.5 py-0.5 rounded-lg">
                         {fest.bsDate}
                       </span>
                       <span className="text-[10px] font-medium text-stone-500 dark:text-stone-400 truncate">

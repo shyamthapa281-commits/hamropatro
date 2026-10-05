@@ -90,18 +90,18 @@ export const GovernmentHelpCentreView: React.FC<GovernmentHelpCentreProps> = ({ 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 w-full overflow-hidden">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-red-800 via-stone-900 to-red-950 text-white rounded-3xl p-5 sm:p-7 shadow-md mb-6 border border-red-700/40">
+      <div className="bg-gradient-to-r from-sky-700 via-sky-800 to-blue-950 text-white rounded-3xl p-5 sm:p-7 shadow-md mb-6 border border-sky-500/40">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-600/50 rounded-full border border-red-400/40 text-amber-200 text-xs font-bold uppercase tracking-wider mb-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-900/60 rounded-full border border-sky-400/40 text-amber-200 text-xs font-bold uppercase tracking-wider mb-2">
                 <Building2 className="w-3.5 h-3.5 shrink-0" />
                 <span>{lang === 'ne' ? 'नेपाल सरकार डिजिटल सेवा केन्द्र' : 'Government of Nepal Citizen Services'}</span>
               </div>
               <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight">
                 {lang === 'ne' ? 'सरकारी सेवा केन्द्र, गुगल दिशानिर्देश तथा आपतकालीन सहायता' : 'Public Services Directory, Google Directions & Help Centre'}
               </h2>
-              <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-2xl leading-relaxed">
+              <p className="text-xs sm:text-sm text-sky-100 mt-1 max-w-2xl leading-relaxed">
                 {lang === 'ne'
                   ? 'सिंहदरबार, नेपाल प्रहरी, अस्पताल, राहदानी, राष्ट्रिय परिचयपत्र लगायतका सेवा केन्द्रहरूको प्रत्यक्ष ठेगाना, गुगल म्याप्स नेभिगेसन तथा २४ घण्टे राष्ट्रिय हटलाइनहरू।'
                   : 'Directory of major government centers (Singha Durbar, Police, Hospitals, Passports, NID) with Google Maps turn-by-turn directions and 24/7 hotlines.'}
@@ -153,7 +153,7 @@ export const GovernmentHelpCentreView: React.FC<GovernmentHelpCentreProps> = ({ 
               onClick={() => setActiveTab(tab.id as any)}
               className={`px-3.5 sm:px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                 isActive
-                  ? 'bg-red-700 text-white shadow-xs ring-1 ring-red-800'
+                  ? 'bg-sky-600 text-white shadow-xs ring-1 ring-sky-700'
                   : 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50'
               }`}
             >

@@ -58,12 +58,12 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
           {/* Brand Col */}
           <div className="lg:col-span-4 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-red-700 text-white flex items-center justify-center font-extrabold shadow-md shadow-red-900/40">
+              <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center font-extrabold shadow-md shadow-sky-900/40">
                 <Calendar className="w-5 h-5" />
               </div>
               <div>
                 <span className="text-lg font-extrabold text-white block">Nepali Calendar</span>
-                <span className="text-xs text-red-400 font-semibold block">नेपाली क्यालेन्डर (बिक्रम संवत्)</span>
+                <span className="text-xs text-sky-400 font-semibold block">नेपाली क्यालेन्डर (बिक्रम संवत्)</span>
               </div>
             </div>
             <p className="text-xs text-stone-400 leading-relaxed">
@@ -123,6 +123,16 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
               <li>
                 <button
                   type="button"
+                  id="footer-quick-kundali"
+                  onClick={() => onNavigate('kundali')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full"
+                >
+                  {lang === 'ne' ? '• जन्म कुण्डली तथा ३६ गुण मिलान' : '• Janma Kundali & 36 Gun Milan'}
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
                   id="footer-quick-weather"
                   onClick={() => onNavigate('weather')}
                   className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full"
@@ -143,11 +153,32 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
               <li>
                 <button
                   type="button"
+                  id="footer-quick-nrn-banking"
+                  onClick={() => onNavigate('nrn-banking')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full"
+                >
+                  {lang === 'ne' ? '• NRN बैंकिङ तथा १०% IPO कोटा' : '• NRN Banking & 10% IPO Quota'}
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
                   id="footer-quick-converter"
                   onClick={() => onNavigate('converter')}
                   className="hover:text-amber-300 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full"
                 >
                   {lang === 'ne' ? '• नाप, जग्गा र मिति रूपान्तरण' : '• Measurement & Date Converter'}
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  id="footer-quick-support"
+                  onClick={() => onNavigate('support')}
+                  className="text-rose-400 hover:text-rose-300 font-semibold transition-colors cursor-pointer hover:underline text-left w-full flex items-center gap-1.5"
+                >
+                  <Heart className="w-3 h-3 text-rose-400 fill-current" />
+                  <span>{lang === 'ne' ? 'हाम्रो कामलाई सहयोग गर्नुहोस् (Donation)' : 'Support Our Work & Donate'}</span>
                 </button>
               </li>
             </ul>
@@ -156,7 +187,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
           {/* Teams and Contact Info */}
           <div className="lg:col-span-5 bg-stone-800/50 p-4 sm:p-5 rounded-2xl border border-stone-700/60 shadow-inner">
             <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3.5 flex items-center gap-1.5 pb-2 border-b border-stone-700">
-              <Users className="w-4 h-4 text-red-400" />
+              <Users className="w-4 h-4 text-sky-400" />
               <span>{lang === 'ne' ? 'नेपाली क्यालेन्डर टिम तथा सम्पर्क' : 'Nepali Calendar Team & Contact'}</span>
             </h4>
 
@@ -343,7 +374,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
 
                   <button
                     type="submit"
-                    className="inline-flex items-center gap-1.5 bg-gradient-to-r from-red-700 to-rose-700 hover:from-red-600 hover:to-rose-600 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-md transition-all cursor-pointer active:scale-95"
+                    className="inline-flex items-center gap-1.5 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-md transition-all cursor-pointer active:scale-95"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>{lang === 'ne' ? 'प्रतिक्रिया पठाउनुहोस्' : 'Send Reaction / Advice'}</span>

@@ -653,7 +653,7 @@ export const WorldClockView: React.FC<WorldClockViewProps> = ({ lang, todayBs })
       )}
 
       {/* HERO SECTION: DEFAULT NEPAL STANDARD TIME (काठमाडौं, नेपाल) */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-red-700 via-red-800 to-red-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-red-600/40">
+      <div className="relative overflow-hidden bg-gradient-to-br from-sky-700 via-sky-800 to-blue-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-sky-500/40">
         {/* Subtle decorative background watermark */}
         <div className="absolute -right-8 -bottom-10 opacity-10 text-white select-none pointer-events-none">
           <Clock className="w-80 h-80" />

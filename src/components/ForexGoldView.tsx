@@ -25,9 +25,10 @@ import {
 
 interface ForexGoldViewProps {
   lang: Language;
+  onNavigate?: (tab: string) => void;
 }
 
-export const ForexGoldView: React.FC<ForexGoldViewProps> = ({ lang }) => {
+export const ForexGoldView: React.FC<ForexGoldViewProps> = ({ lang, onNavigate }) => {
   // Live Data States initialized with cached live data if available (0ms instant paint)
   const [forexRates, setForexRates] = useState<ForexRate[]>(() => {
     try {
@@ -214,6 +215,41 @@ export const ForexGoldView: React.FC<ForexGoldViewProps> = ({ lang }) => {
           </div>
         </div>
       </div>
+
+      {/* NRN Banking & 10% IPO Quota Teaser Banner */}
+      {onNavigate && (
+        <div className="mb-8 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-sky-900 via-blue-900 to-indigo-950 text-white border border-sky-500/40 shadow-sm flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-amber-400 text-stone-950 flex items-center justify-center font-black text-sm shrink-0 shadow-md">
+              १०%
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-sm sm:text-base text-white">
+                  {lang === 'ne' ? 'विदेशमा हुनुहुन्छ? १०% कोटामा नेपालको IPO भर्नुहोस्' : 'Living Abroad? Apply in 10% Reserved Nepal IPO Quota'}
+                </span>
+                <span className="text-[10px] bg-emerald-500 text-white font-black px-2 py-0.5 rounded-full uppercase">
+                  New
+                </span>
+              </div>
+              <p className="text-xs text-sky-200 mt-0.5">
+                {lang === 'ne'
+                  ? 'वाणिज्य बैंकहरूमा उच्च ब्याजदरको NRN मुद्दती खाता, विदेशी मुद्रा निक्षेप र MeroShare C-ASBA प्रक्रिया हेर्नुहोस्।'
+                  : 'Check high-yield NRN fixed deposit rates and step-by-step C-ASBA Demat guide.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('nrn-banking')}
+            className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+          >
+            <span>{lang === 'ne' ? 'NRN बैंकिङ तथा IPO हेर्नुहोस्' : 'Explore NRN Banking'}</span>
+            <TrendingUp className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Gold & Silver Bullion Live Cards */}
       <div className="mb-10">

@@ -220,6 +220,41 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
         </div>
       </div>
 
+      {/* Detailed Kundali & 36 Gun Milan Promo Banner */}
+      {onNavigate && (
+        <div className="mb-8 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-700 via-amber-800 to-stone-900 text-white border border-amber-500/40 shadow-sm flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-amber-400 text-stone-950 flex items-center justify-center font-black text-sm shrink-0 shadow-md">
+              <Compass className="w-5 h-5 text-stone-950" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-sm sm:text-base text-white">
+                  {lang === 'ne' ? 'आफ्नो सटीक जन्म कुण्डली तथा ३६ गुण विवाह मिलान हेर्नुहोस्' : 'Generate Full Janma Kundali Chart & 36 Gun Milan'}
+                </span>
+                <span className="text-[10px] bg-amber-400 text-stone-950 font-black px-2 py-0.5 rounded-full uppercase">
+                  New
+                </span>
+              </div>
+              <p className="text-xs text-amber-100 mt-0.5">
+                {lang === 'ne'
+                  ? '१२ भाव ग्रह चक्र, विंशोत्तरी महादशा, माङ्गलिक दोष विश्लेषण तथा PDF प्रतिवेदन डाउनलोड गर्नुहोस्।'
+                  : '12-house planetary chart, Vimshottari Mahadasha timeline, Manglik Dosha, and printable PDF dossier.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('kundali')}
+            className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+          >
+            <span>{lang === 'ne' ? 'कुण्डली तथा गुण मिलान हेर्नुहोस्' : 'Explore Kundali & Gun Milan'}</span>
+            <Sparkles className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* 12 Rashis Selector Grid */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -259,7 +294,7 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
                   onClick={() => setPeriod(p)}
                   className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                     period === p
-                      ? 'bg-red-700 text-white shadow-xs'
+                      ? 'bg-sky-600 text-white shadow-xs'
                       : 'text-stone-600 hover:text-stone-900'
                   }`}
                 >
@@ -283,8 +318,8 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
                 onClick={() => setSelectedRashiId(rashi.id)}
                 className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all duration-200 select-none ${
                   isSelected
-                    ? 'bg-red-700 text-white border-red-800 shadow-md ring-2 ring-red-500 scale-[1.03]'
-                    : 'bg-white text-stone-700 border-stone-200 hover:border-red-300 hover:bg-red-50/50'
+                    ? 'bg-sky-600 text-white border-sky-700 shadow-md ring-2 ring-sky-400 scale-[1.03]'
+                    : 'bg-white text-stone-700 border-stone-200 hover:border-sky-300 hover:bg-sky-50/50'
                 }`}
               >
                 <span className="text-2xl mb-1">{rashi.symbol}</span>
@@ -307,7 +342,7 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
         <div className="lg:col-span-8 space-y-6">
           <div className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden">
             {/* Rashi Header Badge */}
-            <div className="bg-gradient-to-r from-red-800 to-red-900 text-white p-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="bg-gradient-to-r from-sky-700 via-sky-800 to-blue-900 text-white p-6 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-4xl shadow-inner">
                   {selectedRashi.symbol}
@@ -324,7 +359,7 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
                   <p className="text-xs text-amber-200 mt-1">
                     {lang === 'ne' ? 'नामरूप अक्षरहरू:' : 'Name Letters:'} {selectedRashi.lettersNe}
                   </p>
-                  <p className="text-xs text-red-200">
+                  <p className="text-xs text-sky-100">
                     {lang === 'ne' ? 'स्वामी ग्रह:' : 'Ruling Planet:'} {selectedRashi.rulingPlanet} • {selectedRashi.englishDateRange}
                   </p>
                 </div>
@@ -333,7 +368,7 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
               {/* Actions & Star Rating */}
               <div className="flex flex-wrap items-center gap-3">
                 {/* Star Rating */}
-                <div className="bg-red-950/60 px-4 py-2 rounded-2xl border border-red-700/40 text-center">
+                <div className="bg-sky-950/60 px-4 py-2 rounded-2xl border border-sky-600/40 text-center">
                   <div className="flex items-center gap-1 text-amber-400 justify-center mb-1">
                     {[...Array(5)].map((_, i) => (
                       <Star

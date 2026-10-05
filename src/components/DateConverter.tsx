@@ -111,15 +111,15 @@ export const DateConverter: React.FC<DateConverterProps> = ({ lang }) => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-red-800 to-red-900 text-white rounded-3xl p-6 sm:p-8 shadow-md mb-8">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-700/60 rounded-full border border-red-500/40 text-amber-200 text-xs font-bold uppercase tracking-wider mb-2">
+      <div className="bg-gradient-to-r from-sky-700 via-sky-800 to-blue-900 text-white rounded-3xl p-6 sm:p-8 shadow-md mb-8">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-900/60 rounded-full border border-sky-500/40 text-amber-200 text-xs font-bold uppercase tracking-wider mb-2">
           <ArrowLeftRight className="w-3.5 h-3.5" />
           {lang === 'ne' ? 'नेपाली डिजिटल रूपान्तरण उपकरणहरू' : 'Nepali Measurement & Conversion Hub'}
         </div>
         <h2 className="text-2xl sm:text-4xl font-extrabold text-white">
           {lang === 'ne' ? 'नाप, मिति तथा एकाइ रूपान्तरण' : 'Measurement & Date Conversion Suite'}
         </h2>
-        <p className="text-xs sm:text-sm text-red-100 mt-1 max-w-2xl">
+        <p className="text-xs sm:text-sm text-sky-100 mt-1 max-w-2xl">
           {lang === 'ne'
             ? 'नेपाली जग्गा नाप (रोपनी/बिघा), परम्परागत धार्नी/पाउ/तोला, लम्बाइ, क्षेत्रफल, बिक्रम संवत् (BS <-> AD) मिति र उमेर क्याल्कुलेटर।'
             : 'Convert Nepali land units, traditional mass/volume, scientific measurements, Bikram Sambat dates, and age instantly.'}
@@ -142,8 +142,8 @@ export const DateConverter: React.FC<DateConverterProps> = ({ lang }) => {
               onClick={() => setConversionType(tool.id as any)}
               className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
                 conversionType === tool.id
-                  ? 'bg-red-700 text-white shadow-xs ring-1 ring-red-800'
-                  : 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50'
+                  ? 'bg-sky-600 text-white shadow-xs ring-1 ring-sky-700'
+                  : 'bg-white text-stone-700 border border-stone-200 hover:bg-sky-50/60'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />

@@ -103,17 +103,17 @@ export const LanguageLearningView: React.FC<LanguageLearningViewProps> = ({ lang
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-red-800 via-stone-900 to-red-950 text-white rounded-3xl p-6 sm:p-8 shadow-md mb-8 border border-red-700/40">
+      <div className="bg-gradient-to-r from-sky-700 via-sky-800 to-blue-950 text-white rounded-3xl p-6 sm:p-8 shadow-md mb-8 border border-sky-500/40">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-600/50 rounded-full border border-red-400/40 text-amber-200 text-xs font-bold uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-900/60 rounded-full border border-sky-400/40 text-amber-200 text-xs font-bold uppercase tracking-wider mb-2">
               <Globe className="w-3.5 h-3.5" />
               {lang === 'ne' ? 'गुगल अनुवाद तथा नेपाली-अंग्रेजी भाषा सिकाई' : 'Google Translate & Language Learning Hub'}
             </div>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
               {lang === 'ne' ? 'नेपाली-अंग्रेजी अनुवाद तथा भाषा सिकाई केन्द्र' : 'Nepali - English Google Translate & Learning'}
             </h2>
-            <p className="text-stone-300 text-xs sm:text-sm mt-1 max-w-2xl">
+            <p className="text-sky-100 text-xs sm:text-sm mt-1 max-w-2xl">
               {lang === 'ne'
                 ? 'गुगल ट्रान्सलेट (Google Translate) मार्फत द्रुत अनुवाद, दैनिक उपयोगी वाक्यांशहरू, शब्दावली फ्ल्यासकार्ड, र व्याकरण पाठहरू।'
                 : 'Direct Google Translate engine with practical daily phrases, vocabulary flashcards, grammar guides, and interactive quizzes.'}
@@ -139,7 +139,7 @@ export const LanguageLearningView: React.FC<LanguageLearningViewProps> = ({ lang
               onClick={() => setActiveSubTab(tab.id as any)}
               className={`px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                 isActive
-                  ? 'bg-red-700 text-white shadow-xs ring-1 ring-red-800'
+                  ? 'bg-sky-600 text-white shadow-xs ring-1 ring-sky-700'
                   : 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50'
               }`}
             >
