@@ -11,7 +11,12 @@ import {
   VolumeX, 
   BookOpen, 
   Info, 
-  Filter
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  List,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { MotivationQuote, Language, NepaliDate } from '../types';
 import { MOTIVATION_QUOTES } from '../data/motivationQuotes';
@@ -37,9 +42,29 @@ export const DailyMotivationCard: React.FC<DailyMotivationCardProps> = ({
   const [currentIndex, setCurrentIndex] = useState<number>(dailyQuoteIndex);
   const [copied, setCopied] = useState<boolean>(false);
   const [showContext, setShowContext] = useState<boolean>(false);
+  const [showQuoteList, setShowQuoteList] = useState<boolean>(false);
   const [isPlayingSpeech, setIsPlayingSpeech] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
+  // Available categories
+  const CATEGORIES = [
+    { id: 'all', nameNe: 'सबै', nameEn: 'All' },
+    { id: 'proverb', nameNe: 'उखान टुक्का', nameEn: 'Proverbs' },
+    { id: 'literary', nameNe: 'साहित्यिक', nameEn: 'Literary' },
+    { id: 'buddha', nameNe: 'बुद्ध वाणी', nameEn: 'Buddha' },
+    { id: 'perseverance', nameNe: 'कर्म र सङ्घर्ष', nameEn: 'Resilience' },
+    { id: 'wisdom', nameNe: 'ज्ञान र विवेक', nameEn: 'Wisdom' },
+  ];
+
+  // Dynamic counts for each category
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: MOTIVATION_QUOTES.length };
+    MOTIVATION_QUOTES.forEach(q => {
+      counts[q.category] = (counts[q.category] || 0) + 1;
+    });
+    return counts;
+  }, []);
+
   // Favorites persisted in localStorage
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
@@ -52,13 +77,77 @@ export const DailyMotivationCard: React.FC<DailyMotivationCardProps> = ({
 
   const activeQuote: MotivationQuote = MOTIVATION_QUOTES[currentIndex] || MOTIVATION_QUOTES[0];
   const isFavorite = favorites.includes(activeQuote.id);
-  const isDailyDefault = currentIndex === dailyQuoteIndex;
+  const isDailyDefault = currentIndex === dailyQuoteIndex && selectedCategory === 'all';
 
-  // Filtered pool for randomizer
+  // Filtered pool for active category
   const filteredQuotes = useMemo(() => {
     if (selectedCategory === 'all') return MOTIVATION_QUOTES;
     return MOTIVATION_QUOTES.filter(q => q.category === selectedCategory);
   }, [selectedCategory]);
+
+  // Current position within the active category pool
+  const currentCategoryPosition = useMemo(() => {
+    const idx = filteredQuotes.findIndex(q => q.id === activeQuote.id);
+    return idx >= 0 ? idx : 0;
+  }, [filteredQuotes, activeQuote.id]);
+
+  // Instantly switch to selected category
+  const handleSelectCategory = (catId: string) => {
+    setSelectedCategory(catId);
+    setShowContext(false);
+
+    if (window.speechSynthesis && isPlayingSpeech) {
+      window.speechSynthesis.cancel();
+      setIsPlayingSpeech(false);
+    }
+
+    if (catId === 'all') {
+      setCurrentIndex(dailyQuoteIndex);
+      return;
+    }
+
+    const matching = MOTIVATION_QUOTES.filter(q => q.category === catId);
+    if (matching.length === 0) return;
+
+    // If already in that category, cycle to next quote in category
+    if (activeQuote.category === catId) {
+      const currentInCatIdx = matching.findIndex(q => q.id === activeQuote.id);
+      const nextQuote = matching[(currentInCatIdx + 1) % matching.length];
+      const newGlobalIdx = MOTIVATION_QUOTES.findIndex(q => q.id === nextQuote.id);
+      setCurrentIndex(newGlobalIdx >= 0 ? newGlobalIdx : 0);
+    } else {
+      // Newly selected category: show the first quote of this category
+      const firstQuote = matching[0];
+      const newGlobalIdx = MOTIVATION_QUOTES.findIndex(q => q.id === firstQuote.id);
+      setCurrentIndex(newGlobalIdx >= 0 ? newGlobalIdx : 0);
+    }
+  };
+
+  // Next quote within current category
+  const handleNextInPool = () => {
+    if (filteredQuotes.length <= 1) return;
+    const nextPos = (currentCategoryPosition + 1) % filteredQuotes.length;
+    const nextQ = filteredQuotes[nextPos];
+    const fullIdx = MOTIVATION_QUOTES.findIndex(q => q.id === nextQ.id);
+    if (window.speechSynthesis && isPlayingSpeech) {
+      window.speechSynthesis.cancel();
+      setIsPlayingSpeech(false);
+    }
+    setCurrentIndex(fullIdx >= 0 ? fullIdx : 0);
+  };
+
+  // Previous quote within current category
+  const handlePrevInPool = () => {
+    if (filteredQuotes.length <= 1) return;
+    const prevPos = (currentCategoryPosition - 1 + filteredQuotes.length) % filteredQuotes.length;
+    const prevQ = filteredQuotes[prevPos];
+    const fullIdx = MOTIVATION_QUOTES.findIndex(q => q.id === prevQ.id);
+    if (window.speechSynthesis && isPlayingSpeech) {
+      window.speechSynthesis.cancel();
+      setIsPlayingSpeech(false);
+    }
+    setCurrentIndex(fullIdx >= 0 ? fullIdx : 0);
+  };
 
   // Handle Random Quote selection
   const handleRandomize = () => {
@@ -106,7 +195,7 @@ export const DailyMotivationCard: React.FC<DailyMotivationCardProps> = ({
 
   // Copy to Clipboard
   const handleCopyQuote = async () => {
-    const textToCopy = `"${lang === 'ne' ? activeQuote.quoteNe : activeQuote.quoteEn}"\n— ${lang === 'ne' ? activeQuote.authorNe : activeQuote.authorEn}\n(Nepali Calendar)`;
+    const textToCopy = `"${lang === 'ne' ? activeQuote.quoteNe : activeQuote.quoteEn}"\n— ${lang === 'ne' ? activeQuote.authorNe : activeQuote.authorEn}\n(Shubha Patro • shubhapatro.com)`;
     try {
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
@@ -122,7 +211,7 @@ export const DailyMotivationCard: React.FC<DailyMotivationCardProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: lang === 'ne' ? 'Nepali Calendar - दैनिक प्रेरणा' : 'Nepali Calendar - Daily Motivation',
+          title: lang === 'ne' ? 'Shubha Patro (शुभ पात्रो) - दैनिक प्रेरणा' : 'Shubha Patro - Daily Motivation',
           text: shareText,
           url: window.location.href,
         });
@@ -237,58 +326,35 @@ export const DailyMotivationCard: React.FC<DailyMotivationCardProps> = ({
           </div>
         </div>
 
-        {/* Category Filters (Pill selector) */}
+        {/* Category Filters (Pill selector) - dynamically rendered with all categories & live quote counts */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px] no-scrollbar">
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
-              selectedCategory === 'all'
-                ? 'bg-red-700 text-white shadow-xs'
-                : 'bg-stone-100 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
-            }`}
-          >
-            {lang === 'ne' ? 'सबै' : 'All'}
-          </button>
-          <button
-            onClick={() => setSelectedCategory('proverb')}
-            className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
-              selectedCategory === 'proverb'
-                ? 'bg-red-700 text-white shadow-xs'
-                : 'bg-stone-100 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
-            }`}
-          >
-            {lang === 'ne' ? 'उखान टुक्का' : 'Proverbs'}
-          </button>
-          <button
-            onClick={() => setSelectedCategory('literary')}
-            className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
-              selectedCategory === 'literary'
-                ? 'bg-red-700 text-white shadow-xs'
-                : 'bg-stone-100 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
-            }`}
-          >
-            {lang === 'ne' ? 'साहित्यिक' : 'Literary'}
-          </button>
-          <button
-            onClick={() => setSelectedCategory('buddha')}
-            className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
-              selectedCategory === 'buddha'
-                ? 'bg-red-700 text-white shadow-xs'
-                : 'bg-stone-100 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
-            }`}
-          >
-            {lang === 'ne' ? 'बुद्ध वाणी' : 'Buddha'}
-          </button>
-          <button
-            onClick={() => setSelectedCategory('perseverance')}
-            className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
-              selectedCategory === 'perseverance'
-                ? 'bg-red-700 text-white shadow-xs'
-                : 'bg-stone-100 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
-            }`}
-          >
-            {lang === 'ne' ? 'कर्म र सङ्घर्ष' : 'Resilience'}
-          </button>
+          {CATEGORIES.map((cat) => {
+            const count = categoryCounts[cat.id] || 0;
+            const isSelected = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                id={`motivation-cat-${cat.id}`}
+                onClick={() => handleSelectCategory(cat.id)}
+                className={`px-2.5 py-1.5 rounded-xl font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'bg-red-700 text-white shadow-xs scale-[1.02]'
+                    : 'bg-stone-100 dark:bg-stone-800/80 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
+                }`}
+                title={lang === 'ne' ? `${cat.nameNe} (${toNepaliDigits(count)} भनाइहरू)` : `${cat.nameEn} (${count} quotes)`}
+              >
+                <span>{lang === 'ne' ? cat.nameNe : cat.nameEn}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  isSelected 
+                    ? 'bg-red-800 text-white' 
+                    : 'bg-stone-200/80 dark:bg-stone-700/80 text-stone-600 dark:text-stone-300'
+                }`}>
+                  {lang === 'ne' ? toNepaliDigits(count) : count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* The Quote Body */}
@@ -299,26 +365,73 @@ export const DailyMotivationCard: React.FC<DailyMotivationCardProps> = ({
           </div>
 
           <div className="relative z-10 space-y-3">
-            {/* Category Tag & Favorite Indicator */}
-            <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300">
-                <BookOpen className="w-3 h-3" />
-                <span>{lang === 'ne' ? activeQuote.categoryNe : activeQuote.categoryEn}</span>
-              </span>
+            {/* Category Tag, Carousel Counter & Action Indicators */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300">
+                  <BookOpen className="w-3 h-3" />
+                  <span>{lang === 'ne' ? activeQuote.categoryNe : activeQuote.categoryEn}</span>
+                </span>
 
-              <button
-                id="toggle-quote-fav-btn"
-                type="button"
-                onClick={handleToggleFavorite}
-                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                  isFavorite 
-                    ? 'text-rose-600 bg-rose-50 dark:bg-rose-950/60' 
-                    : 'text-stone-400 hover:text-rose-500 hover:bg-stone-200/50 dark:hover:bg-stone-700'
-                }`}
-                title={isFavorite ? (lang === 'ne' ? 'मनपर्नेबाट हटाउनुहोस्' : 'Remove from Favorites') : (lang === 'ne' ? 'मनपर्नेमा राख्नुहोस्' : 'Save as Favorite')}
-              >
-                <Heart className={`w-4 h-4 ${isFavorite ? 'fill-rose-600 text-rose-600' : ''}`} />
-              </button>
+                {/* Counter & Prev/Next for browsing quotes in active section */}
+                <div className="flex items-center gap-1 bg-white/90 dark:bg-stone-900/90 px-1.5 py-0.5 rounded-lg border border-stone-200/80 dark:border-stone-700/80 text-[11px] text-stone-600 dark:text-stone-300 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={handlePrevInPool}
+                    disabled={filteredQuotes.length <= 1}
+                    className="p-0.5 rounded hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-red-600 disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title={lang === 'ne' ? 'अघिल्लो विचार' : 'Previous Quote'}
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="font-mono font-bold px-1 text-[10.5px]">
+                    {lang === 'ne'
+                      ? `${toNepaliDigits(currentCategoryPosition + 1)}/${toNepaliDigits(filteredQuotes.length)}`
+                      : `${currentCategoryPosition + 1}/${filteredQuotes.length}`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleNextInPool}
+                    disabled={filteredQuotes.length <= 1}
+                    className="p-0.5 rounded hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-red-600 disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title={lang === 'ne' ? 'पछिल्लो विचार' : 'Next Quote'}
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1">
+                {/* Toggle All Quotes in Category List */}
+                <button
+                  type="button"
+                  onClick={() => setShowQuoteList(prev => !prev)}
+                  className={`p-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                    showQuoteList
+                      ? 'bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300'
+                      : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-200/50 dark:hover:bg-stone-700'
+                  }`}
+                  title={lang === 'ne' ? 'यस विधाका सबै भनाइहरू सूची हेर्नुहोस्' : 'Browse full list of quotes in this section'}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span className="text-[10px] hidden sm:inline">{lang === 'ne' ? 'सूची' : 'List'}</span>
+                </button>
+
+                {/* Favorite Toggle Button */}
+                <button
+                  id="toggle-quote-fav-btn"
+                  type="button"
+                  onClick={handleToggleFavorite}
+                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                    isFavorite 
+                      ? 'text-rose-600 bg-rose-50 dark:bg-rose-950/60' 
+                      : 'text-stone-400 hover:text-rose-500 hover:bg-stone-200/50 dark:hover:bg-stone-700'
+                  }`}
+                  title={isFavorite ? (lang === 'ne' ? 'मनपर्नेबाट हटाउनुहोस्' : 'Remove from Favorites') : (lang === 'ne' ? 'मनपर्नेमा राख्नुहोस्' : 'Save as Favorite')}
+                >
+                  <Heart className={`w-4 h-4 ${isFavorite ? 'fill-rose-600 text-rose-600' : ''}`} />
+                </button>
+              </div>
             </div>
 
             {/* Primary Quote Text (Nepali) */}
@@ -427,6 +540,64 @@ export const DailyMotivationCard: React.FC<DailyMotivationCardProps> = ({
             </button>
           </div>
         </div>
+        {/* Collapsible Quote List Drawer */}
+        {showQuoteList && (
+          <div className="mt-3 pt-3 border-t border-stone-200 dark:border-stone-800 space-y-2 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-stone-700 dark:text-stone-300">
+                {lang === 'ne' 
+                  ? `यस वर्गका सबै भनाइहरू (${toNepaliDigits(filteredQuotes.length)}):` 
+                  : `All Quotes in this Section (${filteredQuotes.length}):`}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowQuoteList(false)}
+                className="text-[11px] text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 cursor-pointer"
+              >
+                {lang === 'ne' ? 'बन्द गर्नुहोस्' : 'Close'}
+              </button>
+            </div>
+
+            <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1 text-xs">
+              {filteredQuotes.map((q, idx) => {
+                const isSelectedQuote = q.id === activeQuote.id;
+                const fullIndex = MOTIVATION_QUOTES.findIndex(item => item.id === q.id);
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => {
+                      if (fullIndex >= 0) setCurrentIndex(fullIndex);
+                      if (window.speechSynthesis && isPlayingSpeech) {
+                        window.speechSynthesis.cancel();
+                        setIsPlayingSpeech(false);
+                      }
+                      setShowContext(false);
+                      setShowQuoteList(false);
+                    }}
+                    className={`w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer flex items-start gap-2 ${
+                      isSelectedQuote
+                        ? 'bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-900 text-red-950 dark:text-red-100 font-medium'
+                        : 'bg-stone-50/60 dark:bg-stone-800/40 border-stone-200/60 dark:border-stone-700/60 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300'
+                    }`}
+                  >
+                    <span className="font-mono text-[10px] text-stone-400 shrink-0 mt-0.5">
+                      {lang === 'ne' ? `${toNepaliDigits(idx + 1)}.` : `${idx + 1}.`}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="line-clamp-2 leading-relaxed text-xs">
+                        {lang === 'ne' ? q.quoteNe : q.quoteEn}
+                      </p>
+                      <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold block mt-1">
+                        — {lang === 'ne' ? q.authorNe : q.authorEn}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

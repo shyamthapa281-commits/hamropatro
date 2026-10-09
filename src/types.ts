@@ -125,27 +125,6 @@ export interface DailyHoroscope {
 
 export type HoroscopePeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
-export interface NewsArticle {
-  id: string;
-  titleNe: string;
-  titleEn: string;
-  summaryNe: string;
-  summaryEn: string;
-  contentNe: string;
-  contentEn: string;
-  category: 'trending' | 'national' | 'politics' | 'economy' | 'sports' | 'technology' | 'entertainment' | 'opinion' | 'world' | string;
-  source: string;       // Kantipur, OnlineKhabar, Setopati, Ratopati, The Himalayan Times, etc.
-  sourceUrl?: string;
-  publishedAt: string;  // e.g. "२० मिनेट अगाडि" or ISO date
-  author?: string;
-  imageUrl?: string;
-  readTimeMin: number;
-  tags: string[];
-  isBreaking?: boolean;
-  isLive?: boolean;
-  rawPubDate?: string;
-}
-
 export interface ForexRate {
   currencyCode: string; // USD, EUR, GBP, AUD, JPY, QAR, AED, INR, CAD, etc.
   currencyNameNe: string;
@@ -170,20 +149,6 @@ export interface GoldSilverRate {
   changeNpr: number;
   isUp: boolean;
   date: string;
-}
-
-export interface RadioStation {
-  id: string;
-  name: string;
-  frequency: string;
-  location: string;
-  streamUrl: string;
-  backupStreamUrl?: string;
-  genre: string;
-  genreNe?: string;
-  logo: string;
-  bitrate: string;
-  isInstrumental?: boolean;
 }
 
 export interface FestivalInfo {

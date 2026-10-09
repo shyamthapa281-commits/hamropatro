@@ -32,7 +32,9 @@ import {
   IPO_GUIDE_STEPS, 
   NRN_FAQS, 
   IpoIssue, 
-  NrnBankDeposit 
+  NrnBankDeposit,
+  QUOTA_QUALIFICATION_CHECKLIST,
+  NRN_BANK_PORTALS
 } from '../data/nrnBankingData';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
 
@@ -51,6 +53,10 @@ export const NrnBankingIpoView: React.FC<NrnBankingIpoViewProps> = ({ lang, onNa
   const [depositCurrency, setDepositCurrency] = useState<'NPR' | 'AUD' | 'USD'>('NPR');
   const [depositTenureYears, setDepositTenureYears] = useState<number>(1);
   const [selectedBankId, setSelectedBankId] = useState<string>(NRN_COMMERCIAL_BANKS[0].id);
+
+  // Simulator and Checklist States
+  const [simulatorKitta, setSimulatorKitta] = useState<number>(10);
+  const [completedChecklist, setCompletedChecklist] = useState<string[]>(['shram', 'remit_account']);
 
   // FAQ Accordion State
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(0);
@@ -93,16 +99,20 @@ export const NrnBankingIpoView: React.FC<NrnBankingIpoViewProps> = ({ lang, onNa
     e.preventDefault();
     if (!leadName.trim() || !leadContact.trim()) return;
 
-    // Direct email mailto to the site owner for lead followup
-    const subject = encodeURIComponent(`NRN Banking & Demat Assistance Request: ${leadName}`);
-    const body = encodeURIComponent(
-      `Name: ${leadName}\n` +
-      `Living in: ${leadCountry}\n` +
-      `Contact (WhatsApp / Email): ${leadContact}\n` +
-      `Preferred Bank: ${leadBankChoice}\n\n` +
-      `Sent via Nepali Calendar NRN Banking Portal`
-    );
-    window.location.href = `mailto:shyamthapa281@gmail.com?subject=${subject}&body=${body}`;
+    // Smooth on-page lead registration
+    try {
+      const storedLeads = JSON.parse(localStorage.getItem('shubhapatro_nrn_inquiries') || '[]');
+      storedLeads.unshift({
+        id: Date.now().toString(),
+        name: leadName.trim(),
+        country: leadCountry,
+        contact: leadContact.trim(),
+        bank: leadBankChoice,
+        date: new Date().toISOString()
+      });
+      localStorage.setItem('shubhapatro_nrn_inquiries', JSON.stringify(storedLeads.slice(0, 30)));
+    } catch (_) {}
+
     setLeadSuccess(true);
   };
 
@@ -404,6 +414,128 @@ export const NrnBankingIpoView: React.FC<NrnBankingIpoViewProps> = ({ lang, onNa
             </div>
           </div>
 
+          {/* Interactive IPO Allotment Odds Simulator */}
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-stone-200 dark:border-stone-800 shadow-sm space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 dark:border-stone-800 pb-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 text-xs font-black">
+                  <Calculator className="w-3.5 h-3.5" />
+                  <span>{lang === 'ne' ? 'प्रत्यक्ष तुलना सिमुलेटर' : 'Live Allotment Odds Simulator'}</span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-stone-900 dark:text-white mt-1.5">
+                  {lang === 'ne' ? 'वैदेशिक रोजगार कोटा (१०%) vs सर्वसाधारण लटरी तुलना' : 'Foreign Employment (10%) vs General Public Lottery'}
+                </h3>
+              </div>
+
+              {/* Kitta Selector */}
+              <div className="flex items-center gap-1.5 bg-stone-100 dark:bg-stone-800 p-1 rounded-xl text-xs font-bold">
+                <span className="text-stone-500 px-2">{lang === 'ne' ? 'आवेदन कित्ता:' : 'Applied Kitta:'}</span>
+                {[10, 20, 30, 50].map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setSimulatorKitta(k)}
+                    className={`px-3 py-1.5 rounded-lg cursor-pointer transition-all ${
+                      simulatorKitta === k
+                        ? 'bg-sky-600 text-white font-black shadow-xs'
+                        : 'text-stone-600 dark:text-stone-300 hover:text-sky-600'
+                    }`}
+                  >
+                    {toNepaliDigits(k)} {lang === 'ne' ? 'कित्ता' : 'Kitta'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Comparison Cards: Side by side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Option A: Foreign Employment Quota (Green Winner) */}
+              <div className="p-6 rounded-3xl bg-gradient-to-br from-emerald-50 via-teal-50/40 to-stone-50 dark:from-stone-900 dark:via-emerald-950/30 dark:to-stone-900 border-2 border-emerald-500 dark:border-emerald-700 shadow-sm space-y-4 relative overflow-hidden">
+                <div className="absolute top-3 right-3 bg-emerald-600 text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-2xs">
+                  {lang === 'ne' ? 'उच्च सम्भावना (Win)' : 'Guaranteed Tier'}
+                </div>
+
+                <div>
+                  <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider block">
+                    {lang === 'ne' ? 'विकल्प १: वैदेशिक रोजगार कोटा' : 'Option 1: Foreign Employment Quota'}
+                  </span>
+                  <h4 className="text-2xl font-black text-emerald-950 dark:text-emerald-100 mt-1">
+                    १००% {lang === 'ne' ? 'निश्चित सेयर पर्ने सम्भावना' : 'Allotment Probability'}
+                  </h4>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between py-1 border-b border-emerald-200/60 dark:border-emerald-900/60">
+                    <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'औसत कुल आवेदक संख्या:' : 'Average Verified Applicants:'}</span>
+                    <span className="font-bold text-stone-900 dark:text-white">~४०,००० देखि ५०,०००</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-emerald-200/60 dark:border-emerald-900/60">
+                    <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? '१०% सुरक्षित सेयर संख्या:' : 'Reserved 10% Shares:'}</span>
+                    <span className="font-bold text-stone-900 dark:text-white">१,५०,००० देखि ३,००,०००</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-emerald-200/60 dark:border-emerald-900/60">
+                    <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'आवेदक प्रति सेयर अनुपात:' : 'Shares per Applicant:'}</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">१० देखि ५० कित्तासम्म पक्का</span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-emerald-100/70 dark:bg-emerald-950/80 rounded-2xl text-xs text-emerald-950 dark:text-emerald-200 font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>
+                    {lang === 'ne'
+                      ? `रु ${toNepaliDigits(simulatorKitta * 100)} लगानीमा प्रायः सबै ${toNepaliDigits(simulatorKitta)} कित्ता नै हात पर्दछ!`
+                      : `At NPR ${simulatorKitta * 100} invested, you are practically guaranteed the full ${simulatorKitta} shares!`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Option B: General Public Quota (Red Risk) */}
+              <div className="p-6 rounded-3xl bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-700 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block">
+                    {lang === 'ne' ? 'विकल्प २: सर्वसाधारण लटरी कोटा' : 'Option 2: General Public Quota'}
+                  </span>
+                  <span className="text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold px-2 py-0.5 rounded-full">
+                    {lang === 'ne' ? 'गोलाप्रथा जोखिम' : 'Pure Lottery'}
+                  </span>
+                </div>
+
+                <div>
+                  <h4 className="text-2xl font-black text-rose-700 dark:text-rose-400">
+                    ~६.५% {lang === 'ne' ? 'मात्र गोलाप्रथा सम्भावना' : 'Hit Probability'}
+                  </h4>
+                  <p className="text-xs text-stone-500 mt-0.5">
+                    {lang === 'ne' ? '९३.५% भन्दा धेरै आवेदकको हात रित्तो हुन्छ' : 'Over 93.5% of applicants get 0 shares'}
+                  </p>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between py-1 border-b border-stone-200/80 dark:border-stone-700">
+                    <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'कुल आवेदक संख्या:' : 'Average Applicants:'}</span>
+                    <span className="font-bold text-stone-900 dark:text-white">२२,००,००० देखि २५,००,०००+</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-stone-200/80 dark:border-stone-700">
+                    <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? '१० कित्ता पाउने भाग्यशाली:' : 'Lottery Winners:'}</span>
+                    <span className="font-bold text-stone-900 dark:text-white">१,३५,००० देखि १,५०,००० जना</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-stone-200/80 dark:border-stone-700">
+                    <span className="text-stone-600 dark:text-stone-400">{lang === 'ne' ? 'नतिजा:' : 'Outcome:'}</span>
+                    <span className="font-bold text-rose-600 dark:text-rose-400">अधिकांशलाई पर्दैन</span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-stone-100 dark:bg-stone-800 rounded-2xl text-xs text-stone-600 dark:text-stone-300 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-stone-400 shrink-0" />
+                  <span>
+                    {lang === 'ne'
+                      ? 'त्यसैले विदेशमा रहेका नेपालीले आफ्नो C-ASBA लाई वैदेशिक रोजगार कोटामा प्रमाणित गर्नु अनिवार्य छ!'
+                      : 'This is why tagging your C-ASBA account under Foreign Employment is essential!'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       )}
 
@@ -511,6 +643,87 @@ export const NrnBankingIpoView: React.FC<NrnBankingIpoViewProps> = ({ lang, onNa
                   <span>Sanima Capital</span>
                   <ExternalLink className="w-3.5 h-3.5 text-stone-400" />
                 </a>
+              </div>
+            </div>
+
+            {/* Interactive Quota Qualification Checklist */}
+            <div className="pt-6 border-t border-stone-200 dark:border-stone-800 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 text-xs font-black">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>{lang === 'ne' ? 'अनिवार्य ५ बुँदे चेकलिस्ट' : 'Mandatory 5-Step Verification Checklist'}</span>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-black text-stone-900 dark:text-white mt-1.5">
+                    {lang === 'ne' ? '१०% कोटामा आवेदन दिन तपाईं तयार हुनुहुन्छ?' : 'Are You Ready for the 10% Foreign Quota?'}
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-3 py-1.5 rounded-xl">
+                  <span>{lang === 'ne' ? 'तयारी अवस्था:' : 'Readiness:'}</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-black">
+                    {Math.round((completedChecklist.length / QUOTA_QUALIFICATION_CHECKLIST.length) * 100)}%
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {QUOTA_QUALIFICATION_CHECKLIST.map((item) => {
+                  const isChecked = completedChecklist.includes(item.id);
+                  const toggleCheck = () => {
+                    if (isChecked) {
+                      setCompletedChecklist(completedChecklist.filter(id => id !== item.id));
+                    } else {
+                      setCompletedChecklist([...completedChecklist, item.id]);
+                    }
+                  };
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={toggleCheck}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
+                        isChecked
+                          ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800'
+                          : 'bg-stone-50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 hover:border-sky-300'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                          isChecked ? 'bg-emerald-600 text-white' : 'border-2 border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900'
+                        }`}
+                      >
+                        {isChecked && <Check className="w-4 h-4" />}
+                      </button>
+
+                      <div className="space-y-1 text-xs flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="font-extrabold text-stone-900 dark:text-white text-xs sm:text-sm">
+                            {lang === 'ne' ? item.titleNe : item.titleEn}
+                          </h4>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                            item.status === 'mandatory'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'
+                              : item.status === 'critical'
+                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                              : 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300'
+                          }`}>
+                            {item.status === 'mandatory' ? (lang === 'ne' ? 'अनिवार्य' : 'Mandatory') : item.status === 'critical' ? (lang === 'ne' ? 'महत्वपूर्ण' : 'Critical') : (lang === 'ne' ? 'अनलाइन' : 'Online')}
+                          </span>
+                        </div>
+
+                        <p className="text-stone-600 dark:text-stone-300 text-[11px] leading-relaxed">
+                          {lang === 'ne' ? item.requirementNe : item.requirementEn}
+                        </p>
+
+                        <p className="text-[10px] text-sky-700 dark:text-sky-400 font-semibold pt-0.5">
+                          💡 {lang === 'ne' ? item.verificationTipNe : item.verificationTipEn}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -765,6 +978,81 @@ export const NrnBankingIpoView: React.FC<NrnBankingIpoViewProps> = ({ lang, onNa
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* Direct Bank NRN Online Portals & Video-KYC Links */}
+          <div className="bg-white dark:bg-stone-900 p-6 sm:p-8 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-xs space-y-5">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 text-xs font-black">
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>{lang === 'ne' ? 'प्रत्यक्ष अनलाइन भिडियो KYC पोर्टलहरू' : 'Direct Online Video-KYC Portals'}</span>
+                </div>
+                <h3 className="text-lg sm:text-xl font-black text-stone-900 dark:text-white mt-1.5">
+                  {lang === 'ne' ? 'विदेशबाटै सिधै खाता खोल्ने आधिकारिक बैंक पोर्टल' : 'Open NRN Remittance Account Online Without Middlemen'}
+                </h3>
+              </div>
+              <span className="text-xs text-stone-500 dark:text-stone-400">
+                {lang === 'ne' ? 'शून्य मौज्दात (Zero Balance) • सुरक्षित' : 'Zero Balance • 100% Digital'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {NRN_BANK_PORTALS.map((portal) => (
+                <div
+                  key={portal.id}
+                  className="p-5 rounded-2xl border border-stone-200 dark:border-stone-700/80 bg-stone-50/60 dark:bg-stone-800/40 hover:border-sky-400 transition-all flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="font-black text-stone-900 dark:text-white text-sm">
+                          {lang === 'ne' ? portal.nameNe : portal.nameEn}
+                        </h4>
+                        <p className="text-[11px] font-bold text-sky-700 dark:text-sky-400">
+                          {lang === 'ne' ? portal.schemeNe : portal.schemeEn}
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded-full shrink-0">
+                        {portal.fdRate}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1 text-[10px]">
+                      {portal.fcyCurrencies.map((c) => (
+                        <span key={c} className="px-1.5 py-0.5 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded font-semibold text-stone-700 dark:text-stone-300">
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 shrink-0" />
+                      <span>{portal.videoKycTime}</span>
+                    </div>
+
+                    <ul className="space-y-1 text-[11px] text-stone-600 dark:text-stone-300">
+                      {(lang === 'ne' ? portal.featuresNe : portal.featuresEn).map((f, i) => (
+                        <li key={i} className="flex items-start gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <a
+                    href={portal.portalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
+                  >
+                    <span>{lang === 'ne' ? 'बैंक पोर्टलमा खाता खोल्नुहोस्' : 'Open Account on Bank Portal'}</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              ))}
             </div>
           </div>
 

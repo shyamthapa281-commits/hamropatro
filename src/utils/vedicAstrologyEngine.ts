@@ -1,8 +1,7 @@
 /**
- * AI Fallback Engine
+ * Vedic Astrological Guidance & Content Engine
  * Provides instant, authentic, culturally grounded Vedic Astrological guidance,
- * News summaries, and language analysis when the Gemini API is rate-limited (429)
- * or offline.
+ * News summaries, and language analysis deterministically and offline.
  */
 
 export interface VedicReadingOptions {

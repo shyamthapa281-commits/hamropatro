@@ -1,0 +1,22 @@
+[
+  {
+    "id": "msg-1791540773617",
+    "name": "hari",
+    "email": "siam124ai@gmail.com",
+    "category": "advice",
+    "type": "advice",
+    "message": "good work",
+    "createdAt": "2026-10-09T10:12:53.617Z",
+    "status": "received"
+  },
+  {
+    "id": "msg-1728468463000",
+    "name": "hari",
+    "email": "siam124ai@gmail.com",
+    "type": "advice",
+    "category": "advice",
+    "message": "good work",
+    "createdAt": "2026-10-09T10:00:00.000Z",
+    "status": "received"
+  }
+]

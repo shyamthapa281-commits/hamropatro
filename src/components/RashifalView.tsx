@@ -47,7 +47,7 @@ import { getDynamicHoroscope } from '../utils/horoscopeEngine';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
 import { DREAM_INTERPRETATIONS, DreamItem } from '../data/dharmaCultureData';
 import { HoroscopeShareModal } from './HoroscopeShareModal';
-import { generateAstrologyReading } from '../utils/aiFallbackEngine';
+import { generateAstrologyReading } from '../utils/vedicAstrologyEngine';
 import confetti from 'canvas-confetti';
 
 interface RashifalViewProps {
@@ -149,7 +149,7 @@ export const RashifalView: React.FC<RashifalViewProps> = ({ lang, todayBs, onNav
       ? (lang === 'ne' ? todayBs.formattedNe : todayBs.formattedEn)
       : (lang === 'ne' ? 'आजको दिन' : "Today's Date");
 
-    const text = `🌟 Nepali Calendar • वैदिक राशिफल (Horoscope)
+    const text = `🌟 Shubha Patro • वैदिक राशिफल (Horoscope)
 ${rashiToCopy.symbol} ${rashiToCopy.nameNe} (${rashiToCopy.nameEn}) | ${h.date}
 ⭐ शुभ योग: ${h.rating}/५ तारा
 
@@ -165,7 +165,7 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
 🌿 ज्योतिषीय उपाय: ${lang === 'ne' ? h.remedyNe : h.remedyEn}
 💎 शुभ रत्न: ${lang === 'ne' ? h.gemstoneNe : h.gemstoneEn}
 
-📱 थप विस्तृत पञ्चाङ्ग तथा राशिफलका लागि Nepali Calendar हेर्नुहोस्।`;
+📱 थप विस्तृत पञ्चाङ्ग तथा राशिफलका लागि Shubha Patro (Nepali Calendar • shubhapatro.com) हेर्नुहोस्।`;
 
     navigator.clipboard.writeText(text);
     setCopiedRashiId(rashiToCopy.id);

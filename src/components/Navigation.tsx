@@ -2,21 +2,14 @@ import React, { useRef, useState, useEffect } from 'react';
 import { 
   Calendar as CalendarIcon, 
   Sparkles, 
-  Newspaper, 
   Coins, 
-  Flame, 
   ArrowLeftRight,
   Calculator as CalcIcon,
-  Languages,
-  Building2,
   Clock,
   CloudSun,
   ChevronLeft,
   ChevronRight,
-  HeartPulse,
-  Gamepad2,
   BookOpen,
-  Heart,
   TrendingUp,
   Compass
 } from 'lucide-react';
@@ -26,7 +19,6 @@ interface NavigationProps {
   activeTab: string;
   onSelectTab: (tab: string) => void;
   lang: Language;
-  unreadNewsCount?: number;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -57,8 +49,24 @@ export const Navigation: React.FC<NavigationProps> = ({
       nameNe: 'कुण्डली तथा गुण मिलान',
       nameEn: 'Kundali & Gun Milan',
       icon: Compass,
-      badgeNe: '३६ गुण',
-      badgeEn: '36 Gunas',
+      badgeNe: 'वैदिक',
+      badgeEn: 'Vedic',
+    },
+    {
+      id: 'forex',
+      nameNe: 'विदेशी मुद्रा र सुन',
+      nameEn: 'Forex & Gold',
+      icon: Coins,
+      badgeNe: 'NRB',
+      badgeEn: 'Rates',
+    },
+    {
+      id: 'nrn-banking',
+      nameNe: 'NRN बैंकिङ र IPO',
+      nameEn: 'NRN Banking & IPO',
+      icon: TrendingUp,
+      badgeNe: '१०% कोटा',
+      badgeEn: '10% Quota',
     },
     {
       id: 'dharma',
@@ -67,14 +75,6 @@ export const Navigation: React.FC<NavigationProps> = ({
       icon: BookOpen,
       badgeNe: 'सपना फल',
       badgeEn: 'Dreams',
-    },
-    {
-      id: 'news',
-      nameNe: 'ताजा समाचार',
-      nameEn: 'Nepali News',
-      icon: Newspaper,
-      badgeNe: 'ताजा',
-      badgeEn: 'Live',
     },
     {
       id: 'weather',
@@ -93,78 +93,16 @@ export const Navigation: React.FC<NavigationProps> = ({
       badgeEn: 'Nepal NPT',
     },
     {
-      id: 'forex',
-      nameNe: 'विदेशी मुद्रा र सुन',
-      nameEn: 'Forex & Gold',
-      icon: Coins,
-    },
-    {
-      id: 'nrn-banking',
-      nameNe: 'NRN बैंकिङ र IPO',
-      nameEn: 'NRN Banking & IPO',
-      icon: TrendingUp,
-      badgeNe: '१०% कोटा',
-      badgeEn: '10% Quota',
-    },
-    {
       id: 'calculator',
       nameNe: 'क्याल्कुलेटर',
-      nameEn: 'Calculator',
+      nameEn: 'Calculator & EMI',
       icon: CalcIcon,
-      badgeNe: 'नयाँ',
-      badgeEn: 'New',
     },
     {
       id: 'converter',
-      nameNe: 'नाप / मिति रूपान्तरण',
+      nameNe: 'नाप तथा मिति रूपान्तरण',
       nameEn: 'Measurement & Date',
       icon: ArrowLeftRight,
-    },
-    {
-      id: 'health',
-      nameNe: 'स्वास्थ्य तथा कल्याण',
-      nameEn: 'Health & Wellness',
-      icon: HeartPulse,
-      badgeNe: 'ऋतुचर्या',
-      badgeEn: 'Wellness',
-    },
-    {
-      id: 'language',
-      nameNe: 'भाषा सिकाई',
-      nameEn: 'Language Learning',
-      icon: Languages,
-      badgeNe: 'नयाँ',
-      badgeEn: 'New',
-    },
-    {
-      id: 'games',
-      nameNe: 'सुडोकू र खेल केन्द्र',
-      nameEn: 'Sudoku & Games',
-      icon: Gamepad2,
-      badgeNe: 'सुडोकू',
-      badgeEn: 'Sudoku',
-    },
-    {
-      id: 'govhelp',
-      nameNe: 'सरकारी सेवा तथा दिशानिर्देश',
-      nameEn: 'Gov Services & Directions',
-      icon: Building2,
-      badgeNe: 'दिशा',
-      badgeEn: 'Directions',
-    },
-    {
-      id: 'festivals',
-      nameNe: 'नेपाली चाडपर्व',
-      nameEn: 'Festivals',
-      icon: Flame,
-    },
-    {
-      id: 'support',
-      nameNe: 'सहयोग गर्नुहोस्',
-      nameEn: 'Support Our Work',
-      icon: Heart,
-      badgeNe: '❤️ सहयोग',
-      badgeEn: '❤️ Donate',
     },
   ];
 

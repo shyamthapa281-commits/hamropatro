@@ -1,10 +1,11 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import dotenv from 'dotenv';
 import { XMLParser } from 'fast-xml-parser';
 import { createServer as createViteServer } from 'vite';
 import { translateOffline } from './src/utils/nepaliTranslator';
-import { generateAstrologyReading, generateNewsSummary, generateCustomPrediction } from './src/utils/aiFallbackEngine';
+import { generateAstrologyReading, generateNewsSummary, generateCustomPrediction } from './src/utils/vedicAstrologyEngine';
 
 dotenv.config();
 
@@ -948,6 +949,102 @@ app.get('/api/radio/proxy', async (req, res) => {
       res.end();
     }
   }
+});
+
+// Feedback & Advice Inbox Data Management
+const FEEDBACK_FILE = path.join(process.cwd(), 'data', 'feedback_inbox.json');
+
+function loadFeedbacks(): any[] {
+  try {
+    if (fs.existsSync(FEEDBACK_FILE)) {
+      const data = fs.readFileSync(FEEDBACK_FILE, 'utf-8');
+      return JSON.parse(data) || [];
+    }
+  } catch (err) {
+    console.warn('Failed to load feedbacks:', err);
+  }
+  return [];
+}
+
+function saveFeedbacks(list: any[]): void {
+  try {
+    const dir = path.dirname(FEEDBACK_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(FEEDBACK_FILE, JSON.stringify(list.slice(0, 100), null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('Failed to save feedbacks:', err);
+  }
+}
+
+// Get all received feedback & advice messages
+app.get('/api/feedback/list', (req, res) => {
+  const items = loadFeedbacks();
+  res.json({
+    success: true,
+    total: items.length,
+    feedbacks: items,
+  });
+});
+
+// Submit advice, reaction, or feedback smoothly on-page
+app.post('/api/feedback/submit', async (req, res) => {
+  const { name = '', email = '', category = 'advice', type = 'advice', message = '' } = req.body;
+  if (!message || typeof message !== 'string' || !message.trim()) {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+
+  const cleanName = (name || '').trim() || 'Anonymous (शुभचिन्तक)';
+  const cleanEmail = (email || '').trim() || 'Not specified';
+  const cleanCategory = (category || type || 'advice').trim();
+  const cleanMessage = message.trim();
+
+  const newEntry = {
+    id: `msg-${Date.now()}`,
+    name: cleanName,
+    email: cleanEmail,
+    category: cleanCategory,
+    type: cleanCategory,
+    message: cleanMessage,
+    createdAt: new Date().toISOString(),
+    status: 'received',
+  };
+
+  const currentList = loadFeedbacks();
+  currentList.unshift(newEntry);
+  saveFeedbacks(currentList);
+
+  // Asynchronously dispatch to FormSubmit webhook for external notification
+  (async () => {
+    try {
+      const targets = ['shyamthapa281@gmail.com', 'info@shubhapatro.com'];
+      for (const target of targets) {
+        await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(target)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Origin': 'https://shubhapatro.com',
+            'Referer': 'https://shubhapatro.com/',
+          },
+          body: JSON.stringify({
+            name: cleanName,
+            email: cleanEmail,
+            category: cleanCategory,
+            message: cleanMessage,
+            _subject: `[Shubha Patro ${cleanCategory.toUpperCase()}] From ${cleanName} (${cleanEmail})`,
+          }),
+        }).catch(() => {});
+      }
+    } catch (_) {}
+  })();
+
+  res.json({
+    success: true,
+    message: 'Feedback received and securely stored in Shubha Patro inbox.',
+    entry: newEntry,
+  });
 });
 
 // Vite middleware setup

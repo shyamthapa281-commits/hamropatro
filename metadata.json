@@ -1,6 +1,6 @@
 {
   "name": "Hamro Patro",
-  "description": "Comprehensive Nepali Bikram Sambat calendar, authentic Dharma Sanskriti (Vedic rituals, puja vidhi & 108 japa counter), Swapna Shastra dream interpretation, daily Rashifal, Daily Motivation & Nepali proverbs, Health & Wellness seasonal Ayurvedic Ritucharya & yoga, free online Sudoku & mind activity games centre, live weather forecasts, Nepali news, real Forex & Gold rates, calculators, and official government help centre with direct Google Maps directions.",
+  "description": "Shubha Patro - Comprehensive Nepali Calendar (Bikram Sambat), authentic Dharma Sanskriti (Vedic rituals, puja vidhi & 108 japa counter), Swapna Shastra dream interpretation, daily Rashifal, Daily Motivation & Nepali proverbs, Health & Wellness seasonal Ayurvedic Ritucharya & yoga, free online Sudoku & mind activity games centre, live weather forecasts, NRN banking & IPO allotment tools, real Forex & Gold rates, calculators, and official government help centre with direct Google Maps directions.",
   "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -16,10 +16,14 @@ import {
   Check, 
   RotateCcw, 
   Volume2,
+  VolumeX,
+  Bell,
   Share2,
   Calendar,
   Compass,
-  ArrowRight
+  ArrowRight,
+  Clock,
+  ShieldAlert
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Language } from '../types';
@@ -27,11 +31,14 @@ import {
   DREAM_INTERPRETATIONS, 
   VEDIC_RITUALS_DATA, 
   SACRED_MANTRAS_DATA,
+  SWAPNA_TIMING_GUIDES,
+  BAD_DREAM_REMEDIES,
   DreamItem,
   VedicRitual,
   SacredMantra
 } from '../data/dharmaCultureData';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
+import { soundSynthesizer } from '../utils/audioSynthesizer';
 
 interface DharmaSanskritiViewProps {
   lang: Language;
@@ -52,11 +59,13 @@ export const DharmaSanskritiView: React.FC<DharmaSanskritiViewProps> = ({
   const [selectedDream, setSelectedDream] = useState<DreamItem | null>(DREAM_INTERPRETATIONS[0]);
   const [copiedDreamId, setCopiedDreamId] = useState<string | null>(null);
 
-  // --- JAPA COUNTER STATE ---
+  // --- JAPA & SOUND STATE ---
   const [selectedMantra, setSelectedMantra] = useState<SacredMantra>(SACRED_MANTRAS_DATA[0]);
   const [japaCount, setJapaCount] = useState<number>(0);
   const [japaRounds, setJapaRounds] = useState<number>(0);
   const [copiedMantraId, setCopiedMantraId] = useState<string | null>(null);
+  const [isContinuousDrone, setIsContinuousDrone] = useState<boolean>(false);
+  const [isPlayingMantraRecitation, setIsPlayingMantraRecitation] = useState<boolean>(false);
 
   // Filtered Dreams
   const filteredDreams = useMemo(() => {
@@ -78,20 +87,12 @@ export const DharmaSanskritiView: React.FC<DharmaSanskritiViewProps> = ({
 
   // Handle Japa Click
   const handleJapaStep = () => {
-    // Play subtle soft bell sound via Web Audio API
-    try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(528, audioCtx.currentTime); // 528 Hz Love/Solfeggio frequency
-      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.35);
-    } catch {}
+    // Unique sound: If Maha Mrityunjaya Mantra, play rich Tibetan singing bowl strike!
+    if (selectedMantra.id === 'mahamrityunjaya') {
+      soundSynthesizer.playSingingBowl(216, 4.0);
+    } else {
+      soundSynthesizer.playTempleBell(528);
+    }
 
     const nextCount = japaCount + 1;
     if (nextCount >= selectedMantra.suggestedChants) {
@@ -108,18 +109,50 @@ export const DharmaSanskritiView: React.FC<DharmaSanskritiViewProps> = ({
     }
   };
 
+  const handlePlaySingingBowl = () => {
+    soundSynthesizer.playSingingBowl(216, 5.0);
+  };
+
+  const handleToggleDrone = () => {
+    const isPlaying = soundSynthesizer.toggleContinuousSingingBowl(setIsContinuousDrone);
+    setIsContinuousDrone(isPlaying);
+  };
+
+  const handleReciteMantra = (m: SacredMantra) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    if (isPlayingMantraRecitation) {
+      window.speechSynthesis.cancel();
+      setIsPlayingMantraRecitation(false);
+      return;
+    }
+
+    // Strike the singing bowl
+    soundSynthesizer.playSingingBowl(216, 6.0);
+
+    const cleanText = m.sanskritText.replace(/[।॥\n]/g, ' ');
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'ne-NP';
+    utterance.rate = 0.85;
+    utterance.onend = () => setIsPlayingMantraRecitation(false);
+    utterance.onerror = () => setIsPlayingMantraRecitation(false);
+
+    setIsPlayingMantraRecitation(true);
+    window.speechSynthesis.speak(utterance);
+  };
+
   const handleResetJapa = () => {
     setJapaCount(0);
   };
 
   const handleCopyDream = (dream: DreamItem) => {
-    const text = `🌙 सपनाको फल (Swapna Shastra) • Nepali Calendar
+    const text = `🌙 सपनाको फल (Swapna Shastra) • Shubha Patro (Nepali Calendar)
 ✨ सपना: ${lang === 'ne' ? dream.keywordNe : dream.keywordEn}
 📖 फल: ${lang === 'ne' ? dream.shortMeaningNe : dream.shortMeaningEn}
 🔍 संकेत: ${lang === 'ne' ? dream.indicationNe : dream.indicationEn}
 🌿 वैदिक शान्ति उपाय: ${lang === 'ne' ? dream.remedyNe : dream.remedyEn}
 
-📱 थप सपनाको फल तथा धर्म संस्कृतिका लागि Nepali Calendar हेर्नुहोस्।`;
+📱 थप सपनाको फल तथा धर्म संस्कृतिका लागि Shubha Patro (Nepali Calendar • shubhapatro.com) हेर्नुहोस्।`;
 
     navigator.clipboard.writeText(text);
     setCopiedDreamId(dream.id);
@@ -133,7 +166,7 @@ ${m.sanskritText}
 अर्थ: ${m.nepaliMeaning}
 फल: ${m.benefitNe}
 
-Nepali Calendar • धर्म संस्कृति`;
+Shubha Patro (शुभ पात्रो • shubhapatro.com) • धर्म संस्कृति`;
     navigator.clipboard.writeText(text);
     setCopiedMantraId(m.id);
     setTimeout(() => setCopiedMantraId(null), 2500);
@@ -489,6 +522,74 @@ Nepali Calendar • धर्म संस्कृति`;
               ) : null}
             </div>
           </div>
+
+          {/* Swapna Shastra Timing Guide & Bad Dream Remedies */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-stone-200 dark:border-stone-800">
+            {/* 1. Prahar Timing Guide */}
+            <div className="bg-white dark:bg-stone-900 rounded-3xl p-5 sm:p-6 border border-stone-200 dark:border-stone-800 space-y-4 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-400 flex items-center justify-center font-bold">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-stone-900 dark:text-white text-sm sm:text-base">
+                    {lang === 'ne' ? 'प्रहर अनुसार सपनाको फल कहिले मिल्छ?' : 'When Do Dreams Manifest? (Prahar Timing)'}
+                  </h4>
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
+                    {lang === 'ne' ? 'प्राचीन स्वप्न शास्त्र अनुसार समय र प्रहरको प्रभाव' : 'Vedic Swapna Shastra timing precision'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                {SWAPNA_TIMING_GUIDES.map((item, idx) => (
+                  <div key={idx} className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <span className="font-extrabold text-stone-900 dark:text-white block">
+                        {lang === 'ne' ? item.praharNe : item.praharEn}
+                      </span>
+                      <p className="text-stone-600 dark:text-stone-300 text-[11px] mt-0.5">
+                        {lang === 'ne' ? item.manifestationNe : item.manifestationEn}
+                      </p>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200 shrink-0 self-start sm:self-center">
+                      {lang === 'ne' ? item.accuracyNe : item.accuracyEn}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Bad Dream Neutralizing Remedies */}
+            <div className="bg-white dark:bg-stone-900 rounded-3xl p-5 sm:p-6 border border-stone-200 dark:border-stone-800 space-y-4 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-400 flex items-center justify-center font-bold">
+                  <ShieldAlert className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-stone-900 dark:text-white text-sm sm:text-base">
+                    {lang === 'ne' ? 'दुःस्वप्न शान्ति तथा वैदिक रक्षा विधि' : 'Bad Dream Protection & Remedies'}
+                  </h4>
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
+                    {lang === 'ne' ? 'अशुभ सपना देखेमा तत्काल गर्नुपर्ने सरल उपाय' : 'Simple authentic steps to dispel bad dreams'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                {BAD_DREAM_REMEDIES.map((rem) => (
+                  <div key={rem.id} className="p-3.5 rounded-2xl bg-red-50/50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/40 text-xs space-y-1">
+                    <span className="font-bold text-red-900 dark:text-red-300 block">
+                      🛡️ {lang === 'ne' ? rem.titleNe : rem.titleEn}
+                    </span>
+                    <p className="text-stone-700 dark:text-stone-300 text-[11px] leading-relaxed">
+                      {lang === 'ne' ? rem.descNe : rem.descEn}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -643,6 +744,66 @@ Nepali Calendar • धर्म संस्कृति`;
                       <Sparkles className="w-3.5 h-3.5 shrink-0" />
                       <span>{lang === 'ne' ? `फल: ${m.benefitNe}` : `Benefit: ${m.benefitEn}`}</span>
                     </div>
+
+                    {/* Dedicated Audio & Singing Bowl Sound Controls */}
+                    <div className="pt-2 border-t border-stone-200/60 dark:border-stone-800 flex flex-wrap items-center gap-2">
+                      {m.id === 'mahamrityunjaya' ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlaySingingBowl();
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer active:scale-95"
+                            title="Play authentic bronze Tibetan singing bowl sound"
+                          >
+                            <Bell className="w-3.5 h-3.5 text-stone-900" />
+                            <span>{lang === 'ne' ? 'सिङ्गिङ बाउल ध्वनि बजाउनुहोस्' : 'Play Singing Bowl Chime'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleDrone();
+                            }}
+                            className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                              isContinuousDrone
+                                ? 'bg-red-600 text-white animate-pulse'
+                                : 'bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300'
+                            }`}
+                          >
+                            {isContinuousDrone ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-amber-600" />}
+                            <span>{isContinuousDrone ? (lang === 'ne' ? 'ध्यान ध्वनि बन्द' : 'Stop Drone') : (lang === 'ne' ? 'निरन्तर ध्यान ध्वनि (Drone)' : 'Singing Bowl Drone')}</span>
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            soundSynthesizer.playTempleBell(528);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <Bell className="w-3.5 h-3.5 text-amber-600" />
+                          <span>{lang === 'ne' ? 'मन्दिरको घण्टी बजाउनुहोस्' : 'Play Bell Chime'}</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReciteMantra(m);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Volume2 className="w-3.5 h-3.5 text-amber-600" />
+                        <span>{isPlayingMantraRecitation ? (lang === 'ne' ? 'रोक्नुहोस्' : 'Stop Audio') : (lang === 'ne' ? 'मन्त्र पाठ सुन्नुहोस्' : 'Listen Chanting')}</span>
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -651,7 +812,7 @@ Nepali Calendar • धर्म संस्कृति`;
 
           {/* Right Column: 108 Digital Japa Counter Bead Machine (5 cols) */}
           <div className="lg:col-span-5 sticky top-24">
-            <div className="bg-gradient-to-b from-stone-900 via-stone-900 to-red-950 text-white rounded-3xl p-6 sm:p-7 shadow-xl border border-stone-800 space-y-6 relative overflow-hidden text-center">
+            <div className="bg-gradient-to-b from-stone-900 via-stone-900 to-red-950 text-white rounded-3xl p-6 sm:p-7 shadow-xl border border-stone-800 space-y-5 relative overflow-hidden text-center">
               
               <div>
                 <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block mb-1">
@@ -663,6 +824,13 @@ Nepali Calendar • धर्म संस्कृति`;
                 <p className="text-xs text-amber-200/80 mt-1 line-clamp-1 font-serif">
                   {selectedMantra.sanskritText.split('\n')[0]}
                 </p>
+
+                {selectedMantra.id === 'mahamrityunjaya' && (
+                  <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-[11px] font-bold text-amber-300">
+                    <Bell className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                    <span>{lang === 'ne' ? 'महामृत्युञ्जय: सिङ्गिङ बाउल ध्वनि सक्रिय (प्रत्येक ट्यापमा)' : 'Singing Bowl sound active on each tap'}</span>
+                  </div>
+                )}
               </div>
 
               {/* Central Japa Dial */}
@@ -685,7 +853,7 @@ Nepali Calendar • धर्म संस्कृति`;
                     / {toNepaliDigits(selectedMantra.suggestedChants)} {lang === 'ne' ? 'जप' : 'Chants'}
                   </span>
                   <span className="text-[10px] font-bold text-stone-800 bg-amber-300/80 px-2 py-0.5 rounded-full mt-1.5 shadow-2xs">
-                    👆 {lang === 'ne' ? 'यहाँ छुनुहोस्' : 'Tap Bead'}
+                    👆 {selectedMantra.id === 'mahamrityunjaya' ? (lang === 'ne' ? '🔔 छुनुहोस् (बाउल ध्वनि)' : '🔔 Tap for Singing Bowl') : (lang === 'ne' ? 'यहाँ छुनुहोस्' : 'Tap Bead')}
                   </span>
                 </button>
               </div>
@@ -711,15 +879,27 @@ Nepali Calendar • धर्म संस्कृति`;
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center justify-center gap-3">
+              {/* Action Buttons: Reset, Singing bowl, Drone */}
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {selectedMantra.id === 'mahamrityunjaya' && (
+                  <button
+                    type="button"
+                    onClick={handlePlaySingingBowl}
+                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-stone-950 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Play singing bowl chime"
+                  >
+                    <Bell className="w-3.5 h-3.5 text-stone-950" />
+                    <span>{lang === 'ne' ? 'बाउल ध्वनि' : 'Bowl Chime'}</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={handleResetJapa}
-                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-stone-700"
+                  className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-stone-700"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span>{lang === 'ne' ? 'रिसेट गर्नुहोस्' : 'Reset'}</span>
+                  <span>{lang === 'ne' ? 'रिसेट' : 'Reset'}</span>
                 </button>
               </div>
 

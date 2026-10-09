@@ -23,6 +23,11 @@ import {
   toNepaliDigits, 
   getPanchangaForDate 
 } from '../utils/nepaliCalendar';
+import { 
+  getTithiDetails, 
+  getYogaDetails, 
+  getKaranaDetails 
+} from '../utils/panchangaDetails';
 
 export interface UserNote {
   id: string;
@@ -62,6 +67,10 @@ export const DayDetailModal: React.FC<DayDetailModalProps> = ({
   const bsDateKey = `${day.bsYear}-${day.bsMonth}-${day.bsDay}`;
   const dayNotes = notes.filter((n) => n.bsDateKey === bsDateKey);
   const panchanga = day.panchanga || getPanchangaForDate(day.bsYear, day.bsMonth, day.bsDay);
+
+  const tithiInfo = getTithiDetails(panchanga.tithi);
+  const yogaInfo = getYogaDetails(panchanga.yoga);
+  const karanaInfo = getKaranaDetails(panchanga.karana);
 
   const monthName = lang === 'ne' 
     ? BS_MONTH_NAMES_NE[day.bsMonth - 1] 
@@ -211,6 +220,92 @@ export const DayDetailModal: React.FC<DayDetailModalProps> = ({
               <span>{lang === 'ne' ? 'सम्पूर्ण पञ्चाङ्ग तथा मुहूर्त विवरण' : 'Detailed Vedic Panchanga & Timings'}</span>
             </h3>
 
+            {/* Three Pillars: Tithi, Yoga, and Karana Highlights */}
+            <div className="space-y-3 mb-4">
+              {/* Tithi Detail Box */}
+              <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60">
+                <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span className="text-xs font-black uppercase text-amber-900 dark:text-amber-200">
+                      {lang === 'ne' ? '१. तिथि विश्लेषण' : '1. Tithi (Lunar Phase)'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-200">
+                      {lang === 'ne' ? `${tithiInfo.categoryNe} तिथि` : `${tithiInfo.categoryEn} Tithi`}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/80 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
+                      {lang === 'ne' ? tithiInfo.pakshaNe : tithiInfo.pakshaEn}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-base font-extrabold text-stone-900 dark:text-white mb-1">
+                  {lang === 'ne' ? panchanga.tithi : panchanga.tithiEn}
+                </div>
+                <p className="text-xs text-amber-950 dark:text-amber-200/90 leading-relaxed">
+                  {lang === 'ne' ? tithiInfo.significanceNe : tithiInfo.significanceEn}
+                </p>
+                <div className="mt-2 pt-2 border-t border-amber-200/60 dark:border-amber-900/40 text-[11px] text-amber-800 dark:text-amber-400 font-medium">
+                  {lang === 'ne' ? `अधिष्ठाता देवता: ${tithiInfo.deityNe}` : `Ruling Deity: ${tithiInfo.deityEn}`}
+                </div>
+              </div>
+
+              {/* Yoga & Karana Two-Column Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Yoga Detail Box */}
+                <div className="p-4 rounded-2xl bg-sky-50/80 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/60">
+                  <div className="flex items-center justify-between mb-1.5 gap-2">
+                    <span className="text-xs font-black uppercase text-sky-900 dark:text-sky-200">
+                      {lang === 'ne' ? '२. योग (Yoga)' : '2. Astrological Yoga'}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                      yogaInfo.type === 'shubh'
+                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                        : 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
+                    }`}>
+                      {lang === 'ne' ? yogaInfo.typeNe : yogaInfo.typeEn}
+                    </span>
+                  </div>
+                  <div className="text-base font-extrabold text-stone-900 dark:text-white mb-1">
+                    {panchanga.yoga} {lang === 'ne' ? 'योग' : 'Yoga'}
+                  </div>
+                  <p className="text-xs text-sky-950 dark:text-sky-200/90 leading-relaxed">
+                    {lang === 'ne' ? yogaInfo.guidanceNe : yogaInfo.guidanceEn}
+                  </p>
+                  <div className="mt-2 pt-2 border-t border-sky-200/60 dark:border-sky-900/40 text-[11px] text-sky-800 dark:text-sky-400 font-medium">
+                    {lang === 'ne' ? `देवता: ${yogaInfo.deityNe}` : `Deity: ${yogaInfo.deityEn}`}
+                  </div>
+                </div>
+
+                {/* Karana Detail Box */}
+                <div className="p-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60">
+                  <div className="flex items-center justify-between mb-1.5 gap-2">
+                    <span className="text-xs font-black uppercase text-indigo-900 dark:text-indigo-200">
+                      {lang === 'ne' ? '३. करण (Karana)' : '3. Half-Tithi Karana'}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                      karanaInfo.isBhadra
+                        ? 'bg-rose-200 text-rose-900 dark:bg-rose-900 dark:text-rose-100 animate-pulse'
+                        : 'bg-indigo-200/80 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-200'
+                    }`}>
+                      {karanaInfo.isBhadra ? (lang === 'ne' ? '⚠️ भद्रा' : '⚠️ Bhadra') : (lang === 'ne' ? karanaInfo.categoryNe : karanaInfo.categoryEn)}
+                    </span>
+                  </div>
+                  <div className="text-base font-extrabold text-stone-900 dark:text-white mb-1">
+                    {panchanga.karana} {lang === 'ne' ? 'करण' : 'Karana'}
+                  </div>
+                  <p className="text-xs text-indigo-950 dark:text-indigo-200/90 leading-relaxed">
+                    {lang === 'ne' ? karanaInfo.guidanceNe : karanaInfo.guidanceEn}
+                  </p>
+                  <div className="mt-2 pt-2 border-t border-indigo-200/60 dark:border-indigo-900/40 text-[11px] text-indigo-800 dark:text-indigo-400 font-medium">
+                    {lang === 'ne' ? `देवता/प्रतीक: ${karanaInfo.deityNe}` : `Symbol/Deity: ${karanaInfo.deityEn}`}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Astronomical & Timing Metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
               {/* Sunrise / Sunset */}
               <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40">
@@ -229,12 +324,6 @@ export const DayDetailModal: React.FC<DayDetailModalProps> = ({
                 <div className="font-extrabold text-stone-900 dark:text-white text-sm">{panchanga.sunset}</div>
               </div>
 
-              {/* Tithi */}
-              <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/60">
-                <span className="text-stone-500 dark:text-stone-400 text-[11px] block">{lang === 'ne' ? 'तिथि' : 'Tithi'}</span>
-                <span className="font-bold text-stone-900 dark:text-white">{lang === 'ne' ? panchanga.tithi : panchanga.tithiEn}</span>
-              </div>
-
               {/* Nakshatra */}
               <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/60">
                 <span className="text-stone-500 dark:text-stone-400 text-[11px] block">{lang === 'ne' ? 'नक्षत्र' : 'Nakshatra'}</span>
@@ -251,18 +340,6 @@ export const DayDetailModal: React.FC<DayDetailModalProps> = ({
               <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/60">
                 <span className="text-stone-500 dark:text-stone-400 text-[11px] block">{lang === 'ne' ? 'सूर्य राशि' : 'Sun Sign'}</span>
                 <span className="font-bold text-sky-700 dark:text-sky-400">{panchanga.suryaRashi}</span>
-              </div>
-
-              {/* Yoga */}
-              <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/60">
-                <span className="text-stone-500 dark:text-stone-400 text-[11px] block">{lang === 'ne' ? 'योग' : 'Yoga'}</span>
-                <span className="font-semibold text-stone-900 dark:text-white">{panchanga.yoga}</span>
-              </div>
-
-              {/* Karana */}
-              <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/60">
-                <span className="text-stone-500 dark:text-stone-400 text-[11px] block">{lang === 'ne' ? 'करण' : 'Karana'}</span>
-                <span className="font-semibold text-stone-900 dark:text-white">{panchanga.karana}</span>
               </div>
 
               {/* Abhijit Muhurat */}

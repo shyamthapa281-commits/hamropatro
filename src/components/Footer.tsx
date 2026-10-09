@@ -4,7 +4,6 @@ import {
   Heart, 
   Sparkles, 
   Users, 
-  Phone, 
   Mail, 
   MapPin, 
   MessageSquare, 
@@ -12,9 +11,17 @@ import {
   CheckCircle2, 
   UserCheck, 
   Award, 
-  Code 
+  Code,
+  Loader2,
+  ExternalLink,
+  Copy,
+  Check,
+  X
 } from 'lucide-react';
 import { Language } from '../types';
+import { EmailServerModal } from './EmailServerModal';
+import { FeedbackInboxModal } from './FeedbackInboxModal';
+import { Inbox } from 'lucide-react';
 
 interface FooterProps {
   lang: Language;
@@ -26,26 +33,78 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
   const [adviceEmail, setAdviceEmail] = useState('');
   const [adviceType, setAdviceType] = useState('advice');
   const [adviceMessage, setAdviceMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [lastSubmittedNote, setLastSubmittedNote] = useState<{
+    name: string;
+    email?: string;
+    type: string;
+    message: string;
+    date: string;
+  } | null>(null);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [isInboxOpen, setIsInboxOpen] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
 
-  const handleSubmitAdvice = (e: React.FormEvent) => {
+  const handleSubmitAdvice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adviceMessage.trim()) return;
 
-    // Construct mailto link as direct action
-    const subject = encodeURIComponent(`Nepali Calendar Feedback [${adviceType.toUpperCase()}]: ${adviceName || 'User'}`);
-    const body = encodeURIComponent(
-      `From: ${adviceName || 'Anonymous'} (${adviceEmail || 'No email provided'})\n` +
-      `Category: ${adviceType}\n\n` +
-      `Message / Advice:\n${adviceMessage}\n\n` +
-      `Sent from: Nepali Calendar Web App (Craigieburn, Melbourne 3064)`
-    );
+    setIsSubmitting(true);
 
-    const mailtoUrl = `mailto:shyamthapa281@gmail.com?subject=${subject}&body=${body}`;
-    
-    // Open user's email client
-    window.location.href = mailtoUrl;
-    setIsSubmitted(true);
+    const senderName = adviceName.trim() || (lang === 'ne' ? 'अज्ञात (शुभचिन्तक)' : 'Anonymous');
+    const senderEmail = adviceEmail.trim() || 'Not specified';
+    const noteContent = adviceMessage.trim();
+    const noteCategory = adviceType;
+
+    const newFeedback = {
+      name: senderName,
+      email: senderEmail,
+      type: noteCategory,
+      category: noteCategory,
+      message: noteContent,
+      date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    // 1. Post to live server-side inbox endpoint
+    try {
+      await fetch('/api/feedback/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newFeedback),
+      });
+    } catch (err) {
+      console.warn('Feedback submit network note:', err);
+    }
+
+    // 2. Client-side local storage backup
+    try {
+      const stored = JSON.parse(localStorage.getItem('shubhapatro_feedbacks') || '[]');
+      stored.unshift({
+        ...newFeedback,
+        id: Date.now().toString(),
+        fullDate: new Date().toISOString()
+      });
+      localStorage.setItem('shubhapatro_feedbacks', JSON.stringify(stored.slice(0, 50)));
+    } catch (_) {}
+
+    setLastSubmittedNote(newFeedback);
+
+    // Smooth instant on-page transition
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsSubmitted(true);
+      setAdviceMessage('');
+      setAdviceName('');
+      setAdviceEmail('');
+    }, 350);
+  };
+
+  const handleCopyEmail = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText('info@shubhapatro.com');
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2000);
   };
 
   return (
@@ -62,24 +121,33 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                 <Calendar className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-lg font-extrabold text-white block">Nepali Calendar</span>
-                <span className="text-xs text-sky-400 font-semibold block">नेपाली क्यालेन्डर (बिक्रम संवत्)</span>
+                <span className="text-lg font-extrabold text-white block">Shubha Patro</span>
+                <span className="text-xs text-sky-400 font-semibold block">शुभ पात्रो • नेपाली क्यालेन्डर (shubhapatro.com)</span>
               </div>
             </div>
             <p className="text-xs text-stone-400 leading-relaxed">
               {lang === 'ne'
-                ? 'नेपाली क्यालेन्डर (बिक्रम संवत्), दैनिक वैदिक राशिफल, चाडपर्व पञ्चाङ्ग, ताजा नेपाली समाचार र विदेशी मुद्रा विनिमय दरको भरपर्दो डिजिटल सेवा।'
-                : 'Your trusted Nepali digital companion for Bikram Sambat calendar, Panchanga, Vedic horoscopes, live news and currency rates.'}
+                ? 'शुभ पात्रो (नेपाली क्यालेन्डर) - बिक्रम संवत्, दैनिक वैदिक राशिफल, चाडपर्व पञ्चाङ्ग, एनआरएन बैंकिङ, विदेशी मुद्रा तथा सुनचाँदी दरको भरपर्दो डिजिटल सेवा।'
+                : 'Shubha Patro - Your trusted Nepali digital companion for Bikram Sambat calendar, Panchanga, Vedic horoscopes, NRN banking, and live currency rates.'}
             </p>
             <div className="flex items-center gap-2 text-[11px] text-amber-400 font-semibold pt-1">
               <Sparkles className="w-3.5 h-3.5" />
               <span>{lang === 'ne' ? 'नेपालको सांस्कृतिक र सामाजिक पञ्चाङ्ग' : 'Nepali Cultural & Social Calendar'}</span>
             </div>
             
-            <div className="pt-2 text-xs text-stone-400">
+            <div className="pt-2 text-xs text-stone-400 flex flex-wrap items-center gap-2">
               <span className="inline-block text-[11px] bg-stone-800/90 text-stone-300 px-3 py-1.5 rounded-lg border border-stone-700/80">
                 Version 2.5 • BS 2080-2084 Live
               </span>
+              <button
+                type="button"
+                onClick={() => setIsInboxOpen(true)}
+                className="inline-flex items-center gap-1.5 text-[11px] bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 px-3 py-1.5 rounded-lg border border-amber-500/30 transition-colors cursor-pointer"
+                title={lang === 'ne' ? 'प्राप्त सल्लाह तथा प्रतिक्रिया इनबक्स हेर्नुहोस्' : 'View received advice and messages inbox'}
+              >
+                <Inbox className="w-3.5 h-3.5 text-amber-400" />
+                <span>{lang === 'ne' ? 'सन्देश इनबक्स' : 'Messages Inbox'}</span>
+              </button>
             </div>
           </div>
 
@@ -209,7 +277,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   <span className="text-stone-400 block text-[11px]">
                     {lang === 'ne' ? 'सल्लाहकार:' : 'Advisor:'}
                   </span>
-                  <strong className="text-white font-semibold">Mana Magar (मना मगर)</strong>
+                  <strong className="text-white font-semibold">Mana Magar(मन मगर)</strong>
                 </div>
               </div>
 
@@ -226,31 +294,71 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
 
             {/* Contact Details */}
             <div className="pt-3 border-t border-stone-700/80 space-y-2 text-xs">
-              <div className="flex items-center gap-2 text-stone-300">
-                <Phone className="w-3.5 h-3.5 text-green-400 shrink-0" />
-                <span className="text-stone-400">{lang === 'ne' ? 'सम्पर्क:' : 'Contact:'}</span>
-                <a 
-                  href="tel:0416045056" 
-                  className="font-bold text-amber-300 hover:text-amber-200 hover:underline transition-colors"
-                >
-                  0416045056
-                </a>
+              <div className="flex flex-col gap-1.5 text-stone-300">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                    <span className="text-stone-400">{lang === 'ne' ? 'इमेल:' : 'Email:'}</span>
+                    <button 
+                      type="button"
+                      onClick={() => setIsEmailModalOpen(true)}
+                      className="text-amber-300 hover:text-amber-200 hover:underline transition-colors font-medium cursor-pointer text-left"
+                      title={lang === 'ne' ? 'इमेल सर्भर छान्नुहोस् (Gmail, Outlook, Yahoo)' : 'Direct to customer email server'}
+                    >
+                      info@shubhapatro.com
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyEmail}
+                    className="px-2 py-1 rounded bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition-colors text-[10px] flex items-center gap-1 cursor-pointer shrink-0 border border-stone-700/60"
+                    title={lang === 'ne' ? 'इमेल कपी गर्नुहोस्' : 'Copy email address'}
+                  >
+                    {copiedEmail ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedEmail ? (lang === 'ne' ? 'कपी भयो' : 'Copied') : (lang === 'ne' ? 'कपी' : 'Copy')}</span>
+                  </button>
+                </div>
+
+                {/* Direct Customer Email Server shortcuts */}
+                <div className="flex items-center gap-1.5 pl-5 pt-0.5 text-[10px] flex-wrap">
+                  <span className="text-stone-500">{lang === 'ne' ? 'सर्भर:' : 'Direct to:'}</span>
+                  <a
+                    href="https://mail.google.com/mail/?view=cm&fs=1&to=info@shubhapatro.com&su=Inquiry%20to%20Shubha%20Patro"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-1.5 py-0.5 rounded bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-800/50 hover:border-red-600 transition-colors cursor-pointer font-medium"
+                    title={lang === 'ne' ? 'गुगल जिमेल वेब सर्भरमा सिधै खोल्नुहोस्' : 'Direct to Gmail Web'}
+                  >
+                    Gmail
+                  </a>
+                  <a
+                    href="https://outlook.live.com/mail/0/deeplink/compose?to=info@shubhapatro.com&subject=Inquiry%20to%20Shubha%20Patro"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-1.5 py-0.5 rounded bg-blue-950/60 hover:bg-blue-900/80 text-blue-300 border border-blue-800/50 hover:border-blue-600 transition-colors cursor-pointer font-medium"
+                    title={lang === 'ne' ? 'माइक्रोसफ्ट आउटलुक वेब सर्भरमा सिधै खोल्नुहोस्' : 'Direct to Outlook Web'}
+                  >
+                    Outlook
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setIsEmailModalOpen(true)}
+                    className="px-1.5 py-0.5 rounded bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700 transition-colors cursor-pointer"
+                  >
+                    {lang === 'ne' ? 'थप छान्नुहोस्...' : 'More servers...'}
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 text-stone-300">
-                <Mail className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                <span className="text-stone-400">{lang === 'ne' ? 'इमेल:' : 'Email:'}</span>
-                <a 
-                  href="mailto:shyamthapa281@gmail.com" 
-                  className="text-stone-200 hover:text-white hover:underline transition-colors"
-                >
-                  shyamthapa281@gmail.com
-                </a>
-              </div>
-
-              <div className="flex items-start gap-2 text-stone-400 text-[11px] pt-0.5">
-                <MapPin className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
-                <span>Craigieburn, Melbourne 3064, Vic, Australia</span>
+              <div className="space-y-1.5 text-stone-400 text-[11px] pt-1 border-t border-stone-800/60">
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+                  <span>Lalitpur, Bagmati Province, Nepal 44705</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                  <span>Craigieburn, Melbourne 3064, Vic, Australia</span>
+                </div>
               </div>
             </div>
 
@@ -272,31 +380,45 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
             
             <p className="text-xs text-stone-400 mb-4 leading-relaxed">
               {lang === 'ne'
-                ? 'नेपाली क्यालेन्डरलाई थप प्रभावकारी बनाउन तपाईंको सल्लाह, सुझाव वा प्रतिक्रिया हाम्रो लागि अत्यन्त महत्वपूर्ण छ। तलको फारम भरी सिधै हाम्रो टिमलाई पठाउन सक्नुहुन्छ।'
-                : 'Your feedback, advice, or suggestions help us enhance the Nepali Calendar for the entire community. Leave your note below.'}
+                ? 'नेपाली क्यालेन्डरलाई थप प्रभावकारी बनाउन तपाईंको सल्लाह, सुझाव वा प्रतिक्रिया हाम्रो लागि अत्यन्त महत्वपूर्ण छ। तलको फारम भरी कुनै पनि इमेल एप नखोली सोझै यसै पृष्ठमा सुरक्षित पठाउन सक्नुहुन्छ।'
+                : 'Your feedback, advice, or suggestions help us enhance the Nepali Calendar for the entire community. Submit directly on-page without opening email apps.'}
             </p>
 
             {isSubmitted ? (
-              <div className="bg-emerald-950/40 border border-emerald-600/40 rounded-xl p-4 text-center space-y-2 text-xs">
-                <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto" />
-                <h5 className="font-bold text-emerald-200 text-sm">
-                  {lang === 'ne' ? 'सल्लाह र प्रतिक्रियाका लागि हार्दिक धन्यवाद!' : 'Thank you for your advice & feedback!'}
-                </h5>
-                <p className="text-stone-300 max-w-md mx-auto text-[11px]">
-                  {lang === 'ne'
-                    ? 'तपाईंको सन्देश श्याम थापा तथा नेपाली क्यालेन्डर टिम (shyamthapa281@gmail.com) लाई पठाइएको छ।'
-                    : 'Your message has been addressed to Shyam Thapa and the team at shyamthapa281@gmail.com.'}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSubmitted(false);
-                    setAdviceMessage('');
-                  }}
-                  className="mt-2 inline-block px-3 py-1.5 bg-stone-700 hover:bg-stone-600 text-white rounded-lg text-xs transition-colors cursor-pointer"
-                >
-                  {lang === 'ne' ? 'अर्को सुझाव पठाउनुहोस्' : 'Send another note'}
-                </button>
+              <div className="bg-gradient-to-br from-emerald-950/60 to-stone-900 border border-emerald-600/40 rounded-xl p-6 text-center space-y-4 text-xs animate-in fade-in duration-200">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <h5 className="font-bold text-emerald-200 text-sm sm:text-base">
+                    {lang === 'ne' 
+                      ? 'तपाईंको सल्लाह र सुझाव पेश भएकोमा हार्दिक धन्यवाद!' 
+                      : 'Thank you for submitting your advice and feedback!'}
+                  </h5>
+                  <p className="text-stone-300 max-w-md mx-auto text-xs leading-relaxed">
+                    {lang === 'ne'
+                      ? 'तपाईंको सल्लाह सफलतापूर्वक दर्ता भएको छ। यसले शुभ पात्रोलाई अझ उपयोगी र प्रभावकारी बनाउन मद्दत पुर्‍याउनेछ।'
+                      : 'Your advice has been successfully submitted. It will help us continue enhancing Shubha Patro for the entire community.'}
+                  </p>
+                </div>
+
+                <div className="pt-2 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSubmitted(false);
+                      setAdviceMessage('');
+                      setAdviceName('');
+                      setAdviceEmail('');
+                      setLastSubmittedNote(null);
+                    }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 active:scale-95 text-white rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-md"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>{lang === 'ne' ? 'बन्द गर्नुहोस् (नयाँ सुझाव लेख्नुहोस्)' : 'Close'}</span>
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmitAdvice} className="space-y-3.5">
@@ -359,25 +481,47 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                     onChange={(e) => setAdviceMessage(e.target.value)}
                     placeholder={
                       lang === 'ne'
-                        ? 'यहाँ आफ्नो प्रतिक्रिया वा क्यालेन्डर सम्बन्धी कुनै सल्लाह लेख्नुहोस्...'
-                        : 'Write your reaction, advice, or suggestions here...'
+                        ? 'यहाँ आफ्नो प्रतिक्रिया वा क्यालेन्डर सम्बन्धी कुनै सल्लाह लेख्नुहोस् (सिधै यसै पृष्ठबाट सब्मिट हुनेछ)...'
+                        : 'Write your reaction, advice, or suggestions here (submits smoothly on-page)...'
                     }
                     className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-2 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-amber-400 resize-y"
                   />
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                  <span className="text-[11px] text-stone-400 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-stone-500" />
-                    <span>{lang === 'ne' ? 'सिधै इमेल:' : 'Direct email:'} <strong className="text-amber-400">shyamthapa281@gmail.com</strong></span>
-                  </span>
+                  <div className="flex items-center gap-2 text-[11px] text-stone-400 flex-wrap">
+                    <Mail className="w-3.5 h-3.5 text-stone-500 shrink-0" />
+                    <span>{lang === 'ne' ? 'सिधै इमेल:' : 'Direct email:'}</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsEmailModalOpen(true)}
+                      className="text-amber-400 hover:text-amber-300 font-semibold hover:underline cursor-pointer"
+                      title={lang === 'ne' ? 'इमेल सर्भर खोल्नुहोस् (Gmail, Outlook)' : 'Direct to your email server'}
+                    >
+                      info@shubhapatro.com
+                    </button>
+                    <span className="text-stone-600 hidden sm:inline">|</span>
+                    <span className="text-[10px] text-stone-500 hidden sm:inline">
+                      {lang === 'ne' ? '(कुनै मेल एप खोल्नु पर्दैन)' : '(smooth on-page submit)'}
+                    </span>
+                  </div>
 
                   <button
                     type="submit"
-                    className="inline-flex items-center gap-1.5 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-md transition-all cursor-pointer active:scale-95"
+                    disabled={isSubmitting}
+                    className="inline-flex items-center gap-1.5 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 disabled:opacity-60 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-md transition-all cursor-pointer active:scale-95"
                   >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>{lang === 'ne' ? 'प्रतिक्रिया पठाउनुहोस्' : 'Send Reaction / Advice'}</span>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>{lang === 'ne' ? 'दर्ता हुँदैछ...' : 'Submitting...'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{lang === 'ne' ? 'यसै पृष्ठबाट पठाउनुहोस्' : 'Submit On-Page'}</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
@@ -385,9 +529,25 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
           </div>
         </div>
 
+        {/* Email Server Chooser Modal */}
+        <EmailServerModal 
+          isOpen={isEmailModalOpen}
+          onClose={() => setIsEmailModalOpen(false)}
+          lang={lang}
+          email="info@shubhapatro.com"
+          defaultSubject="Inquiry to Shubha Patro"
+        />
+
+        {/* Live Feedback & Advice Inbox Modal */}
+        <FeedbackInboxModal 
+          isOpen={isInboxOpen}
+          onClose={() => setIsInboxOpen(false)}
+          lang={lang}
+        />
+
         {/* Bottom copyright */}
         <div className="pt-6 border-t border-stone-800 flex flex-wrap items-center justify-between gap-4 text-xs text-stone-500">
-          <p>© {new Date().getFullYear()} Nepali Calendar (नेपाली क्यालेन्डर). All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Shubha Patro (शुभ पात्रो • shubhapatro.com). Nepali Calendar. All rights reserved.</p>
           <p className="flex items-center gap-1">
             <span>Made with</span>
             <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" />

@@ -415,3 +415,169 @@ export const NRN_FAQS = [
     aEn: 'Shares held for more than 1 year attract 5% CGT on net profit, while shares held for less than 1 year attract 7.5% CGT. The tax is automatically deducted at settlement by the broker.'
   }
 ];
+
+export interface QuotaChecklistItem {
+  id: string;
+  stepNumber: number;
+  titleNe: string;
+  titleEn: string;
+  requirementNe: string;
+  requirementEn: string;
+  verificationTipNe: string;
+  verificationTipEn: string;
+  status: 'mandatory' | 'critical' | 'online';
+}
+
+export const QUOTA_QUALIFICATION_CHECKLIST: QuotaChecklistItem[] = [
+  {
+    id: 'shram',
+    stepNumber: 1,
+    titleNe: 'वैध श्रम स्वीकृति (DOFE Labour Permit)',
+    titleEn: 'Valid DOFE Labour Permit',
+    requirementNe: 'वैदेशिक रोजगार विभाग (DOFE) बाट जारी भएको कम्तीमा ६ महिना म्याद बाँकी रहेको श्रम स्वीकृति।',
+    requirementEn: 'Valid Government Labour Approval issued by Department of Foreign Employment with at least active status.',
+    verificationTipNe: 'DOFE को FEIMS पोर्टलमा गएर पासपोर्ट नम्बर हाली आफ्नो श्रम स्वीकृतिको अवस्था जाँच गर्नुहोस्।',
+    verificationTipEn: 'Verify your status online at dofe.gov.np FEIMS portal by entering your passport number.',
+    status: 'mandatory',
+  },
+  {
+    id: 'remit_account',
+    stepNumber: 2,
+    titleNe: 'रेमिट्यान्स बचत खाता (Remittance Savings Account)',
+    titleEn: 'Dedicated Remittance Savings Account',
+    requirementNe: "नेपालको 'क' वर्गको वाणिज्य बैंकमा आफ्नो नाममा खोलिएको विशेष रेमिट्यान्स बचत वा मुद्दती खाता।",
+    requirementEn: 'Special remittance savings account opened in an "A" Class commercial bank in Nepal under your name.',
+    verificationTipNe: 'बैंकको खाता शीर्षकमा "Remittance" शब्द उल्लेख भएको सुनिश्चित गर्नुहोस्।',
+    verificationTipEn: 'Confirm with your bank that the account product type is designated as Remittance Savings.',
+    status: 'mandatory',
+  },
+  {
+    id: 'remit_deposit',
+    stepNumber: 3,
+    titleNe: 'न्यूनतम रु ५०,००० विप्रेषण दाखिला (SEBON Remittance Rule)',
+    titleEn: 'Minimum NPR 50,000 Remittance Transfer',
+    requirementNe: 'पछिल्लो ६ महिनाभित्र वैधानिक बैंकिङ माध्यमबाट उक्त खातामा कम्तीमा रु ५०,००० रकम दाखिला भएको प्रमाण।',
+    requirementEn: 'Proof of at least NPR 50,000 transferred via legal banking / remit channels into the account within past 6 months.',
+    verificationTipNe: 'रेमिट कम्पनी (उदा: Prabhu, IME, Western Union, बैंक स्विफ्ट) को ट्रान्सफर स्लिप वा स्टेटमेन्ट सुरक्षित राख्नुहोस्।',
+    verificationTipEn: 'Keep digital remit transfer receipts from exchange houses or direct SWIFT/wire transfers.',
+    status: 'critical',
+  },
+  {
+    id: 'casba_crn',
+    stepNumber: 4,
+    titleNe: 'वैदेशिक रोजगार C-ASBA र CRN दर्ता',
+    titleEn: 'Foreign Employment Tagged C-ASBA / CRN',
+    requirementNe: 'बैंकले C-ASBA प्रणालीमा तपाईंको CRN नम्बरलाई "Foreign Employment Quota" मा प्रमाणित गरिदिएको हुनुपर्छ।',
+    requirementEn: 'Your bank must specifically tag your CRN registration as eligible for Foreign Employment Quota in the C-ASBA portal.',
+    verificationTipNe: 'बैंकलाई इमेल वा पोर्टलबाट श्रम स्वीकृति र रेमिट भौचर पठाएर कोटा ट्यागिङ पुष्टि गराउनुहोस्।',
+    verificationTipEn: 'Email your bank branch or use internet banking to ensure your CRN is tagged as Foreign Employment eligible.',
+    status: 'critical',
+  },
+  {
+    id: 'meroshare',
+    stepNumber: 5,
+    titleNe: 'मेरोसेयर (MeroShare) खाता सक्रियता',
+    titleEn: 'Active MeroShare Demat Portal',
+    requirementNe: 'CDSC को मेरोसेयर (meroshare.cdsc.com.np) मा लगइन गरी Asba मेनुबाट सिधै कोटामा १० देखि ५० कित्ता आवेदन दिनुहोस्।',
+    requirementEn: 'Log in to MeroShare (meroshare.cdsc.com.np) and apply directly under the Foreign Employment category.',
+    verificationTipNe: 'आवेदन गर्दा Category मा "Foreign Employment" छान्नुहोस् र ४-अंकको पिन हाली कन्फर्म गर्नुहोस्।',
+    verificationTipEn: 'Select category "Foreign Employment" during application and confirm with your 4-digit transaction PIN.',
+    status: 'online',
+  },
+];
+
+export interface BankPortalDirect {
+  id: string;
+  nameNe: string;
+  nameEn: string;
+  schemeNe: string;
+  schemeEn: string;
+  fdRate: string;
+  fcyCurrencies: string[];
+  videoKycTime: string;
+  portalUrl: string;
+  featuresNe: string[];
+  featuresEn: string[];
+}
+
+export const NRN_BANK_PORTALS: BankPortalDirect[] = [
+  {
+    id: 'nabil',
+    nameNe: 'नबिल बैंक लिमिटेड',
+    nameEn: 'Nabil Bank Ltd.',
+    schemeNe: 'नबिल ग्लोबल NRN बचत तथा मुद्दती खाता',
+    schemeEn: 'Nabil Global NRN Remittance Account',
+    fdRate: '८.५०% - ९.५०%',
+    fcyCurrencies: ['USD', 'AUD', 'EUR', 'GBP'],
+    videoKycTime: '२४ घण्टाभित्र अनलाइन सक्रिय',
+    portalUrl: 'https://nabilbank.com',
+    featuresNe: ['१००% अनलाइन खाता र भिडियो KYC', 'अनलाइन CRN र मेरोसेयर सुविधा', 'अतिरिक्त +१.२५% रेमिट ब्याज'],
+    featuresEn: ['100% online Video-KYC account', 'Instant digital CRN & MeroShare', '+1.25% extra remittance yield'],
+  },
+  {
+    id: 'global',
+    nameNe: 'ग्लोबल आइएमई बैंक लिमिटेड',
+    nameEn: 'Global IME Bank Ltd.',
+    schemeNe: 'जननी रेमिट्यान्स बचत खाता',
+    schemeEn: 'Janani Remittance Account',
+    fdRate: '८.७५% - ९.७५%',
+    fcyCurrencies: ['USD', 'AUD', 'CAD', 'GBP', 'EUR', 'AED'],
+    videoKycTime: '२४ देखि ४८ घण्टा',
+    portalUrl: 'https://globalimebank.com',
+    featuresNe: ['विश्वभरबाट सजिलो रेमिट सेवा', 'निशुल्क डेबिट कार्ड तथा इन्टरनेट बैंकिङ', 'वैदेशिक रोजगार कोटा C-ASBA द्रुत प्रमाणिकरण'],
+    featuresEn: ['Global network for easy remits', 'Free digital banking & debit card', 'Fast-track Foreign Employment CRN tagging'],
+  },
+  {
+    id: 'nic',
+    nameNe: 'एनआईसी एशिया बैंक लिमिटेड',
+    nameEn: 'NIC Asia Bank Ltd.',
+    schemeNe: 'सर्वश्रेष्ठ रेमिट्यान्स बचत तथा मुद्दती',
+    schemeEn: 'Sarbashrestha Remittance Account',
+    fdRate: '८.६०% - ९.६०%',
+    fcyCurrencies: ['USD', 'AUD', 'EUR', 'GBP'],
+    videoKycTime: 'तुरुन्त अनलाइन आवेदन',
+    portalUrl: 'https://nicasiabank.com',
+    featuresNe: ['उच्चतम बिमा सुरक्षण सुविधा', 'मोबाइल बैंकिङबाट सिधै मुद्दती नवीकरण', 'विदेशबाटै निःशुल्क CRN नम्बर'],
+    featuresEn: ['High insurance coverage package', 'Mobile banking FD management', 'Free online CRN generation'],
+  },
+  {
+    id: 'sanima',
+    nameNe: 'सानिमा बैंक लिमिटेड',
+    nameEn: 'Sanima Bank Ltd.',
+    schemeNe: 'सानिमा रेमिट्यान्स मुद्दती खाता',
+    schemeEn: 'Sanima Remittance Fixed Deposit',
+    fdRate: '८.५०% - ९.२५%',
+    fcyCurrencies: ['USD', 'AUD', 'EUR'],
+    videoKycTime: '२४ घण्टा',
+    portalUrl: 'https://sanimabank.com',
+    featuresNe: ['सानिमा क्यापिटलमार्फत तुरुन्त डिम्याट', 'पारदर्शी ब्याजदर र सहज फिर्ता (Repatriation)', 'मध्यपूर्व र कोरियामा विशेष सञ्जाल'],
+    featuresEn: ['Instant Demat via Sanima Capital', 'Seamless FCY interest repatriation', 'Extensive Middle East & Korea network'],
+  },
+  {
+    id: 'everest',
+    nameNe: 'एभरेष्ट बैंक लिमिटेड',
+    nameEn: 'Everest Bank Ltd.',
+    schemeNe: 'एभरेष्ट रेमिट्यान्स बचत तथा मुद्दती',
+    schemeEn: 'Everest Remittance Bachat',
+    fdRate: '८.४०% - ९.२०%',
+    fcyCurrencies: ['USD', 'INR', 'EUR', 'GBP'],
+    videoKycTime: 'अनलाइन भिडियो KYC उपलब्ध',
+    portalUrl: 'https://everestbankltd.com',
+    featuresNe: ['पञ्जाब नेशनल बैंक (PNB) सँग बलियो साझेदारी', 'भारत र खाडी मुलुकबाट सरल विप्रेषण', 'सुरक्षित सरकारी मुद्दती सरह भरपर्दो'],
+    featuresEn: ['Strong tie-up with PNB India', 'Direct remittances from India & Gulf', 'High financial stability & trust'],
+  },
+  {
+    id: 'nimb',
+    nameNe: 'नेपाल इन्भेष्टमेण्ट मेगा बैंक',
+    nameEn: 'Nepal Investment Mega Bank Ltd.',
+    schemeNe: 'प्रवास रेमिट्यान्स खाता',
+    schemeEn: 'Prabas Remittance Savings',
+    fdRate: '८.५५% - ९.३५%',
+    fcyCurrencies: ['USD', 'AUD', 'EUR'],
+    videoKycTime: '४८ घण्टा',
+    portalUrl: 'https://nimb.com.np',
+    featuresNe: ['ठूलो पूँजी आधार भएको बलियो बैंक', 'विदेशी मुद्रा मुद्दतीमा विशेष प्रिमियम', 'मेगा क्यापिटलमार्फत डिम्याट सेवा'],
+    featuresEn: ['Solid capital base & safety', 'Special FCY deposit premium', 'Integrated Demat via Mega Capital'],
+  },
+];
+

@@ -20,14 +20,15 @@ import {
   QrCode, 
   CreditCard, 
   AlertCircle, 
-  Info, 
   CheckCircle2, 
   Award, 
   FileText,
   Calendar,
   Clock,
   MapPin,
-  RefreshCw
+  RefreshCw,
+  Video,
+  Flame
 } from 'lucide-react';
 import { Language } from '../types';
 import { 
@@ -91,7 +92,6 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
   const [transactionRef, setTransactionRef] = useState('');
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [showPaywallExplainer, setShowPaywallExplainer] = useState(false);
 
   const reportPrintRef = useRef<HTMLDivElement>(null);
 
@@ -121,19 +121,6 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
       setCopiedKey(key);
       setTimeout(() => setCopiedKey(null), 2500);
     }
-  };
-
-  const handleInstantDemoUnlock = () => {
-    setIsUnlocked(true);
-    setShowPaymentModal(false);
-    try {
-      localStorage.setItem('hamro_patro_kundali_premium', 'true');
-    } catch {}
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
   };
 
   const handleConfirmPayment = (e: React.FormEvent) => {
@@ -195,14 +182,6 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
               <Printer className="w-4 h-4 text-emerald-300" />
               <span>{lang === 'ne' ? 'PDF डाउनलोड तथा प्रिन्ट योग्य' : 'Printable & PDF Export'}</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowPaywallExplainer(!showPaywallExplainer)}
-              className="flex items-center gap-1.5 bg-amber-400 text-stone-950 px-3 py-1.5 rounded-xl font-bold cursor-pointer hover:bg-amber-300 transition-colors"
-            >
-              <Info className="w-4 h-4" />
-              <span>{lang === 'ne' ? 'सशुल्क संस्करण कसरी काम गर्छ? (Guide)' : 'How the Paid Version Works'}</span>
-            </button>
 
             <button
               type="button"
@@ -270,79 +249,32 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
         </div>
       )}
 
-      {/* Explainer Banner: How the Site Owner Implements & Monetizes This Paid Version */}
-      {showPaywallExplainer && (
-        <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-900 via-slate-900 to-stone-950 text-white border border-indigo-500/40 shadow-xl space-y-4 animate-in fade-in">
-          <div className="flex items-center justify-between border-b border-indigo-500/30 pb-3">
-            <div className="flex items-center gap-2">
-              <Award className="w-5 h-5 text-amber-400" />
-              <h3 className="font-extrabold text-base text-white">
-                {lang === 'ne' ? 'कुण्डली तथा गुण मिलानलाई सशुल्क (Paid Version) बनाउने ३ तरिकाहरू' : 'How to Make Kundali & Gun Milan a Paid Version (Architecture)'}
-              </h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowPaywallExplainer(false)}
-              className="text-indigo-300 hover:text-white text-xs font-bold cursor-pointer"
-            >
-              बन्द गर्नुहोस् ✕
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-              <span className="w-7 h-7 rounded-lg bg-amber-400 text-stone-950 font-black flex items-center justify-center text-xs">1</span>
-              <h4 className="font-bold text-white text-sm">Freemium Teaser Hook</h4>
-              <p className="text-stone-300 leading-relaxed">
-                प्रयोगकर्तालाई लग्न (Lagna), राशी, नक्षत्र र कुल गुण अंक (e.g. 26/36) निःशुल्क देखाउने। तर १२ भावको सम्पूर्ण ग्रह चक्र, २० वर्षे महादशा, माङ्गलिक दोष शान्ति उपाय, र PDF डाउनलोडलाई <strong>Locked (सशुल्क)</strong> राख्ने।
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-              <span className="w-7 h-7 rounded-lg bg-emerald-400 text-stone-950 font-black flex items-center justify-center text-xs">2</span>
-              <h4 className="font-bold text-white text-sm">eSewa / Khalti / Stripe Paywall</h4>
-              <p className="text-stone-300 leading-relaxed">
-                नेपालका ग्राहकका लागि <strong>रु २५० - ५००</strong> (eSewa / Khalti QR मार्फत) र विदेशमा रहेका नेपालीका लागि <strong>$4.99 USD</strong> (Stripe वा PayPal मार्फत)। भुक्तानी पूरा हुनासाथ प्रतिवेदन तुरुन्त अनलक हुन्छ।
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-              <span className="w-7 h-7 rounded-lg bg-sky-400 text-stone-950 font-black flex items-center justify-center text-xs">3</span>
-              <h4 className="font-bold text-white text-sm">High-Resolution PDF Export</h4>
-              <p className="text-stone-300 leading-relaxed">
-                भुक्तानी गरेपछि ग्राहकले परम्परागत नेपाली कुण्डली ढाँचामा तयार भएको आकर्षक रंगीन PDF डाउनलोड वा सिधै प्रिन्ट गर्न पाउँछन्। डिजिटल डेलिभरी भएकाले तपाईंको <strong>१००% नाफा</strong> हुन्छ।
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Mode Switcher Tabs */}
-      <div className="flex items-center gap-3 bg-white dark:bg-stone-900 p-2 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs">
+      <div className="grid grid-cols-2 gap-2 bg-white dark:bg-stone-900 p-2 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-xs">
         <button
           type="button"
           onClick={() => setActiveMode('kundali')}
-          className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
+          className={`py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
             activeMode === 'kundali'
-              ? 'bg-amber-600 text-white shadow-xs font-black'
+              ? 'bg-amber-600 text-white shadow-xs font-black ring-2 ring-amber-500/30'
               : 'text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
           }`}
         >
-          <Compass className="w-4 h-4" />
-          <span>{lang === 'ne' ? '१. विस्तृत जन्म कुण्डली (Kundali Chart)' : '1. Janma Kundali Chart'}</span>
+          <Compass className="w-4 h-4 shrink-0" />
+          <span>{lang === 'ne' ? '१. वैदिक जन्म कुण्डली' : '1. Vedic Kundali Chart'}</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveMode('gunmilan')}
-          className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
+          className={`py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
             activeMode === 'gunmilan'
-              ? 'bg-amber-600 text-white shadow-xs font-black'
+              ? 'bg-amber-600 text-white shadow-xs font-black ring-2 ring-amber-500/30'
               : 'text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
           }`}
         >
-          <Heart className="w-4 h-4" />
-          <span>{lang === 'ne' ? '२. विवाह ३६ गुण मिलान (Gun Milan)' : '2. 36 Gun Milan'}</span>
+          <Heart className="w-4 h-4 shrink-0" />
+          <span>{lang === 'ne' ? '२. ३६ गुण मिलान (विवाह मेलापक)' : '2. 36 Gun Milan Matchmaking'}</span>
         </button>
       </div>
 
@@ -578,19 +510,10 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
                   <button
                     type="button"
                     onClick={() => setShowPaymentModal(true)}
-                    className="flex-1 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Lock className="w-3.5 h-3.5" />
                     <span>{lang === 'ne' ? 'अनलक गर्नुहोस् (रु २५०)' : 'Unlock ($4.99 / रु २५०)'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleInstantDemoUnlock}
-                    className="px-3 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 text-stone-800 dark:text-stone-200 font-bold rounded-xl cursor-pointer"
-                    title="डेमो अनलक परीक्षण गर्नुहोस्"
-                  >
-                    डेमो
                   </button>
                 </div>
               </div>
@@ -892,14 +815,6 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
                       <Unlock className="w-4 h-4" />
                       <span>{lang === 'ne' ? 'रु २५० मा अनलक गर्नुहोस् (Instant Unlock)' : 'Unlock for NPR 250 / $4.99'}</span>
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={handleInstantDemoUnlock}
-                      className="px-4 py-3 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs flex items-center gap-1.5 border border-white/20 cursor-pointer"
-                    >
-                      <span>डेमो परीक्षण (Test Demo)</span>
-                    </button>
                   </div>
                 </div>
               )}
@@ -1065,16 +980,6 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
                     <span>Pay with Card / PayPal ($4.99)</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
-                </div>
-
-                <div className="pt-2 text-center">
-                  <button
-                    type="button"
-                    onClick={handleInstantDemoUnlock}
-                    className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 font-bold underline cursor-pointer"
-                  >
-                    Or Test Instant Demo Unlock
-                  </button>
                 </div>
               </div>
             )}

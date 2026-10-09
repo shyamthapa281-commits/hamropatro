@@ -4,27 +4,20 @@ import { Navigation } from './components/Navigation';
 import { CalendarView } from './components/CalendarView';
 import { RashifalView } from './components/RashifalView';
 import { DharmaSanskritiView } from './components/DharmaSanskritiView';
-import { NewsView } from './components/NewsView';
 import { WeatherView } from './components/WeatherView';
 import { WorldClockView } from './components/WorldClockView';
 import { ForexGoldView } from './components/ForexGoldView';
 import { FestivalsView } from './components/FestivalsView';
-import { HealthWellnessView } from './components/HealthWellnessView';
 import { DateConverter } from './components/DateConverter';
 import { CalculatorsView } from './components/CalculatorsView';
-import { LanguageLearningView } from './components/LanguageLearningView';
-import { ActivityCentreView } from './components/ActivityCentreView';
-import { GovernmentHelpCentreView } from './components/GovernmentHelpCentreView';
 import { SupportWorkView } from './components/SupportWorkView';
 import { NrnBankingIpoView } from './components/NrnBankingIpoView';
 import { KundaliGunMilanView } from './components/KundaliGunMilanView';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { RadioPlayer } from './components/RadioPlayer';
 import { Footer } from './components/Footer';
 
 import { getCurrentNepaliDate, getPanchangaForDate } from './utils/nepaliCalendar';
-import { MOCK_RADIO_STATIONS } from './data/mockNews';
-import { Language, RadioStation } from './types';
+import { Language } from './types';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('calendar');
@@ -53,11 +46,6 @@ export function App() {
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
-
-  // Radio player state
-  const [isRadioOpen, setIsRadioOpen] = useState<boolean>(false);
-  const [isRadioPlaying, setIsRadioPlaying] = useState<boolean>(false);
-  const [activeRadioStation, setActiveRadioStation] = useState<RadioStation>(MOCK_RADIO_STATIONS[0]);
 
   // Today's Nepali date and Panchanga
   const todayBs = getCurrentNepaliDate();
@@ -90,9 +78,6 @@ export function App() {
         theme={theme}
         onToggleTheme={toggleTheme}
         onToggleLang={toggleLanguage}
-        onOpenRadio={() => setIsRadioOpen(true)}
-        isRadioPlaying={isRadioPlaying}
-        activeRadioName={activeRadioStation.name}
         onNavigate={handleNavigate}
       />
 
@@ -111,7 +96,7 @@ export function App() {
             lang={lang}
             onNavigate={handleNavigate}
             onSelectDateForHoroscope={() => handleNavigate('rashifal')}
-            onOpenWellness={() => handleNavigate('health')}
+            onOpenWellness={() => handleNavigate('dharma')}
           />
         )}
 
@@ -123,12 +108,16 @@ export function App() {
           <KundaliGunMilanView lang={lang} onNavigate={handleNavigate} />
         )}
 
-        {activeTab === 'dharma' && (
-          <DharmaSanskritiView lang={lang} onNavigate={handleNavigate} />
+        {activeTab === 'forex' && (
+          <ForexGoldView lang={lang} onNavigate={handleNavigate} />
         )}
 
-        {activeTab === 'news' && (
-          <NewsView lang={lang} />
+        {activeTab === 'nrn-banking' && (
+          <NrnBankingIpoView lang={lang} onNavigate={handleNavigate} />
+        )}
+
+        {activeTab === 'dharma' && (
+          <DharmaSanskritiView lang={lang} onNavigate={handleNavigate} />
         )}
 
         {activeTab === 'weather' && (
@@ -139,36 +128,12 @@ export function App() {
           <WorldClockView lang={lang} todayBs={todayBs} />
         )}
 
-        {activeTab === 'forex' && (
-          <ForexGoldView lang={lang} onNavigate={handleNavigate} />
-        )}
-
-        {activeTab === 'nrn-banking' && (
-          <NrnBankingIpoView lang={lang} onNavigate={handleNavigate} />
-        )}
-
         {activeTab === 'calculator' && (
           <CalculatorsView lang={lang} />
         )}
 
         {activeTab === 'converter' && (
           <DateConverter lang={lang} />
-        )}
-
-        {activeTab === 'health' && (
-          <HealthWellnessView lang={lang} todayBs={todayBs} />
-        )}
-
-        {activeTab === 'language' && (
-          <LanguageLearningView lang={lang} />
-        )}
-
-        {activeTab === 'games' && (
-          <ActivityCentreView lang={lang} />
-        )}
-
-        {activeTab === 'govhelp' && (
-          <GovernmentHelpCentreView lang={lang} />
         )}
 
         {activeTab === 'festivals' && (
@@ -182,17 +147,6 @@ export function App() {
 
       {/* Offline Toast Indicator */}
       <OfflineIndicator lang={lang} />
-
-      {/* Floating Live Radio Player */}
-      <RadioPlayer
-        lang={lang}
-        isOpen={isRadioOpen}
-        onClose={() => setIsRadioOpen(false)}
-        isPlaying={isRadioPlaying}
-        setIsPlaying={setIsRadioPlaying}
-        activeStation={activeRadioStation}
-        setActiveStation={setActiveRadioStation}
-      />
 
       {/* Footer */}
       <Footer lang={lang} onNavigate={handleNavigate} />

@@ -79,7 +79,7 @@ export const SupportWorkView: React.FC<SupportWorkViewProps> = ({ lang, onNaviga
       name: 'राजेश खड्का (Rajesh Khadka)',
       location: 'दोहा, कतार (Doha, Qatar)',
       amount: 'रु १,०००',
-      message: 'निःशुल्क नेपाली क्यालेन्डर र ताजा समाचारको लागि मुरी मुरी धन्यवाद। यस्तो सफा र उपयोगी प्लेटफर्म नेपालको लागि गौरव हो।',
+      message: 'निःशुल्क शुभ पात्रो (नेपाली क्यालेन्डर) र पञ्चाङ्गको लागि मुरी मुरी धन्यवाद। यस्तो सफा र उपयोगी प्लेटफर्म नेपालको लागि गौरव हो।',
       timeAgoNe: '१ दिन अघि',
       timeAgoEn: '1 day ago',
       currency: 'NPR',
@@ -136,17 +136,6 @@ export const SupportWorkView: React.FC<SupportWorkViewProps> = ({ lang, onNaviga
     setDonorName('');
     setDonorLocation('');
     setDonorMessage('');
-
-    // Optional mailto for direct notification to director
-    const subject = encodeURIComponent(`Nepali Calendar Donation Pledge: ${donorName}`);
-    const body = encodeURIComponent(
-      `Supporter Name: ${donorName}\n` +
-      `Location: ${donorLocation}\n` +
-      `Pledged Amount: ${newTestimonial.amount}\n\n` +
-      `Message:\n${donorMessage}\n\n` +
-      `Sent via Nepali Calendar Web App Support Page`
-    );
-    window.location.href = `mailto:shyamthapa281@gmail.com?subject=${subject}&body=${body}`;
   };
 
   // Preset donation amounts
@@ -179,14 +168,14 @@ export const SupportWorkView: React.FC<SupportWorkViewProps> = ({ lang, onNaviga
 
           <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
             {lang === 'ne' 
-              ? 'नेपाली क्यालेन्डरलाई सधैं निःशुल्क र भरपर्दो राख्न सहयोग गर्नुहोस्' 
-              : 'Help Keep Nepali Calendar 100% Free, Independent & Fast for Everyone'}
+              ? 'शुभ पात्रो (नेपाली क्यालेन्डर) लाई सधैं निःशुल्क र भरपर्दो राख्न सहयोग गर्नुहोस्' 
+              : 'Help Keep Shubha Patro (Nepali Calendar) 100% Free, Independent & Fast for Everyone'}
           </h1>
 
           <p className="text-sky-100 text-xs sm:text-sm sm:leading-relaxed">
             {lang === 'ne'
-              ? 'नेपाली क्यालेन्डर (बिक्रम संवत्), पञ्चाङ्ग, चाडपर्व, प्रत्यक्ष रेडियो, समाचार तथा उपयोगी रूपान्तरण उपकरणहरू विश्वभर छरिएर रहेका सम्पूर्ण नेपाली दाजुभाइ तथा दिदीबहिनीहरूका लागि निःशुल्क रूपमा उपलब्ध गराइएको छ। यसलाई निरन्तर सञ्चालन र थप स्तरीय बनाउन तपाईंको सानो सहयोगले ठूलो मद्दत पुग्नेछ।'
-              : 'Our digital Bikram Sambat calendar, Panchanga, live FM radio streams, news aggregator, and conversion tools are independently built and kept 100% free with zero paywalls. Your kind contribution directly covers server costs, streaming bandwidth, and continuous Vedic ephemeris updates.'}
+              ? 'शुभ पात्रो - नेपाली क्यालेन्डर (बिक्रम संवत्), पञ्चाङ्ग, चाडपर्व, प्रत्यक्ष रेडियो, एनआरएन सेवा तथा उपयोगी रूपान्तरण उपकरणहरू विश्वभर छरिएर रहेका सम्पूर्ण नेपाली दाजुभाइ तथा दिदीबहिनीहरूका लागि निःशुल्क रूपमा उपलब्ध गराइएको छ। यसलाई निरन्तर सञ्चालन र थप स्तरीय बनाउन तपाईंको सानो सहयोगले ठूलो मद्दत पुग्नेछ।'
+              : 'Our digital Shubha Patro Bikram Sambat calendar, Panchanga, live FM radio streams, NRN banking tools, and conversion utilities are independently built and kept 100% free with zero paywalls. Your kind contribution directly covers server costs, streaming bandwidth, and continuous Vedic ephemeris updates.'}
           </p>
 
           <div className="pt-2 flex flex-wrap items-center gap-3 text-xs text-sky-200">
@@ -749,7 +738,7 @@ export const SupportWorkView: React.FC<SupportWorkViewProps> = ({ lang, onNaviga
                 </strong>
                 <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
                   {lang === 'ne'
-                    ? 'हो, क्यालेन्डर, पञ्चाङ्ग, रेडियो, समाचार र सबै औजारहरू सधैं निःशुल्क रहनेछन्।'
+                    ? 'हो, क्यालेन्डर, पञ्चाङ्ग, रेडियो, एनआरएन सेवा र सबै औजारहरू सधैं निःशुल्क रहनेछन्।'
                     : 'Yes, our primary mission is keeping the calendar and cultural tools 100% free for everyone.'}
                 </p>
               </div>
@@ -760,8 +749,8 @@ export const SupportWorkView: React.FC<SupportWorkViewProps> = ({ lang, onNaviga
                 </strong>
                 <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
                   {lang === 'ne'
-                    ? 'अवश्य! दशैं, तिहार वा कुनै विशेष दिनमा शुभकामना सन्देश राख्न shyamthapa281@gmail.com मा सम्पर्क गर्नुहोस्।'
-                    : 'Yes! For custom festive greetings or institutional sponsorship, feel free to email us directly.'}
+                    ? 'अवश्य! दशैं, तिहार वा कुनै विशेष दिनमा शुभकामना सन्देश राख्न info@shubhapatro.com मा सम्पर्क गर्नुहोस्।'
+                    : 'Yes! For custom festive greetings or institutional sponsorship, feel free to email us directly at info@shubhapatro.com.'}
                 </p>
               </div>
             </div>

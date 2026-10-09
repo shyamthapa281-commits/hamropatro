@@ -59,7 +59,7 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({ lang, todayBs }) =
 📅 ${fest.bsDate} (${fest.adDate})
 ⏳ ${lang === 'ne' ? `बाँकी दिन: ${toNepaliDigits(fest.daysRemaining)} दिन` : `${fest.daysRemaining} days left`}
 ✨ ${lang === 'ne' ? fest.taglineNe : fest.taglineEn}
-(Nepali Calendar - नेपाली क्यालेन्डर)`;
+(Shubha Patro - शुभ पात्रो • नेपाली क्यालेन्डर • shubhapatro.com)`;
 
     try {
       if (navigator.share) {

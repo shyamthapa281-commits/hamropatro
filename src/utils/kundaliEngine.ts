@@ -5,6 +5,26 @@
  * and Muhurta Chintamani without manual guesswork.
  */
 
+import { 
+  calculateVedicHoroscope, 
+  VedicHoroscope, 
+  BirthInput, 
+  GrahaPosition, 
+  LagnaInfo, 
+  DashaBalance, 
+  ManglikAnalysis 
+} from './VedicAstrologyUtils';
+
+export { 
+  calculateVedicHoroscope, 
+  type VedicHoroscope, 
+  type BirthInput, 
+  type GrahaPosition, 
+  type LagnaInfo, 
+  type DashaBalance, 
+  type ManglikAnalysis 
+};
+
 export interface PlanetPosition {
   nameNe: string;
   nameEn: string;
@@ -491,81 +511,53 @@ export function calculateVedicKundali(
   tob: string,
   pob: string
 ): KundaliResult {
-  // Parse Birth Date & Time
-  const dateParts = dob.split('-').map(Number);
-  const timeParts = tob.split(':').map(Number);
-  const year = dateParts[0] || 1995;
-  const month = dateParts[1] || 1;
-  const day = dateParts[2] || 1;
-  const hour = timeParts[0] || 6;
-  const minute = timeParts[1] || 0;
-
   // Resolve City Coordinates
   const matchedCity = POPULAR_BIRTH_PLACES.find(c => pob.includes(c.nameNe) || pob.includes(c.nameEn)) || POPULAR_BIRTH_PLACES[0];
   const latitude = matchedCity.lat;
   const longitude = matchedCity.lng;
 
-  // Calculate Local Sidereal Time (LST) and Ascendant (Lagna)
-  // Day of year and hour angle
-  const dayOfYear = Math.floor((month - 1) * 30.4 + day);
-  const localSolarTimeHours = hour + (minute / 60) + (longitude / 15);
-  const ascendantDeg = (dayOfYear * 0.9856 + localSolarTimeHours * 15 + 280) % 360;
-
-  // Lahiri Ayanamsha (~24 degrees in modern era)
-  const nirayanaAscendantDeg = (ascendantDeg - 24.18 + 360) % 360;
-  const lagnaIndex = Math.floor(nirayanaAscendantDeg / 30);
-  const lagna = VEDIC_RASHIS[lagnaIndex];
-
-  // Moon Position & Janma Nakshatra
-  const moonDeg = ((dayOfYear * 13.176 + hour * 0.55) % 360);
-  const moonRashiIndex = Math.floor(moonDeg / 30);
-  const moonRashi = VEDIC_RASHIS[moonRashiIndex];
-
-  // Each Nakshatra spans 13° 20' = 13.333°
-  const nakshatraIndex = Math.floor(moonDeg / 13.3333) % 27;
-  const nakshatra = VEDIC_NAKSHATRAS[nakshatraIndex];
-  const charan = (Math.floor((moonDeg % 13.3333) / 3.3333) % 4) + 1;
-
-  // Mars House for Manglik Dosha
-  const marsDeg = ((dayOfYear * 0.524 + hour * 0.1) % 360);
-  const marsRashiIndex = Math.floor(marsDeg / 30);
-  const marsHouse = ((marsRashiIndex - lagnaIndex + 12) % 12) + 1;
-
-  // Manglik Check: Mars in 1st, 4th, 7th, 8th, or 12th house
-  const isManglik = [1, 4, 7, 8, 12].includes(marsHouse);
-  const manglikSeverity = isManglik ? ([1, 7, 8].includes(marsHouse) ? 'high' : 'partial') : 'none';
-
-  // 9 Vedic Planetary Coordinates
-  const planets: PlanetPosition[] = [
-    { nameNe: 'सूर्य', nameEn: 'Sun', symbol: '☉', rashiNe: VEDIC_RASHIS[(lagnaIndex + 3) % 12].ne, rashiEn: VEDIC_RASHIS[(lagnaIndex + 3) % 12].en, house: ((Math.floor((dayOfYear * 0.985) / 30) - lagnaIndex + 12) % 12) + 1, degree: '१४° २२\'' },
-    { nameNe: 'चन्द्र', nameEn: 'Moon', symbol: '☽', rashiNe: moonRashi.ne, rashiEn: moonRashi.en, house: ((moonRashiIndex - lagnaIndex + 12) % 12) + 1, degree: `${Math.floor(moonDeg % 30)}° १२\'` },
-    { nameNe: 'मङ्गल', nameEn: 'Mars', symbol: '♂', rashiNe: VEDIC_RASHIS[marsRashiIndex].ne, rashiEn: VEDIC_RASHIS[marsRashiIndex].en, house: marsHouse, degree: '२१° १०\'' },
-    { nameNe: 'बुध', nameEn: 'Mercury', symbol: '☿', rashiNe: VEDIC_RASHIS[(lagnaIndex + 2) % 12].ne, rashiEn: VEDIC_RASHIS[(lagnaIndex + 2) % 12].en, house: ((lagnaIndex + 2) % 12) + 1, degree: '१२° ३०\'' },
-    { nameNe: 'बृहस्पति', nameEn: 'Jupiter', symbol: '♃', rashiNe: VEDIC_RASHIS[(lagnaIndex + 8) % 12].ne, rashiEn: VEDIC_RASHIS[(lagnaIndex + 8) % 12].en, house: ((lagnaIndex + 8) % 12) + 1, degree: '०५° १८\'' },
-    { nameNe: 'शुक्र', nameEn: 'Venus', symbol: '♀', rashiNe: VEDIC_RASHIS[(lagnaIndex + 4) % 12].ne, rashiEn: VEDIC_RASHIS[(lagnaIndex + 4) % 12].en, house: ((lagnaIndex + 4) % 12) + 1, degree: '२७° ५०\'' },
-    { nameNe: 'शनि', nameEn: 'Saturn', symbol: '♄', rashiNe: VEDIC_RASHIS[(lagnaIndex + 10) % 12].ne, rashiEn: VEDIC_RASHIS[(lagnaIndex + 10) % 12].en, house: ((lagnaIndex + 10) % 12) + 1, degree: '१६° ०४\'' },
-    { nameNe: 'राहु', nameEn: 'Rahu', symbol: '☊', rashiNe: VEDIC_RASHIS[(lagnaIndex + 1) % 12].ne, rashiEn: VEDIC_RASHIS[(lagnaIndex + 1) % 12].en, house: ((lagnaIndex + 1) % 12) + 1, degree: '०२° ४०\'', isRetrograde: true },
-    { nameNe: 'केतु', nameEn: 'Ketu', symbol: '☋', rashiNe: VEDIC_RASHIS[(lagnaIndex + 7) % 12].ne, rashiEn: VEDIC_RASHIS[(lagnaIndex + 7) % 12].en, house: ((lagnaIndex + 7) % 12) + 1, degree: '०२° ४०\'', isRetrograde: true },
-  ];
-
-  // Distribute into 12 houses
-  const houses = Array.from({ length: 12 }, (_, i) => {
-    const houseNumber = i + 1;
-    const signIndex = (lagnaIndex + i) % 12;
-    const housePlanets = planets.filter((p) => p.house === houseNumber).map((p) => p.nameNe);
-    return {
-      houseNumber,
-      signNe: VEDIC_RASHIS[signIndex].ne,
-      signEn: VEDIC_RASHIS[signIndex].en,
-      planets: housePlanets,
-    };
+  // Use standardized deterministic Vedic Astrology Engine
+  const horoscope = calculateVedicHoroscope({
+    date: dob,
+    time: tob,
+    location: {
+      nameNe: matchedCity.nameNe,
+      nameEn: matchedCity.nameEn,
+      latitude,
+      longitude,
+      timezoneOffsetHours: 5.75
+    }
   });
 
-  const gems = ['माणिक्य (Ruby)', 'मोती (Pearl)', 'मूंगा (Red Coral)', 'पन्ना (Emerald)', 'पुखराज (Yellow Sapphire)', 'हीरा (Diamond)', 'नीलम (Blue Sapphire)'];
-  const colors = ['पहेंलो र सुनौलो', 'सेतो र हल्का नीलो', 'गाढा रातो', 'हरियो', 'गुलाबी', 'सुन्तला र कफी'];
-  const deities = ['भगवान गणेश र सूर्य नारायण', 'माता लक्ष्मी र भगवान विष्णु', 'हनुमान जी र शिवजी', 'माता दुर्गा र भैरव', 'भगवान श्रीकृष्ण'];
+  // Map 9 Standardized Planetary Coordinates
+  const planets: PlanetPosition[] = horoscope.grahasList.map((g) => ({
+    nameNe: g.nameNe.split(' ')[0],
+    nameEn: g.nameEn,
+    symbol: g.symbol,
+    rashiNe: g.rashiNe,
+    rashiEn: g.rashiEn,
+    house: g.house,
+    degree: g.formattedDegree,
+    isRetrograde: g.isRetrograde
+  }));
 
-  const seed = Math.abs(year * 365 + dayOfYear + hour);
+  // Distribute into 12 houses from Lagna
+  const houses = horoscope.houses.map(h => ({
+    houseNumber: h.houseNumber,
+    signNe: h.rashiNe,
+    signEn: h.rashiEn,
+    planets: h.planets.map(p => p.nameNe.split(' ')[0]),
+  }));
+
+  const isManglik = horoscope.manglikAnalysis.isManglik;
+  const manglikSeverity = horoscope.manglikAnalysis.severity;
+  const lagnaNe = horoscope.lagna.rashiNe;
+  const lagnaEn = horoscope.lagna.rashiEn;
+  const lagnaIndex = horoscope.lagna.rashiIndex;
+
+  const moonNakshatraIndex = horoscope.grahas.moon.nakshatra.index;
+  const nakshatraMeta = VEDIC_NAKSHATRAS[moonNakshatraIndex] || VEDIC_NAKSHATRAS[0];
+  const rashiMeta = VEDIC_RASHIS[horoscope.moonSign.rashiIndex] || VEDIC_RASHIS[0];
 
   return {
     name,
@@ -575,39 +567,39 @@ export function calculateVedicKundali(
     pob,
     latitude,
     longitude,
-    lagnaNe: lagna.ne,
-    lagnaEn: lagna.en,
-    rashiNe: moonRashi.ne,
-    rashiEn: moonRashi.en,
-    nakshatraNe: nakshatra.ne,
-    nakshatraEn: nakshatra.en,
-    charan,
-    ganNe: nakshatra.gana,
-    ganEn: nakshatra.gana === 'देव' ? 'Deva' : nakshatra.gana === 'मनुष्य' ? 'Manushya' : 'Rakshasa',
-    nadiNe: nakshatra.nadi,
-    nadiEn: nakshatra.nadi === 'आदि' ? 'Aadi' : nakshatra.nadi === 'मध्य' ? 'Madhya' : 'Antya',
-    yoniNe: nakshatra.yoni,
-    yoniEn: nakshatra.yoni,
-    varnaNe: moonRashi.varna,
-    varnaEn: moonRashi.varna,
+    lagnaNe,
+    lagnaEn,
+    rashiNe: horoscope.moonSign.rashiNe,
+    rashiEn: horoscope.moonSign.rashiEn,
+    nakshatraNe: horoscope.moonSign.nakshatraNe,
+    nakshatraEn: horoscope.moonSign.nakshatraEn,
+    charan: horoscope.moonSign.pada,
+    ganNe: nakshatraMeta.gana,
+    ganEn: nakshatraMeta.gana === 'देव' ? 'Deva' : nakshatraMeta.gana === 'मनुष्य' ? 'Manushya' : 'Rakshasa',
+    nadiNe: nakshatraMeta.nadi,
+    nadiEn: nakshatraMeta.nadi === 'आदि' ? 'Aadi' : nakshatraMeta.nadi === 'मध्य' ? 'Madhya' : 'Antya',
+    yoniNe: nakshatraMeta.yoni,
+    yoniEn: nakshatraMeta.yoni,
+    varnaNe: rashiMeta.varna,
+    varnaEn: rashiMeta.varna,
     isManglik,
     manglikSeverity,
     planets,
     houses,
     currentDasha: {
-      mahadasha: 'बृहस्पति (Jupiter)',
-      antardasha: 'शनि (Saturn)',
-      startDate: '२०२३',
-      endDate: '२०२६',
-      predictionNe: 'बृहस्पति र शनिको प्रभावले कार्यक्षेत्रमा पदोन्नति, विदेश यात्रा तथा नयाँ लगानीको अवसर दिलाउनेछ। स्वास्थ्यमा भने सावधानी अपनाउनु पर्नेछ।',
-      predictionEn: 'Jupiter-Saturn alignment signals career elevation, overseas travel, and high-yield investments. Minor health vigilance advised.',
+      mahadasha: horoscope.dashaBalance.rulingPlanetNe,
+      antardasha: 'शुभ महादशा',
+      startDate: '२०२४',
+      endDate: '२०३०',
+      predictionNe: `${horoscope.dashaBalance.rulingPlanetNe} को प्रभावले कार्यक्षेत्रमा नयाँ अवसर, प्रतिष्ठा र आर्थिक लाभ दिलाउनेछ।`,
+      predictionEn: `${horoscope.dashaBalance.rulingPlanetEn} mahadasha fosters fresh career elevation, leadership opportunities, and steady financial stability.`,
     },
-    luckyGem: gems[lagnaIndex % gems.length],
-    luckyColor: colors[lagnaIndex % colors.length],
-    luckyNumber: (lagnaIndex % 9) + 1,
-    luckyDeity: deities[lagnaIndex % deities.length],
-    careerPredictionNe: `तपाईंको कुण्डलीमा ${lagna.ne} लग्न र कर्म भावमा शुभ ग्रहहरूको दृष्टि रहेकोले प्रशासनिक सेवा, व्यापार, प्रविधि वा विदेश सम्बन्धित कार्यमा असाधारण सफलता प्राप्त हुने योग छ।`,
-    careerPredictionEn: `Strong ascendant aspects in ${lagna.en} point toward high success in managerial, tech, entrepreneurship, or multinational ventures.`,
+    luckyGem: horoscope.luckyElements.luckyGemNe,
+    luckyColor: horoscope.luckyElements.luckyColorNe,
+    luckyNumber: horoscope.luckyElements.luckyNumber,
+    luckyDeity: horoscope.luckyElements.luckyDeityNe,
+    careerPredictionNe: `तपाईंको कुण्डलीमा ${lagnaNe} लग्न र कर्म भावमा शुभ ग्रहहरूको दृष्टि रहेकोले प्रशासनिक सेवा, व्यापार, प्रविधि वा विदेश सम्बन्धित कार्यमा असाधारण सफलता प्राप्त हुने योग छ।`,
+    careerPredictionEn: `Strong ascendant aspects in ${lagnaEn} point toward high success in managerial, tech, entrepreneurship, or multinational ventures.`,
     marriagePredictionNe: isManglik
       ? `मङ्गल चतुर्थ/सप्तम भावमा स्थित भएकाले विवाहपूर्व मङ्गल शान्ति वा कुम्भ विवाह पूजा गराउनु शुभ रहनेछ। जीवनसाथी आत्मविश्वासी र सहयोगी प्राप्त हुनेछन्।`
       : `सप्तम भावमा शुभ ग्रहको युति भएकाले दाम्पत्य जीवन सुखमय, समझदारीपूर्ण र दीर्घकालीन रहनेछ। विवाह पश्चात् भाग्यवृद्धि हुने योग छ।`,

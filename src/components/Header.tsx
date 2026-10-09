@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { 
   Sun, 
   Moon, 
-  Radio as RadioIcon, 
   Calendar as CalendarIcon, 
   Sparkles, 
   Globe, 
   Clock,
   CloudSun,
   Compass,
-  Newspaper,
   Coins,
   Heart
 } from 'lucide-react';
@@ -23,8 +21,8 @@ interface HeaderProps {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   onToggleLang: () => void;
-  onOpenRadio: () => void;
-  isRadioPlaying: boolean;
+  onOpenRadio?: () => void;
+  isRadioPlaying?: boolean;
   activeRadioName?: string;
   onNavigate: (tab: string) => void;
 }
@@ -36,9 +34,6 @@ export const Header: React.FC<HeaderProps> = ({
   theme,
   onToggleTheme,
   onToggleLang,
-  onOpenRadio,
-  isRadioPlaying,
-  activeRadioName,
   onNavigate,
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
@@ -95,18 +90,6 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-          {/* Live News Quick Link */}
-          <button
-            id="header-news-top-btn"
-            type="button"
-            onClick={() => onNavigate('news')}
-            className="flex items-center gap-1 bg-sky-900/60 dark:bg-stone-800/70 hover:bg-sky-800 dark:hover:bg-stone-700 px-2.5 py-0.5 rounded-lg border border-sky-600/40 dark:border-stone-700 text-sky-100 text-xs transition-colors font-medium cursor-pointer"
-            title={lang === 'ne' ? 'ताजा समाचार पढ्नुहोस्' : 'Live Nepal News'}
-          >
-            <Newspaper className="w-3 h-3 text-sky-300" />
-            <span className="hidden md:inline">{lang === 'ne' ? 'ताजा समाचार' : 'Live News'}</span>
-          </button>
-
           {/* Forex & Gold Quick Link */}
           <button
             id="header-forex-top-btn"
@@ -180,24 +163,6 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* Radio Toggle */}
-          <button
-            id="header-radio-toggle-top"
-            onClick={onOpenRadio}
-            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium transition-all ${
-              isRadioPlaying
-                ? 'bg-amber-400 text-stone-900 animate-pulse font-semibold'
-                : 'bg-sky-900/80 hover:bg-sky-800 text-sky-100 border border-sky-600/50'
-            }`}
-          >
-            <RadioIcon className="w-3 h-3" />
-            <span>
-              {isRadioPlaying 
-                ? (activeRadioName ? `लाइभ: ${activeRadioName}` : 'Radio ON') 
-                : (lang === 'ne' ? 'नेपाली रेडियो' : 'Nepali FM')}
-            </span>
-          </button>
-
           {/* Language Switch */}
           <button
             id="header-language-toggle-top"
@@ -223,14 +188,14 @@ export const Header: React.FC<HeaderProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-1.5">
-                Nepali Calendar
+                Shubha Patro
                 <span className="text-xs bg-amber-400 text-stone-900 font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
                   BS {toNepaliDigits(todayBs.year)}
                 </span>
               </h1>
             </div>
             <p className="text-xs text-sky-100 dark:text-stone-300 font-medium">
-              {lang === 'ne' ? 'नेपाली क्यालेन्डर, राशिफल र ताजा समाचार' : 'Nepali Calendar, Rashifal & News'}
+              {lang === 'ne' ? 'नेपाली क्यालेन्डर, पञ्चाङ्ग र राशिफल' : 'Nepali Calendar, Panchanga & Rashifal'}
             </p>
           </div>
         </div>
