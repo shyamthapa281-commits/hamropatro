@@ -9,7 +9,8 @@ import {
   CloudSun,
   Compass,
   Coins,
-  Heart
+  Heart,
+  Wallet
 } from 'lucide-react';
 import { NepaliDate, Panchanga, Language } from '../types';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
@@ -126,15 +127,15 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="hidden xs:inline">{lang === 'ne' ? 'विश्व घडी' : 'World Clock'}</span>
           </button>
 
-          {/* Support / Donate Quick Link */}
+          {/* Support Quick Link */}
           <button
             id="header-support-top-btn"
             type="button"
-            onClick={() => onNavigate('support')}
-            className="flex items-center gap-1.5 bg-rose-600/90 hover:bg-rose-500 px-2.5 py-0.5 rounded-lg border border-rose-400/50 text-white text-xs transition-all font-bold cursor-pointer shadow-xs"
-            title={lang === 'ne' ? 'हाम्रो कामलाई सहयोग गर्नुहोस् (Donate)' : 'Support our work & donate'}
+            onClick={() => onNavigate('payments')}
+            className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-stone-950 px-2.5 py-0.5 rounded-lg border border-amber-300 text-xs transition-all font-black cursor-pointer shadow-xs"
+            title={lang === 'ne' ? 'सहयोग (Support)' : 'Support Our Work'}
           >
-            <Heart className="w-3 h-3 text-white fill-current animate-pulse" />
+            <Wallet className="w-3 h-3 text-stone-950 fill-current" />
             <span>{lang === 'ne' ? 'सहयोग' : 'Support'}</span>
           </button>
 

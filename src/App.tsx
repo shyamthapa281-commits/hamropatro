@@ -11,6 +11,7 @@ import { FestivalsView } from './components/FestivalsView';
 import { DateConverter } from './components/DateConverter';
 import { CalculatorsView } from './components/CalculatorsView';
 import { SupportWorkView } from './components/SupportWorkView';
+import { ReceivePaymentsView } from './components/ReceivePaymentsView';
 import { NrnBankingIpoView } from './components/NrnBankingIpoView';
 import { KundaliGunMilanView } from './components/KundaliGunMilanView';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -136,12 +137,16 @@ export function App() {
           <DateConverter lang={lang} />
         )}
 
+        {activeTab === 'payments' && (
+          <ReceivePaymentsView lang={lang} onNavigate={handleNavigate} />
+        )}
+
         {activeTab === 'festivals' && (
           <FestivalsView lang={lang} todayBs={todayBs} />
         )}
 
         {activeTab === 'support' && (
-          <SupportWorkView lang={lang} onNavigate={handleNavigate} />
+          <ReceivePaymentsView lang={lang} onNavigate={handleNavigate} initialPurpose="platform_support" />
         )}
       </main>
 

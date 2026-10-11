@@ -20,8 +20,6 @@ import {
 } from 'lucide-react';
 import { Language } from '../types';
 import { EmailServerModal } from './EmailServerModal';
-import { FeedbackInboxModal } from './FeedbackInboxModal';
-import { Inbox } from 'lucide-react';
 
 interface FooterProps {
   lang: Language;
@@ -43,7 +41,6 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
     date: string;
   } | null>(null);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
-  const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
 
   const handleSubmitAdvice = async (e: React.FormEvent) => {
@@ -139,15 +136,6 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
               <span className="inline-block text-[11px] bg-stone-800/90 text-stone-300 px-3 py-1.5 rounded-lg border border-stone-700/80">
                 Version 2.5 • BS 2080-2084 Live
               </span>
-              <button
-                type="button"
-                onClick={() => setIsInboxOpen(true)}
-                className="inline-flex items-center gap-1.5 text-[11px] bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 px-3 py-1.5 rounded-lg border border-amber-500/30 transition-colors cursor-pointer"
-                title={lang === 'ne' ? 'प्राप्त सल्लाह तथा प्रतिक्रिया इनबक्स हेर्नुहोस्' : 'View received advice and messages inbox'}
-              >
-                <Inbox className="w-3.5 h-3.5 text-amber-400" />
-                <span>{lang === 'ne' ? 'सन्देश इनबक्स' : 'Messages Inbox'}</span>
-              </button>
             </div>
           </div>
 
@@ -243,10 +231,10 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   type="button"
                   id="footer-quick-support"
                   onClick={() => onNavigate('support')}
-                  className="text-rose-400 hover:text-rose-300 font-semibold transition-colors cursor-pointer hover:underline text-left w-full flex items-center gap-1.5"
+                  className="text-amber-400 hover:text-amber-300 font-bold transition-colors cursor-pointer hover:underline text-left w-full flex items-center gap-1.5"
                 >
-                  <Heart className="w-3 h-3 text-rose-400 fill-current" />
-                  <span>{lang === 'ne' ? 'हाम्रो कामलाई सहयोग गर्नुहोस् (Donation)' : 'Support Our Work & Donate'}</span>
+                  <Heart className="w-3.5 h-3.5 text-amber-400 fill-amber-400/30" />
+                  <span>{lang === 'ne' ? '• सहयोग (Support Our Work)' : '• Support Our Work'}</span>
                 </button>
               </li>
             </ul>
@@ -357,7 +345,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                 </div>
                 <div className="flex items-start gap-2">
                   <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                  <span>Craigieburn, Melbourne 3064, Vic, Australia</span>
+                  <span>Melbourne 3064, vic, Australia</span>
                 </div>
               </div>
             </div>
@@ -536,13 +524,6 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
           lang={lang}
           email="info@shubhapatro.com"
           defaultSubject="Inquiry to Shubha Patro"
-        />
-
-        {/* Live Feedback & Advice Inbox Modal */}
-        <FeedbackInboxModal 
-          isOpen={isInboxOpen}
-          onClose={() => setIsInboxOpen(false)}
-          lang={lang}
         />
 
         {/* Bottom copyright */}

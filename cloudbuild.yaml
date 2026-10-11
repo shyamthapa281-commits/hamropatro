@@ -1,0 +1,28 @@
+steps:
+  # 1. Build Docker image with Google Cloud Build
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/shubhapatro:$COMMIT_SHA', '-t', 'gcr.io/$PROJECT_ID/shubhapatro:latest', '.']
+
+  # 2. Push image to Google Container / Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/shubhapatro:latest']
+
+  # 3. Deploy image to Google Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'shubhapatro'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/shubhapatro:latest'
+      - '--region'
+      - 'asia-east1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+
+images:
+  - 'gcr.io/$PROJECT_ID/shubhapatro:latest'

@@ -1,0 +1,17 @@
+{
+  "nepalBankName": "NMB Bank Limited",
+  "nepalAccountNumber": "1990256249400016",
+  "nepalAccountHolder": "Shyam Thapa",
+  "nepalBranch": "Gwarko, Lalitpur",
+  "nepalSwiftCode": "NMBNNPKA",
+  "stripePaymentLink": "https://buy.stripe.com/bJeeVc1ImcTf0wZdMf8so00",
+  "paypalEmail": "shyamthapa999@hotmail.com",
+  "paypalUsername": "shubhapatro",
+  "paypalMeUrl": "https://paypal.me/shubhapatro",
+  "payid": "0416045056",
+  "ausAccountName": "Shyam Thapa",
+  "ausBsb": "063620",
+  "ausAccountNumber": "11170070",
+  "ausBankName": "Commonwealth Bank of Australia (CBA)",
+  "instructions": "भुक्तानी गरिसकेपछि कृपया तलको फारम भरेर बैंक भौचर वा स्क्रिनसटको प्रमाण पेश गर्नुहोला।"
+}

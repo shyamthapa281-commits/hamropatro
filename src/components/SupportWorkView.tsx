@@ -486,7 +486,7 @@ export const SupportWorkView: React.FC<SupportWorkViewProps> = ({ lang, onNaviga
                   </a>
 
                   <a
-                    href="https://paypal.me"
+                    href="https://paypal.me/shubhapatro"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-4 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-xs active:scale-95 cursor-pointer"
@@ -533,7 +533,7 @@ export const SupportWorkView: React.FC<SupportWorkViewProps> = ({ lang, onNaviga
 
                   <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60">
                     <span className="text-stone-400 text-[10.5px] block font-medium">Location:</span>
-                    <span className="font-bold text-stone-900 dark:text-white text-xs block">Craigieburn, Melbourne 3064, Victoria</span>
+                    <span className="font-bold text-stone-900 dark:text-white text-xs block">Melbourne 3064, vic, Australia</span>
                   </div>
 
                   <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60">

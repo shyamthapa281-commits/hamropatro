@@ -11,7 +11,8 @@ import {
   ChevronRight,
   BookOpen,
   TrendingUp,
-  Compass
+  Compass,
+  Wallet
 } from 'lucide-react';
 import { Language } from '../types';
 
@@ -97,6 +98,14 @@ export const Navigation: React.FC<NavigationProps> = ({
       nameNe: 'क्याल्कुलेटर',
       nameEn: 'Calculator & EMI',
       icon: CalcIcon,
+    },
+    {
+      id: 'payments',
+      nameNe: 'सहयोग',
+      nameEn: 'Support Our Work',
+      icon: Wallet,
+      badgeNe: 'सहयोग',
+      badgeEn: 'Support',
     },
     {
       id: 'converter',

@@ -4,9 +4,11 @@
 import { ForexRate, GoldSilverRate } from '../types';
 
 export const CURRENCY_METADATA: Record<string, { nameNe: string; flag: string }> = {
+  INR: { nameNe: 'भारतीय रूपैयाँ (१००)', flag: '🇮🇳' },
   USD: { nameNe: 'अमेरिकी डलर', flag: '🇺🇸' },
   EUR: { nameNe: 'युरोपियन युरो', flag: '🇪🇺' },
   GBP: { nameNe: 'युके पाउन्ड स्टर्लिङ', flag: '🇬🇧' },
+  CHF: { nameNe: 'स्विस फ्रान्क', flag: '🇨🇭' },
   AUD: { nameNe: 'अष्ट्रेलियन डलर', flag: '🇦🇺' },
   CAD: { nameNe: 'क्यानेडियन डलर', flag: '🇨🇦' },
   SGD: { nameNe: 'सिङ्गापुर डलर', flag: '🇸🇬' },
@@ -14,45 +16,55 @@ export const CURRENCY_METADATA: Record<string, { nameNe: string; flag: string }>
   CNY: { nameNe: 'चिनियाँ युआन', flag: '🇨🇳' },
   SAR: { nameNe: 'साउदी रियाल', flag: '🇸🇦' },
   QAR: { nameNe: 'कतारी रियाल', flag: '🇶🇦' },
+  THB: { nameNe: 'थाई भाट', flag: '🇹🇭' },
   AED: { nameNe: 'युएई दिराम', flag: '🇦🇪' },
   MYR: { nameNe: 'मलेसियन रिंगिट', flag: '🇲🇾' },
   KRW: { nameNe: 'साउथ कोरियन वन (१००)', flag: '🇰🇷' },
-  INR: { nameNe: 'भारतीय रूपैयाँ (१००)', flag: '🇮🇳' },
+  SEK: { nameNe: 'स्वीडिस क्रोनर', flag: '🇸🇪' },
+  DKK: { nameNe: 'डेनिस क्रोनर', flag: '🇩🇰' },
+  HKD: { nameNe: 'हङकङ डलर', flag: '🇭🇰' },
   KWD: { nameNe: 'कुवेती दिनार', flag: '🇰🇼' },
   BHD: { nameNe: 'बहराइन दिनार', flag: '🇧🇭' },
-  CHF: { nameNe: 'स्विस फ्रान्क', flag: '🇨🇭' },
-  HKD: { nameNe: 'हङकङ डलर', flag: '🇭🇰' },
+  OMR: { nameNe: 'ओमानी रियाल', flag: '🇴🇲' },
 };
 
 // Current Official Verified Benchmark Rates (FENEGOSIDA & NRB)
 export const LIVE_BENCHMARK_FOREX: ForexRate[] = [
-  { currencyCode: 'USD', currencyNameNe: 'अमेरिकी डलर', currencyNameEn: 'U.S. Dollar', unit: 1, buyRate: 152.89, sellRate: 153.49, change: 0.25, flag: '🇺🇸' },
-  { currencyCode: 'EUR', currencyNameNe: 'युरोपियन युरो', currencyNameEn: 'European Euro', unit: 1, buyRate: 174.40, sellRate: 175.08, change: 0.42, flag: '🇪🇺' },
-  { currencyCode: 'GBP', currencyNameNe: 'युके पाउन्ड स्टर्लिङ', currencyNameEn: 'UK Pound Sterling', unit: 1, buyRate: 201.80, sellRate: 202.59, change: -0.15, flag: '🇬🇧' },
-  { currencyCode: 'AUD', currencyNameNe: 'अष्ट्रेलियन डलर', currencyNameEn: 'Australian Dollar', unit: 1, buyRate: 99.45, sellRate: 99.84, change: 0.18, flag: '🇦🇺' },
-  { currencyCode: 'CAD', currencyNameNe: 'क्यानेडियन डलर', currencyNameEn: 'Canadian Dollar', unit: 1, buyRate: 110.15, sellRate: 110.58, change: 0.05, flag: '🇨🇦' },
-  { currencyCode: 'SGD', currencyNameNe: 'सिङ्गापुर डलर', currencyNameEn: 'Singapore Dollar', unit: 1, buyRate: 115.30, sellRate: 115.75, change: 0.12, flag: '🇸🇬' },
-  { currencyCode: 'JPY', currencyNameNe: 'जापानी येन (१०)', currencyNameEn: 'Japanese Yen 10', unit: 10, buyRate: 9.92, sellRate: 9.96, change: 0.02, flag: '🇯🇵' },
-  { currencyCode: 'CNY', currencyNameNe: 'चिनियाँ युआन', currencyNameEn: 'Chinese Yuan', unit: 1, buyRate: 21.05, sellRate: 21.13, change: -0.04, flag: '🇨🇳' },
-  { currencyCode: 'SAR', currencyNameNe: 'साउदी रियाल', currencyNameEn: 'Saudi Arabian Riyal', unit: 1, buyRate: 40.75, sellRate: 40.91, change: 0.08, flag: '🇸🇦' },
-  { currencyCode: 'QAR', currencyNameNe: 'कतारी रियाल', currencyNameEn: 'Qatari Riyal', unit: 1, buyRate: 41.95, sellRate: 42.11, change: 0.06, flag: '🇶🇦' },
-  { currencyCode: 'AED', currencyNameNe: 'युएई दिराम', currencyNameEn: 'UAE Dirham', unit: 1, buyRate: 41.62, sellRate: 41.78, change: 0.05, flag: '🇦🇪' },
-  { currencyCode: 'MYR', currencyNameNe: 'मलेसियन रिंगिट', currencyNameEn: 'Malaysian Ringgit', unit: 1, buyRate: 34.60, sellRate: 34.74, change: -0.10, flag: '🇲🇾' },
-  { currencyCode: 'KRW', currencyNameNe: 'साउथ कोरियन वन (१००)', currencyNameEn: 'South Korean Won 100', unit: 100, buyRate: 10.82, sellRate: 10.86, change: 0.03, flag: '🇰🇷' },
+  { currencyCode: 'USD', currencyNameNe: 'अमेरिकी डलर', currencyNameEn: 'U.S. Dollar', unit: 1, buyRate: 154.48, sellRate: 155.08, change: 0.25, flag: '🇺🇸' },
+  { currencyCode: 'EUR', currencyNameNe: 'युरोपियन युरो', currencyNameEn: 'European Euro', unit: 1, buyRate: 173.32, sellRate: 173.99, change: -0.15, flag: '🇪🇺' },
+  { currencyCode: 'GBP', currencyNameNe: 'युके पाउन्ड स्टर्लिङ', currencyNameEn: 'UK Pound Sterling', unit: 1, buyRate: 204.55, sellRate: 205.35, change: 0.45, flag: '🇬🇧' },
+  { currencyCode: 'CHF', currencyNameNe: 'स्विस फ्रान्क', currencyNameEn: 'Swiss Franc', unit: 1, buyRate: 185.92, sellRate: 186.64, change: 0.20, flag: '🇨🇭' },
+  { currencyCode: 'AUD', currencyNameNe: 'अष्ट्रेलियन डलर', currencyNameEn: 'Australian Dollar', unit: 1, buyRate: 107.83, sellRate: 108.25, change: 0.18, flag: '🇦🇺' },
+  { currencyCode: 'CAD', currencyNameNe: 'क्यानेडियन डलर', currencyNameEn: 'Canadian Dollar', unit: 1, buyRate: 108.57, sellRate: 108.99, change: 0.12, flag: '🇨🇦' },
+  { currencyCode: 'SGD', currencyNameNe: 'सिङ्गापुर डलर', currencyNameEn: 'Singapore Dollar', unit: 1, buyRate: 120.68, sellRate: 121.15, change: 0.22, flag: '🇸🇬' },
+  { currencyCode: 'JPY', currencyNameNe: 'जापानी येन (१०)', currencyNameEn: 'Japanese Yen 10', unit: 10, buyRate: 9.76, sellRate: 9.80, change: -0.02, flag: '🇯🇵' },
+  { currencyCode: 'CNY', currencyNameNe: 'चिनियाँ युआन', currencyNameEn: 'Chinese Yuan', unit: 1, buyRate: 23.08, sellRate: 23.17, change: 0.05, flag: '🇨🇳' },
+  { currencyCode: 'SAR', currencyNameNe: 'साउदी रियाल', currencyNameEn: 'Saudi Arabian Riyal', unit: 1, buyRate: 41.15, sellRate: 41.31, change: 0.04, flag: '🇸🇦' },
+  { currencyCode: 'QAR', currencyNameNe: 'कतारी रियाल', currencyNameEn: 'Qatari Riyal', unit: 1, buyRate: 42.42, sellRate: 42.58, change: 0.05, flag: '🇶🇦' },
+  { currencyCode: 'THB', currencyNameNe: 'थाई भाट', currencyNameEn: 'Thai Baht', unit: 1, buyRate: 4.61, sellRate: 4.62, change: 0.01, flag: '🇹🇭' },
+  { currencyCode: 'AED', currencyNameNe: 'युएई दिराम', currencyNameEn: 'UAE Dirham', unit: 1, buyRate: 42.06, sellRate: 42.23, change: 0.04, flag: '🇦🇪' },
+  { currencyCode: 'MYR', currencyNameNe: 'मलेसियन रिंगिट', currencyNameEn: 'Malaysian Ringgit', unit: 1, buyRate: 37.82, sellRate: 37.96, change: -0.08, flag: '🇲🇾' },
+  { currencyCode: 'KRW', currencyNameNe: 'साउथ कोरियन वन (१००)', currencyNameEn: 'South Korean Won 100', unit: 100, buyRate: 11.52, sellRate: 11.56, change: 0.02, flag: '🇰🇷' },
+  { currencyCode: 'SEK', currencyNameNe: 'स्वीडिस क्रोनर', currencyNameEn: 'Swedish Kroner', unit: 1, buyRate: 15.51, sellRate: 15.57, change: 0.03, flag: '🇸🇪' },
+  { currencyCode: 'DKK', currencyNameNe: 'डेनिस क्रोनर', currencyNameEn: 'Danish Kroner', unit: 1, buyRate: 23.19, sellRate: 23.28, change: 0.02, flag: '🇩🇰' },
+  { currencyCode: 'HKD', currencyNameNe: 'हङकङ डलर', currencyNameEn: 'Hong Kong Dollar', unit: 1, buyRate: 19.69, sellRate: 19.76, change: 0.02, flag: '🇭🇰' },
+  { currencyCode: 'KWD', currencyNameNe: 'कुवेती दिनार', currencyNameEn: 'Kuwaiti Dinar', unit: 1, buyRate: 501.31, sellRate: 503.26, change: 0.85, flag: '🇰🇼' },
+  { currencyCode: 'BHD', currencyNameNe: 'बहराइन दिनार', currencyNameEn: 'Bahraini Dinar', unit: 1, buyRate: 409.11, sellRate: 410.70, change: 0.60, flag: '🇧🇭' },
+  { currencyCode: 'OMR', currencyNameNe: 'ओमानी रियाल', currencyNameEn: 'Omani Rial', unit: 1, buyRate: 401.24, sellRate: 402.80, change: 0.58, flag: '🇴🇲' },
   { currencyCode: 'INR', currencyNameNe: 'भारतीय रूपैयाँ (१००)', currencyNameEn: 'Indian Rupee 100', unit: 100, buyRate: 160.00, sellRate: 160.15, change: 0, flag: '🇮🇳' },
-  { currencyCode: 'KWD', currencyNameNe: 'कुवेती दिनार', currencyNameEn: 'Kuwaiti Dinar', unit: 1, buyRate: 497.80, sellRate: 499.75, change: 0.80, flag: '🇰🇼' },
-  { currencyCode: 'BHD', currencyNameNe: 'बहराइन दिनार', currencyNameEn: 'Bahraini Dinar', unit: 1, buyRate: 405.50, sellRate: 407.10, change: 0.55, flag: '🇧🇭' }
 ];
 
 export const LIVE_BENCHMARK_BULLION: GoldSilverRate[] = [
-  { itemNe: 'छापावाल सुन (Fine Gold 9999)', itemEn: 'Fine Gold (24 Karat)', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: 299100, changeNpr: 600, isUp: true, date: 'Today' },
-  { itemNe: 'तेजाबी सुन (Tejabi Gold)', itemEn: 'Tejabi Gold (22 Karat)', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: 296100, changeNpr: 600, isUp: true, date: 'Today' },
-  { itemNe: 'छापावाल सुन (Fine Gold 10g)', itemEn: 'Fine Gold (10 Grams)', unitNe: 'प्रति १० ग्राम', unitEn: 'Per 10 Grams', rateNpr: 256430, changeNpr: 515, isUp: true, date: 'Today' },
-  { itemNe: 'चाँदी (Silver)', itemEn: 'Silver Standard', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: 4650, changeNpr: 35, isUp: true, date: 'Today' }
+  { itemNe: 'छापावाल सुन (Fine Gold 9999)', itemEn: 'Fine Gold (24 Karat)', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: 296500, changeNpr: 800, isUp: true, date: 'Today' },
+  { itemNe: 'तेजाबी सुन (Tejabi Gold)', itemEn: 'Tejabi Gold (22 Karat)', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: 295800, changeNpr: 800, isUp: true, date: 'Today' },
+  { itemNe: 'छापावाल सुन (Fine Gold 10g)', itemEn: 'Fine Gold (10 Grams)', unitNe: 'प्रति १० ग्राम', unitEn: 'Per 10 Grams', rateNpr: 254200, changeNpr: 685, isUp: true, date: 'Today' },
+  { itemNe: 'तेजाबी सुन (Tejabi 10g)', itemEn: 'Tejabi Gold (10 Grams)', unitNe: 'प्रति १० ग्राम', unitEn: 'Per 10 Grams', rateNpr: 253600, changeNpr: 685, isUp: true, date: 'Today' },
+  { itemNe: 'चाँदी (Silver)', itemEn: 'Silver Standard', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: 4440, changeNpr: 35, isUp: true, date: 'Today' },
+  { itemNe: 'चाँदी (Silver 10g)', itemEn: 'Silver (10 Grams)', unitNe: 'प्रति १० ग्राम', unitEn: 'Per 10 Grams', rateNpr: 3806.5, changeNpr: 30, isUp: true, date: 'Today' },
 ];
 
-const FOREX_STORAGE_KEY = 'hamro_patro_forex_cache_v4';
-const BULLION_STORAGE_KEY = 'hamro_patro_bullion_cache_v4';
+const FOREX_STORAGE_KEY = 'hamro_patro_forex_cache_v5';
+const BULLION_STORAGE_KEY = 'hamro_patro_bullion_cache_v5';
 
 // Runtime in-memory cache for instant zero-delay tab switching
 let inMemoryForex: { rates: ForexRate[]; publishedDate: string; source: string; isLive: boolean } | null = null;
@@ -106,7 +118,11 @@ async function fetchOpenExchangeRatesDirect(): Promise<{ rates: ForexRate[]; pub
       ? new Date(json.time_last_update_utc).toISOString().split('T')[0] 
       : new Date().toISOString().split('T')[0];
 
-    const targetCodes = ['USD', 'EUR', 'GBP', 'AUD', 'CAD', 'SGD', 'JPY', 'CNY', 'SAR', 'QAR', 'AED', 'MYR', 'KRW', 'INR', 'KWD', 'BHD', 'CHF', 'HKD'];
+    const targetCodes = [
+      'USD', 'EUR', 'GBP', 'CHF', 'AUD', 'CAD', 'SGD', 'JPY', 'CNY',
+      'SAR', 'QAR', 'THB', 'AED', 'MYR', 'KRW', 'SEK', 'DKK', 'HKD',
+      'KWD', 'BHD', 'OMR', 'INR'
+    ];
     const rates: ForexRate[] = [];
 
     for (const code of targetCodes) {
@@ -163,14 +179,14 @@ async function fetchOpenExchangeRatesDirect(): Promise<{ rates: ForexRate[]; pub
  * 4. LocalStorage cache
  * 5. Verified benchmark rates
  */
-export async function getLiveForexRates(): Promise<{
+export async function getLiveForexRates(force = false): Promise<{
   rates: ForexRate[];
   publishedDate: string;
   source: string;
   isLive: boolean;
 }> {
-  // If runtime cache is fresh (< 5 mins), return immediately with 0 delay & 0 network calls
-  if (inMemoryForex && Date.now() - lastForexFetchTime < MARKET_CACHE_FRESH_MS) {
+  // If runtime cache is fresh (< 5 mins) and not forced, return immediately with 0 delay & 0 network calls
+  if (!force && inMemoryForex && Date.now() - lastForexFetchTime < MARKET_CACHE_FRESH_MS) {
     return inMemoryForex;
   }
 
@@ -183,8 +199,9 @@ export async function getLiveForexRates(): Promise<{
   // 1. Local / Cloudflare Pages Function endpoint
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3500);
-    const res = await fetch('/api/market/forex', { signal: controller.signal });
+    const timer = setTimeout(() => controller.abort(), 4000);
+    const url = force ? `/api/market/forex?fresh=1&_t=${Date.now()}` : '/api/market/forex';
+    const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
     const contentType = res.headers.get('content-type') || '';
     if (res.ok && contentType.includes('application/json')) {
@@ -291,10 +308,10 @@ function parseBullionHtml(html: string): { rates: GoldSilverRate[]; publishedDat
     }
 
     if (rawItems.length > 0) {
-      const hallmarkTola = rawItems.find(r => r.name.toLowerCase().includes('hallmark') && r.unit.toLowerCase().includes('tola'))?.rate || 299100;
-      const tejabiTola = rawItems.find(r => r.name.toLowerCase().includes('tajabi') && r.unit.toLowerCase().includes('tola'))?.rate || 296100;
-      const hallmark10g = rawItems.find(r => r.name.toLowerCase().includes('hallmark') && r.unit.toLowerCase().includes('10 gram'))?.rate || 256430;
-      const silverTola = rawItems.find(r => r.name.toLowerCase().includes('silver') && r.unit.toLowerCase().includes('tola'))?.rate || 4650;
+      const hallmarkTola = rawItems.find(r => r.name.toLowerCase().includes('hallmark') && r.unit.toLowerCase().includes('tola'))?.rate || 296500;
+      const tejabiTola = rawItems.find(r => r.name.toLowerCase().includes('tajabi') && r.unit.toLowerCase().includes('tola'))?.rate || 295800;
+      const hallmark10g = rawItems.find(r => r.name.toLowerCase().includes('hallmark') && r.unit.toLowerCase().includes('10 gram'))?.rate || 254200;
+      const silverTola = rawItems.find(r => r.name.toLowerCase().includes('silver') && r.unit.toLowerCase().includes('tola'))?.rate || 4440;
 
       const rates: GoldSilverRate[] = [
         {
@@ -303,7 +320,7 @@ function parseBullionHtml(html: string): { rates: GoldSilverRate[]; publishedDat
           unitNe: 'प्रतितोला',
           unitEn: 'Per Tola (11.66g)',
           rateNpr: hallmarkTola,
-          changeNpr: 600,
+          changeNpr: 800,
           isUp: true,
           date: publishedDate,
         },
@@ -313,7 +330,7 @@ function parseBullionHtml(html: string): { rates: GoldSilverRate[]; publishedDat
           unitNe: 'प्रतितोला',
           unitEn: 'Per Tola (11.66g)',
           rateNpr: tejabiTola,
-          changeNpr: 600,
+          changeNpr: 800,
           isUp: true,
           date: publishedDate,
         },
@@ -323,7 +340,7 @@ function parseBullionHtml(html: string): { rates: GoldSilverRate[]; publishedDat
           unitNe: 'प्रति १० ग्राम',
           unitEn: 'Per 10 Grams',
           rateNpr: hallmark10g,
-          changeNpr: 515,
+          changeNpr: 685,
           isUp: true,
           date: publishedDate,
         },
@@ -360,32 +377,37 @@ async function fetchDirectLiveBullion(): Promise<{ rates: GoldSilverRate[]; publ
 
     if (goldRes?.ok) {
       const goldData = await goldRes.json();
-      const goldPriceUsdPerOz = Number(goldData.price) || 2700;
-      const usdRate = 153.48;
+      const goldPriceUsdPerOz = Number(goldData.price) || 4195;
+      const usdRate = 155.08;
       
       // Calculate realistic Nepal tola rate from live gold spot:
-      // 1 tola = 0.375 troy oz. With import duty + FENEGOSIDA margins factor:
+      // 1 tola = 0.374996 troy oz. With import duty + FENEGOSIDA margins factor:
       const baseNprPerTola = goldPriceUsdPerOz * 0.375 * usdRate;
-      const hallmarkTola = Math.round((baseNprPerTola * 1.215) / 100) * 100;
-      const tejabiTola = hallmarkTola - 3000;
+      const hallmarkTola = Math.round((baseNprPerTola * 1.218) / 100) * 100;
+      const tejabiTola = hallmarkTola - 700;
       const hallmark10g = Math.round((hallmarkTola / 11.6638) * 10);
+      const tejabi10g = hallmark10g - 600;
 
-      let silverTola = 4650;
+      let silverTola = 4440;
+      let silver10g = 3806.5;
       if (silverRes?.ok) {
         const silverData = await silverRes.json();
-        const silverPriceUsd = Number(silverData.price) || 32;
+        const silverPriceUsd = Number(silverData.price) || 35;
         const baseSilverNprPerTola = silverPriceUsd * 0.375 * usdRate;
-        silverTola = Math.round((baseSilverNprPerTola * 1.25) / 10) * 10;
+        silverTola = Math.round((baseSilverNprPerTola * 2.18) / 10) * 10;
+        silver10g = Math.round(((silverTola / 11.6638) * 10) * 10) / 10;
       }
 
       const todayStr = new Date().toISOString().split('T')[0];
 
       return {
         rates: [
-          { itemNe: 'छापावाल सुन (Fine Gold 9999)', itemEn: 'Fine Gold (24 Karat)', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: hallmarkTola, changeNpr: 600, isUp: true, date: todayStr },
-          { itemNe: 'तेजाबी सुन (Tejabi Gold)', itemEn: 'Tejabi Gold (22 Karat)', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: tejabiTola, changeNpr: 600, isUp: true, date: todayStr },
-          { itemNe: 'छापावाल सुन (Fine Gold 10g)', itemEn: 'Fine Gold (10 Grams)', unitNe: 'प्रति १० ग्राम', unitEn: 'Per 10 Grams', rateNpr: hallmark10g, changeNpr: 515, isUp: true, date: todayStr },
+          { itemNe: 'छापावाल सुन (Fine Gold 9999)', itemEn: 'Fine Gold (24 Karat)', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: hallmarkTola, changeNpr: 800, isUp: true, date: todayStr },
+          { itemNe: 'तेजाबी सुन (Tejabi Gold)', itemEn: 'Tejabi Gold (22 Karat)', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: tejabiTola, changeNpr: 800, isUp: true, date: todayStr },
+          { itemNe: 'छापावाल सुन (Fine Gold 10g)', itemEn: 'Fine Gold (10 Grams)', unitNe: 'प्रति १० ग्राम', unitEn: 'Per 10 Grams', rateNpr: hallmark10g, changeNpr: 685, isUp: true, date: todayStr },
+          { itemNe: 'तेजाबी सुन (Tejabi 10g)', itemEn: 'Tejabi Gold (10 Grams)', unitNe: 'प्रति १० ग्राम', unitEn: 'Per 10 Grams', rateNpr: tejabi10g, changeNpr: 685, isUp: true, date: todayStr },
           { itemNe: 'चाँदी (Silver)', itemEn: 'Silver Standard', unitNe: 'प्रतितोला', unitEn: 'Per Tola (11.66g)', rateNpr: silverTola, changeNpr: 35, isUp: true, date: todayStr },
+          { itemNe: 'चाँदी (Silver 10g)', itemEn: 'Silver (10 Grams)', unitNe: 'प्रति १० ग्राम', unitEn: 'Per 10 Grams', rateNpr: silver10g, changeNpr: 30, isUp: true, date: todayStr },
         ],
         publishedDate: todayStr
       };
@@ -405,14 +427,14 @@ async function fetchDirectLiveBullion(): Promise<{ rates: GoldSilverRate[]; publ
  * 4. LocalStorage cache.
  * 5. Latest verified FENEGOSIDA market benchmark rates.
  */
-export async function getLiveBullionRates(): Promise<{
+export async function getLiveBullionRates(force = false): Promise<{
   rates: GoldSilverRate[];
   publishedDate: string;
   source: string;
   isLive: boolean;
 }> {
-  // If runtime cache is fresh (< 5 mins), return immediately with 0 delay & 0 network calls
-  if (inMemoryBullion && Date.now() - lastBullionFetchTime < MARKET_CACHE_FRESH_MS) {
+  // If runtime cache is fresh (< 5 mins) and not forced, return immediately with 0 delay & 0 network calls
+  if (!force && inMemoryBullion && Date.now() - lastBullionFetchTime < MARKET_CACHE_FRESH_MS) {
     return inMemoryBullion;
   }
 
@@ -425,8 +447,9 @@ export async function getLiveBullionRates(): Promise<{
   // 1. Local / Cloudflare Pages Function endpoint
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3500);
-    const res = await fetch('/api/market/bullion', { signal: controller.signal });
+    const timer = setTimeout(() => controller.abort(), 4000);
+    const url = force ? `/api/market/bullion?fresh=1&_t=${Date.now()}` : '/api/market/bullion';
+    const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
     const contentType = res.headers.get('content-type') || '';
     if (res.ok && contentType.includes('application/json')) {
@@ -510,4 +533,49 @@ export async function getLiveBullionRates(): Promise<{
   };
   inMemoryBullion = result;
   return result;
+}
+
+/**
+ * Consolidated market fetcher for zero-waterfall loading of Forex and Bullion
+ */
+export async function getLiveMarketBundle(force = false): Promise<{
+  forex: { rates: ForexRate[]; publishedDate: string; source: string; isLive: boolean };
+  bullion: { rates: GoldSilverRate[]; publishedDate: string; source: string; isLive: boolean };
+}> {
+  // 1. Try unified fast server bundle endpoint first
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4500);
+    const url = force ? `/api/market/bundle?fresh=1&_t=${Date.now()}` : '/api/market/bundle';
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.forex?.rates?.length && data?.bullion?.rates?.length) {
+        inMemoryForex = data.forex;
+        lastForexFetchTime = Date.now();
+        inMemoryBullion = data.bullion;
+        lastBullionFetchTime = Date.now();
+
+        try {
+          localStorage.setItem(FOREX_STORAGE_KEY, JSON.stringify(data.forex));
+          localStorage.setItem(BULLION_STORAGE_KEY, JSON.stringify(data.bullion));
+        } catch {}
+
+        return {
+          forex: data.forex,
+          bullion: data.bullion,
+        };
+      }
+    }
+  } catch {}
+
+  // 2. Parallel individual calls
+  const [forex, bullion] = await Promise.all([
+    getLiveForexRates(force),
+    getLiveBullionRates(force),
+  ]);
+
+  return { forex, bullion };
 }
