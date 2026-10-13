@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies
-RUN npm ci
+RUN npm install
 
 # Copy application code
 COPY . .
@@ -24,7 +24,7 @@ ENV NODE_ENV=production
 
 # Copy built artifacts and dependencies
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 COPY --from=builder /app/dist ./dist
 

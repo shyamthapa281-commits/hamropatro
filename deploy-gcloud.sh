@@ -29,12 +29,9 @@ echo "Active GCP Project: $CURRENT_PROJECT"
 echo "Enabling necessary Google Cloud APIs..."
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com --project="$CURRENT_PROJECT"
 
-echo "Submitting container build using Cloud Build..."
-gcloud builds submit --config cloudbuild.yaml .
-
 echo "Deploying to Cloud Run service: $SERVICE_NAME..."
 gcloud run deploy "$SERVICE_NAME" \
-  --image="gcr.io/$CURRENT_PROJECT/$SERVICE_NAME:latest" \
+  --source . \
   --region="$REGION" \
   --platform=managed \
   --allow-unauthenticated \
