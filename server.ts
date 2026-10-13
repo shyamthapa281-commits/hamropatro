@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import https from 'https';
 import dotenv from 'dotenv';
 import { XMLParser } from 'fast-xml-parser';
 import { createServer as createViteServer } from 'vite';
@@ -481,136 +482,184 @@ const BENCHMARK_BULLION_RATES = [
   },
 ];
 
+// Helper: Safe HTTPS GET with non-keepalive socket agent and automatic retry
+function safeHttpsGetJson<T>(urlStr: string, timeoutMs = 6000, maxRetries = 2): Promise<T | null> {
+  return new Promise(async (resolve) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const result = await new Promise<T | null>((innerResolve) => {
+          const url = new URL(urlStr);
+          const req = https.get(
+            {
+              hostname: url.hostname,
+              port: url.port || (url.protocol === 'https:' ? 443 : 80),
+              path: url.pathname + url.search,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) HamroPatroLive/1.0',
+                'Accept': 'application/json, text/plain, */*',
+                'Connection': 'close',
+              },
+              agent: new https.Agent({ keepAlive: false }),
+              timeout: timeoutMs,
+            },
+            (res) => {
+              if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
+                res.resume();
+                innerResolve(null);
+                return;
+              }
+              let rawData = '';
+              res.setEncoding('utf8');
+              res.on('data', (chunk) => {
+                rawData += chunk;
+              });
+              res.on('end', () => {
+                try {
+                  const parsed = JSON.parse(rawData);
+                  innerResolve(parsed as T);
+                } catch {
+                  innerResolve(null);
+                }
+              });
+            }
+          );
+
+          req.on('timeout', () => {
+            req.destroy();
+            innerResolve(null);
+          });
+
+          req.on('error', () => {
+            req.destroy();
+            innerResolve(null);
+          });
+        });
+
+        if (result !== null) {
+          resolve(result);
+          return;
+        }
+      } catch {
+        // Continue to retry if attempts remain
+      }
+
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, 400));
+      }
+    }
+    resolve(null);
+  });
+}
+
 // Helper: Fetch or return cached Forex rates
 async function fetchOrGetCachedForex(force = false): Promise<any> {
   if (!force && serverForexCache && Date.now() - serverForexCache.timestamp < MARKET_CACHE_TTL_MS) {
     return serverForexCache.data;
   }
 
-  // 1. Primary: Official Nepal Rastra Bank App-Rate API
+  // 1. Primary: Official Nepal Rastra Bank App-Rate API via resilient non-pooling HTTPS
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4500);
+    const data = await safeHttpsGetJson<any[]>('https://www.nrb.org.np/api/forex/v1/app-rate', 5000, 2);
+    if (Array.isArray(data) && data.length > 0) {
+      const rates = data.map((item: any) => {
+        const iso = item.iso3 || '';
+        const meta = CURRENCY_METADATA[iso] || { nameNe: item.name, flag: '🌐' };
+        const buyRate = parseFloat(item.buy || '0');
+        const sellRate = parseFloat(item.sell || '0');
 
-    const response = await fetch('https://www.nrb.org.np/api/forex/v1/app-rate', {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) HamroPatroLive/1.0',
-        'Accept': 'application/json',
-      },
-    });
-    clearTimeout(timeoutId);
-
-    if (response.ok) {
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const rates = data.map((item: any) => {
-          const iso = item.iso3 || '';
-          const meta = CURRENCY_METADATA[iso] || { nameNe: item.name, flag: '🌐' };
-          const buyRate = parseFloat(item.buy || '0');
-          const sellRate = parseFloat(item.sell || '0');
-
-          return {
-            currencyCode: iso,
-            currencyNameNe: meta.nameNe,
-            currencyNameEn: item.name,
-            unit: parseInt(item.unit || '1', 10),
-            buyRate,
-            sellRate,
-            change: 0,
-            flag: meta.flag,
-            date: item.date,
-            publishedOn: item.published_on,
-            modifiedOn: item.modified_on,
-            isLive: true,
-          };
-        });
-
-        const result = {
-          success: true,
-          source: 'Nepal Rastra Bank (नेपाल राष्ट्र बैंक)',
-          publishedDate: data[0]?.date || new Date().toISOString().split('T')[0],
-          lastUpdated: new Date().toISOString(),
-          rates,
+        return {
+          currencyCode: iso,
+          currencyNameNe: meta.nameNe,
+          currencyNameEn: item.name,
+          unit: parseInt(item.unit || '1', 10),
+          buyRate,
+          sellRate,
+          change: 0,
+          flag: meta.flag,
+          date: item.date,
+          publishedOn: item.published_on,
+          modifiedOn: item.modified_on,
           isLive: true,
         };
+      });
 
-        serverForexCache = { timestamp: Date.now(), data: result };
-        return result;
-      }
+      const result = {
+        success: true,
+        source: 'Nepal Rastra Bank (नेपाल राष्ट्र बैंक)',
+        publishedDate: data[0]?.date || new Date().toISOString().split('T')[0],
+        lastUpdated: new Date().toISOString(),
+        rates,
+        isLive: true,
+      };
+
+      serverForexCache = { timestamp: Date.now(), data: result };
+      return result;
     }
-  } catch (err) {
-    console.warn('NRB Forex fetch warning:', err);
+  } catch {
+    // Graceful fallback without dumping socket error traces
   }
 
   // 2. Secondary: Global Open Exchange Rates with NPR Conversion
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
-    const res = await fetch('https://open.er-api.com/v6/latest/USD', { signal: controller.signal });
-    clearTimeout(timeoutId);
-
-    if (res.ok) {
-      const json = await res.json();
-      if (json?.rates?.NPR) {
-        const usdToNpr = Number(json.rates.NPR);
-        const targetCodes = [
-          'USD', 'EUR', 'GBP', 'CHF', 'AUD', 'CAD', 'SGD', 'JPY', 'CNY',
-          'SAR', 'QAR', 'THB', 'AED', 'MYR', 'KRW', 'SEK', 'DKK', 'HKD',
-          'KWD', 'BHD', 'OMR', 'INR'
-        ];
-        const rates = targetCodes.map((code) => {
-          const meta = CURRENCY_METADATA[code] || { nameNe: code, flag: '🌐' };
-          let unit = 1;
-          if (code === 'JPY' || code === 'INR' || code === 'KRW') {
-            unit = code === 'KRW' ? 100 : (code === 'INR' ? 100 : 10);
-          }
-
-          let buyRate = 0;
-          let sellRate = 0;
-          if (code === 'USD') {
-            buyRate = Number((usdToNpr * 0.996).toFixed(2));
-            sellRate = Number(usdToNpr.toFixed(2));
-          } else if (code === 'INR') {
-            buyRate = 160.00;
-            sellRate = 160.15;
-          } else if (json.rates[code]) {
-            const ratePerSingle = usdToNpr / Number(json.rates[code]);
-            const nominal = ratePerSingle * unit;
-            buyRate = Number((nominal * 0.996).toFixed(2));
-            sellRate = Number(nominal.toFixed(2));
-          }
-
-          return {
-            currencyCode: code,
-            currencyNameNe: meta.nameNe,
-            currencyNameEn: code,
-            unit,
-            buyRate,
-            sellRate,
-            change: 0,
-            flag: meta.flag,
-            date: new Date().toISOString().split('T')[0],
-            isLive: true,
-          };
-        }).filter(r => r.sellRate > 0);
-
-        if (rates.length > 0) {
-          const result = {
-            success: true,
-            source: 'नेपाल राष्ट्र बैंक तथा अन्तर्राष्ट्रिय विनिमय बजार (Live Global)',
-            publishedDate: new Date().toISOString().split('T')[0],
-            lastUpdated: new Date().toISOString(),
-            rates,
-            isLive: true,
-          };
-          serverForexCache = { timestamp: Date.now(), data: result };
-          return result;
+    const json = await safeHttpsGetJson<any>('https://open.er-api.com/v6/latest/USD', 4000, 2);
+    if (json?.rates?.NPR) {
+      const usdToNpr = Number(json.rates.NPR);
+      const targetCodes = [
+        'USD', 'EUR', 'GBP', 'CHF', 'AUD', 'CAD', 'SGD', 'JPY', 'CNY',
+        'SAR', 'QAR', 'THB', 'AED', 'MYR', 'KRW', 'SEK', 'DKK', 'HKD',
+        'KWD', 'BHD', 'OMR', 'INR'
+      ];
+      const rates = targetCodes.map((code) => {
+        const meta = CURRENCY_METADATA[code] || { nameNe: code, flag: '🌐' };
+        let unit = 1;
+        if (code === 'JPY' || code === 'INR' || code === 'KRW') {
+          unit = code === 'KRW' ? 100 : (code === 'INR' ? 100 : 10);
         }
+
+        let buyRate = 0;
+        let sellRate = 0;
+        if (code === 'USD') {
+          buyRate = Number((usdToNpr * 0.996).toFixed(2));
+          sellRate = Number(usdToNpr.toFixed(2));
+        } else if (code === 'INR') {
+          buyRate = 160.00;
+          sellRate = 160.15;
+        } else if (json.rates[code]) {
+          const ratePerSingle = usdToNpr / Number(json.rates[code]);
+          const nominal = ratePerSingle * unit;
+          buyRate = Number((nominal * 0.996).toFixed(2));
+          sellRate = Number(nominal.toFixed(2));
+        }
+
+        return {
+          currencyCode: code,
+          currencyNameNe: meta.nameNe,
+          currencyNameEn: code,
+          unit,
+          buyRate,
+          sellRate,
+          change: 0,
+          flag: meta.flag,
+          date: new Date().toISOString().split('T')[0],
+          isLive: true,
+        };
+      }).filter(r => r.sellRate > 0);
+
+      if (rates.length > 0) {
+        const result = {
+          success: true,
+          source: 'नेपाल राष्ट्र बैंक तथा अन्तर्राष्ट्रिय विनिमय बजार (Live Global)',
+          publishedDate: new Date().toISOString().split('T')[0],
+          lastUpdated: new Date().toISOString(),
+          rates,
+          isLive: true,
+        };
+        serverForexCache = { timestamp: Date.now(), data: result };
+        return result;
       }
     }
-  } catch (err) {
-    console.warn('OpenExchangeRates secondary fallback warning:', err);
+  } catch {
+    // Graceful fallback
   }
 
   // 3. Fallback: Verified benchmark rates
@@ -630,141 +679,115 @@ async function fetchOrGetCachedBullion(force = false): Promise<any> {
     return serverBullionCache.data;
   }
 
-  // 1. Primary: Official FENEGOSIDA Dashboard Today API (api.fenegosida.org)
+  // 1. Primary: Official FENEGOSIDA Dashboard Today API (api.fenegosida.org) via resilient HTTPS
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4500);
+    const items = await safeHttpsGetJson<any[]>('https://api.fenegosida.org/api/website/v1/Dashboard/today', 5000, 2);
+    if (Array.isArray(items) && items.length > 0) {
+      const goldTola = items.find((i: any) => i.rateType?.includes('सुन') && i.rateType?.includes('१ तोला'));
+      const gold10g = items.find((i: any) => i.rateType?.includes('सुन') && i.rateType?.includes('१० ग्राम'));
+      const silverTola = items.find((i: any) => i.rateType?.includes('चाँदी') && i.rateType?.includes('१ तोला'));
+      const silver10g = items.find((i: any) => i.rateType?.includes('चाँदी') && i.rateType?.includes('१० ग्राम'));
 
-    const response = await fetch('https://api.fenegosida.org/api/website/v1/Dashboard/today', {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) HamroPatroLive/1.0',
-        'Accept': 'application/json',
-      },
-    });
-    clearTimeout(timeoutId);
+      const fineRateTola = goldTola?.todayBaseRatePerGram || 296500;
+      const fineChangeTola = goldTola ? Math.round(goldTola.todayBaseRatePerGram - goldTola.yestardayBaseRatePerGram) : 800;
 
-    if (response.ok) {
-      const items = await response.json();
-      if (Array.isArray(items) && items.length > 0) {
-        const goldTola = items.find((i: any) => i.rateType?.includes('सुन') && i.rateType?.includes('१ तोला'));
-        const gold10g = items.find((i: any) => i.rateType?.includes('सुन') && i.rateType?.includes('१० ग्राम'));
-        const silverTola = items.find((i: any) => i.rateType?.includes('चाँदी') && i.rateType?.includes('१ तोला'));
-        const silver10g = items.find((i: any) => i.rateType?.includes('चाँदी') && i.rateType?.includes('१० ग्राम'));
+      const fineRate10g = gold10g?.todayBaseRatePerGram || 254200;
+      const fineChange10g = gold10g ? Math.round(gold10g.todayBaseRatePerGram - gold10g.yestardayBaseRatePerGram) : 685;
 
-        const fineRateTola = goldTola?.todayBaseRatePerGram || 296500;
-        const fineChangeTola = goldTola ? Math.round(goldTola.todayBaseRatePerGram - goldTola.yestardayBaseRatePerGram) : 800;
+      const silverRateTola = silverTola?.todayBaseRatePerGram || 4440;
+      const silverChangeTola = silverTola ? Math.round(silverTola.todayBaseRatePerGram - silverTola.yestardayBaseRatePerGram) : 35;
 
-        const fineRate10g = gold10g?.todayBaseRatePerGram || 254200;
-        const fineChange10g = gold10g ? Math.round(gold10g.todayBaseRatePerGram - gold10g.yestardayBaseRatePerGram) : 685;
+      const silverRate10g = silver10g?.todayBaseRatePerGram || 3806.5;
+      const silverChange10g = silver10g ? Math.round((silver10g.todayBaseRatePerGram - silver10g.yestardayBaseRatePerGram) * 10) / 10 : 30;
 
-        const silverRateTola = silverTola?.todayBaseRatePerGram || 4440;
-        const silverChangeTola = silverTola ? Math.round(silverTola.todayBaseRatePerGram - silverTola.yestardayBaseRatePerGram) : 35;
+      const tejabiRateTola = fineRateTola - 700;
+      const tejabiRate10g = fineRate10g - 600;
 
-        const silverRate10g = silver10g?.todayBaseRatePerGram || 3806.5;
-        const silverChange10g = silver10g ? Math.round((silver10g.todayBaseRatePerGram - silver10g.yestardayBaseRatePerGram) * 10) / 10 : 30;
+      const publishedDate = goldTola?.todayDate ? goldTola.todayDate.split('T')[0] : new Date().toISOString().split('T')[0];
 
-        const tejabiRateTola = fineRateTola - 700;
-        const tejabiRate10g = fineRate10g - 600;
+      const rates = [
+        {
+          itemNe: 'छापावाल सुन (Fine Gold 9999)',
+          itemEn: 'Fine Gold (24 Karat)',
+          unitNe: 'प्रतितोला',
+          unitEn: 'Per Tola (11.66g)',
+          rateNpr: fineRateTola,
+          changeNpr: Math.abs(fineChangeTola),
+          isUp: fineChangeTola >= 0,
+          date: publishedDate,
+        },
+        {
+          itemNe: 'तेजाबी सुन (Tejabi Gold)',
+          itemEn: 'Tejabi Gold (22 Karat)',
+          unitNe: 'प्रतितोला',
+          unitEn: 'Per Tola (11.66g)',
+          rateNpr: tejabiRateTola,
+          changeNpr: Math.abs(fineChangeTola),
+          isUp: fineChangeTola >= 0,
+          date: publishedDate,
+        },
+        {
+          itemNe: 'छापावाल सुन (Fine Gold 10g)',
+          itemEn: 'Fine Gold (10 Grams)',
+          unitNe: 'प्रति १० ग्राम',
+          unitEn: 'Per 10 Grams',
+          rateNpr: fineRate10g,
+          changeNpr: Math.abs(fineChange10g),
+          isUp: fineChange10g >= 0,
+          date: publishedDate,
+        },
+        {
+          itemNe: 'तेजाबी सुन (Tejabi 10g)',
+          itemEn: 'Tejabi Gold (10 Grams)',
+          unitNe: 'प्रति १० ग्राम',
+          unitEn: 'Per 10 Grams',
+          rateNpr: tejabiRate10g,
+          changeNpr: Math.abs(fineChange10g),
+          isUp: fineChange10g >= 0,
+          date: publishedDate,
+        },
+        {
+          itemNe: 'चाँदी (Silver)',
+          itemEn: 'Silver Standard',
+          unitNe: 'प्रतितोला',
+          unitEn: 'Per Tola (11.66g)',
+          rateNpr: silverRateTola,
+          changeNpr: Math.abs(silverChangeTola),
+          isUp: silverChangeTola >= 0,
+          date: publishedDate,
+        },
+        {
+          itemNe: 'चाँदी (Silver 10g)',
+          itemEn: 'Silver (10 Grams)',
+          unitNe: 'प्रति १० ग्राम',
+          unitEn: 'Per 10 Grams',
+          rateNpr: silverRate10g,
+          changeNpr: Math.abs(silverChange10g),
+          isUp: silverChange10g >= 0,
+          date: publishedDate,
+        },
+      ];
 
-        const publishedDate = goldTola?.todayDate ? goldTola.todayDate.split('T')[0] : new Date().toISOString().split('T')[0];
+      const result = {
+        success: true,
+        source: 'नेपाल सुनचाँदी व्यवसायी महासंघ (FENEGOSIDA Official)',
+        publishedDate,
+        lastUpdated: new Date().toISOString(),
+        rates,
+        isLive: true,
+      };
 
-        const rates = [
-          {
-            itemNe: 'छापावाल सुन (Fine Gold 9999)',
-            itemEn: 'Fine Gold (24 Karat)',
-            unitNe: 'प्रतितोला',
-            unitEn: 'Per Tola (11.66g)',
-            rateNpr: fineRateTola,
-            changeNpr: Math.abs(fineChangeTola),
-            isUp: fineChangeTola >= 0,
-            date: publishedDate,
-          },
-          {
-            itemNe: 'तेजाबी सुन (Tejabi Gold)',
-            itemEn: 'Tejabi Gold (22 Karat)',
-            unitNe: 'प्रतितोला',
-            unitEn: 'Per Tola (11.66g)',
-            rateNpr: tejabiRateTola,
-            changeNpr: Math.abs(fineChangeTola),
-            isUp: fineChangeTola >= 0,
-            date: publishedDate,
-          },
-          {
-            itemNe: 'छापावाल सुन (Fine Gold 10g)',
-            itemEn: 'Fine Gold (10 Grams)',
-            unitNe: 'प्रति १० ग्राम',
-            unitEn: 'Per 10 Grams',
-            rateNpr: fineRate10g,
-            changeNpr: Math.abs(fineChange10g),
-            isUp: fineChange10g >= 0,
-            date: publishedDate,
-          },
-          {
-            itemNe: 'तेजाबी सुन (Tejabi 10g)',
-            itemEn: 'Tejabi Gold (10 Grams)',
-            unitNe: 'प्रति १० ग्राम',
-            unitEn: 'Per 10 Grams',
-            rateNpr: tejabiRate10g,
-            changeNpr: Math.abs(fineChange10g),
-            isUp: fineChange10g >= 0,
-            date: publishedDate,
-          },
-          {
-            itemNe: 'चाँदी (Silver)',
-            itemEn: 'Silver Standard',
-            unitNe: 'प्रतितोला',
-            unitEn: 'Per Tola (11.66g)',
-            rateNpr: silverRateTola,
-            changeNpr: Math.abs(silverChangeTola),
-            isUp: silverChangeTola >= 0,
-            date: publishedDate,
-          },
-          {
-            itemNe: 'चाँदी (Silver 10g)',
-            itemEn: 'Silver (10 Grams)',
-            unitNe: 'प्रति १० ग्राम',
-            unitEn: 'Per 10 Grams',
-            rateNpr: silverRate10g,
-            changeNpr: Math.abs(silverChange10g),
-            isUp: silverChange10g >= 0,
-            date: publishedDate,
-          },
-        ];
-
-        const result = {
-          success: true,
-          source: 'नेपाल सुनचाँदी व्यवसायी महासंघ (FENEGOSIDA Official)',
-          publishedDate,
-          lastUpdated: new Date().toISOString(),
-          rates,
-          isLive: true,
-        };
-
-        serverBullionCache = { timestamp: Date.now(), data: result };
-        return result;
-      }
+      serverBullionCache = { timestamp: Date.now(), data: result };
+      return result;
     }
-  } catch (err) {
-    console.warn('FENEGOSIDA today API warning:', err);
+  } catch {
+    // Graceful fallback
   }
 
   // 2. Secondary: FENEGOSIDA Weekly Rate History
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-    const response = await fetch('https://api.fenegosida.org/api/website/v1/Dashboard/WeeklyChartRate?weekmonthyear=week', {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) HamroPatroLive/1.0',
-        'Accept': 'application/json',
-      },
-    });
-    clearTimeout(timeoutId);
-
-    if (response.ok) {
-      const data = await response.json();
+    const data = await safeHttpsGetJson<any>('https://api.fenegosida.org/api/website/v1/Dashboard/WeeklyChartRate?weekmonthyear=week', 4000, 2);
+    if (data) {
       const latestGold = data.goldData?.[data.goldData.length - 1];
       const latestSilver = data.silverData?.[data.silverData.length - 1];
 
@@ -845,8 +868,8 @@ async function fetchOrGetCachedBullion(force = false): Promise<any> {
         return result;
       }
     }
-  } catch (err) {
-    console.warn('FENEGOSIDA weekly chart warning:', err);
+  } catch {
+    // Graceful fallback
   }
 
   // 3. Fallback: Verified benchmark rates
