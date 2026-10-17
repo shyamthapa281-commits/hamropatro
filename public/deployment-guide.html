@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shubha Patro — Google Cloud Run Deployment & Update Guide</title>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff; padding: 0; }
+      .page-card { box-shadow: none; border: none; max-width: 100%; }
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #1e293b;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 30px 15px;
+    }
+    .page-card {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+    .header-banner {
+      background: linear-gradient(135deg, #881337 0%, #4c0519 100%);
+      color: #ffffff;
+      padding: 32px 36px;
+    }
+    .header-banner h1 {
+      margin: 0 0 6px 0;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .header-banner p {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .content {
+      padding: 36px;
+    }
+    h2 {
+      color: #881337;
+      font-size: 19px;
+      margin-top: 28px;
+      margin-bottom: 12px;
+      border-bottom: 2px solid #ffe4e6;
+      padding-bottom: 6px;
+    }
+    h3 {
+      font-size: 15px;
+      color: #0f172a;
+      margin-top: 18px;
+      margin-bottom: 6px;
+    }
+    p, li {
+      font-size: 14px;
+      color: #334155;
+    }
+    ul {
+      padding-left: 20px;
+      margin: 8px 0;
+    }
+    li {
+      margin-bottom: 4px;
+    }
+    .code-box {
+      background: #0f172a;
+      color: #38bdf8;
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-x: auto;
+      margin: 10px 0 16px 0;
+      border: 1px solid #1e293b;
+    }
+    .meta-box {
+      background: #f8fafc;
+      border-left: 4px solid #881337;
+      padding: 14px 18px;
+      border-radius: 0 8px 8px 0;
+      margin: 16px 0;
+    }
+    .btn-bar {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      padding: 16px 36px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 6px;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+    }
+    .btn-primary {
+      background: #881337;
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background: #9f1239;
+    }
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+    .btn-secondary:hover {
+      background: #cbd5e1;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 18px 0;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-card">
+    <div class="btn-bar no-print">
+      <a href="/shubhapatro-deployment-guide.pdf" download class="btn btn-primary">
+        ⬇ Download PDF File
+      </a>
+      <button onclick="window.print()" class="btn btn-secondary">
+        🖨 Print / Save as PDF
+      </button>
+    </div>
+
+    <div class="header-banner">
+      <h1>SHUBHA PATRO (शुभ पात्रो)</h1>
+      <p>Google Cloud Run Deployment & Continuous Update Guide for <strong>shubhapatro.com</strong></p>
+    </div>
+
+    <div class="content">
+      <div class="meta-box">
+        <strong>Application Architecture Reference:</strong>
+        <ul>
+          <li><strong>Production Domain:</strong> <a href="https://shubhapatro.com" target="_blank">https://shubhapatro.com</a> &amp; <a href="https://www.shubhapatro.com" target="_blank">https://www.shubhapatro.com</a></li>
+          <li><strong>GCP Project ID:</strong> <code>hamropatro-app-live</code></li>
+          <li><strong>Cloud Run Service:</strong> <code>shubhapatro</code> (Region: <code>asia-east1</code>)</li>
+          <li><strong>Container Port:</strong> <code>8080</code> (Mapped to internal Node server port)</li>
+        </ul>
+      </div>
+
+      <h2>1. The Routine Update Workflow (3 Steps)</h2>
+      <p>Whenever you edit code and want to deploy the latest version to production, follow these 3 simple steps:</p>
+
+      <h3>Step 1: Push Your Code to GitHub</h3>
+      <p>In your local terminal or editor, commit and push your new changes:</p>
+      <div class="code-box">
+git add .
+git commit -m "Describe your update here"
+git push origin main
+      </div>
+
+      <h3>Step 2: Open Google Cloud Shell &amp; Pull Code</h3>
+      <p>Visit <a href="https://shell.cloud.google.com" target="_blank">shell.cloud.google.com</a> and run:</p>
+      <div class="code-box">
+cd ~/shubhapatro
+git pull origin main
+      </div>
+
+      <h3>Step 3: Deploy to Google Cloud Run (1 Command)</h3>
+      <p>Run the deployment command:</p>
+      <div class="code-box">
+gcloud run deploy shubhapatro \
+  --source . \
+  --project hamropatro-app-live \
+  --region asia-east1 \
+  --platform managed \
+  --allow-unauthenticated \
+  --port 8080 \
+  --memory 512Mi \
+  --cpu 1
+      </div>
+      <p><em>Google Cloud Build will package your container, run TypeScript build, and deploy a new zero-downtime revision to Cloud Run.</em></p>
+
+      <h2>2. One-Click Deploy Script (Alternative)</h2>
+      <p>Inside <code>~/shubhapatro</code> in Cloud Shell, you can also execute the automated script:</p>
+      <div class="code-box">
+./deploy-gcloud.sh
+      </div>
+
+      <h2>3. Cloudflare DNS Reference Table</h2>
+      <p>Ensure these records remain active in Cloudflare DNS with <strong>DNS Only (Gray Cloud)</strong>:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Name</th>
+            <th>Target / IP Address</th>
+            <th>Proxy Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>A</strong></td><td><code>@</code></td><td><code>216.239.32.21</code></td><td>DNS Only (Gray)</td></tr>
+          <tr><td><strong>A</strong></td><td><code>@</code></td><td><code>216.239.34.21</code></td><td>DNS Only (Gray)</td></tr>
+          <tr><td><strong>A</strong></td><td><code>@</code></td><td><code>216.239.36.21</code></td><td>DNS Only (Gray)</td></tr>
+          <tr><td><strong>A</strong></td><td><code>@</code></td><td><code>216.239.38.21</code></td><td>DNS Only (Gray)</td></tr>
+          <tr><td><strong>CNAME</strong></td><td><code>www</code></td><td><code>ghs.googlehosted.com</code></td><td>DNS Only (Gray)</td></tr>
+        </tbody>
+      </table>
+
+      <h2>4. Useful Troubleshooting Commands</h2>
+      <h3>View Live Logs &amp; Real-time Traffic</h3>
+      <div class="code-box">
+gcloud run services logs read shubhapatro --region asia-east1 --project hamropatro-app-live --limit 50
+      </div>
+
+      <h3>Check Domain Mapping &amp; SSL Certificate Status</h3>
+      <div class="code-box">
+gcloud beta run domain-mappings describe --domain shubhapatro.com --region asia-east1 --project hamropatro-app-live
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

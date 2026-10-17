@@ -1699,6 +1699,16 @@ app.get("/api/download/source-tarball", (req, res) => {
   }
   return res.status(404).send("Archive not ready yet");
 });
+
+// Google AdSense verification ads.txt route
+app.get('/ads.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('google.com, pub-4451581237303819, DIRECT, f08c47fec0942fa0\n');
+});
+
+// Serve static files from public directory
+app.use(express.static(path.join(process.cwd(), 'public')));
+
 // Vite middleware setup
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
