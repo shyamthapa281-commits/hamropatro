@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://shubhapatro.com/sitemap.xml
+Sitemap: https://www.shubhapatro.com/sitemap.xml
