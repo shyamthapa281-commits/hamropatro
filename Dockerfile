@@ -27,6 +27,7 @@ COPY package*.json ./
 RUN npm install --omit=dev
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
 
 # Standard Cloud Run container port
 ENV PORT=8080

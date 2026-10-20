@@ -1730,18 +1730,18 @@ app.get('/sitemap.xml', (req, res) => {
 
 // TikTok Video Ad routes
 app.get('/shubhapatro-ad-video.mp4', (req, res) => {
-  const videoPath = path.join(process.cwd(), 'public', 'shubhapatro-ad-video.mp4');
-  if (fs.existsSync(videoPath)) {
-    return res.sendFile(videoPath);
-  }
+  const distVideo = path.join(process.cwd(), 'dist', 'shubhapatro-ad-video.mp4');
+  const publicVideo = path.join(process.cwd(), 'public', 'shubhapatro-ad-video.mp4');
+  if (fs.existsSync(distVideo)) return res.sendFile(distVideo);
+  if (fs.existsSync(publicVideo)) return res.sendFile(publicVideo);
   return res.redirect('/?tab=tiktok-ad');
 });
 
 app.get('/tiktok-ad.html', (req, res) => {
-  const htmlPath = path.join(process.cwd(), 'public', 'tiktok-ad.html');
-  if (fs.existsSync(htmlPath)) {
-    return res.sendFile(htmlPath);
-  }
+  const distHtml = path.join(process.cwd(), 'dist', 'tiktok-ad.html');
+  const publicHtml = path.join(process.cwd(), 'public', 'tiktok-ad.html');
+  if (fs.existsSync(distHtml)) return res.sendFile(distHtml);
+  if (fs.existsSync(publicHtml)) return res.sendFile(publicHtml);
   return res.redirect('/?tab=tiktok-ad');
 });
 
