@@ -14,6 +14,7 @@ import { SupportWorkView } from './components/SupportWorkView';
 import { ReceivePaymentsView } from './components/ReceivePaymentsView';
 import { NrnBankingIpoView } from './components/NrnBankingIpoView';
 import { KundaliGunMilanView } from './components/KundaliGunMilanView';
+import { TikTokAdView } from './components/TikTokAdView';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { Footer } from './components/Footer';
 
@@ -21,7 +22,14 @@ import { getCurrentNepaliDate, getPanchangaForDate } from './utils/nepaliCalenda
 import { Language } from './types';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<string>('calendar');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam === 'tiktok-ad' || tabParam === 'ad') return 'tiktok-ad';
+    } catch {}
+    return 'calendar';
+  });
   const [lang, setLang] = useState<Language>('ne');
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try {
@@ -147,6 +155,10 @@ export function App() {
 
         {activeTab === 'support' && (
           <ReceivePaymentsView lang={lang} onNavigate={handleNavigate} initialPurpose="platform_support" />
+        )}
+
+        {activeTab === 'tiktok-ad' && (
+          <TikTokAdView lang={lang} onNavigate={handleNavigate} />
         )}
       </main>
 

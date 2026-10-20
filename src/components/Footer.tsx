@@ -237,6 +237,17 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   <span>{lang === 'ne' ? '• सहयोग (Support Our Work)' : '• Support Our Work'}</span>
                 </button>
               </li>
+              <li>
+                <button
+                  type="button"
+                  id="footer-quick-tiktok-ad"
+                  onClick={() => onNavigate('tiktok-ad')}
+                  className="hover:text-pink-400 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+                  <span>{lang === 'ne' ? '• टिकटक विज्ञापन (TikTok Ad)' : '• TikTok Ad Video'}</span>
+                </button>
+              </li>
             </ul>
           </div>
 

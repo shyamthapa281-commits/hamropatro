@@ -3,14 +3,27 @@ const fs = require('fs');
 const path = require('path');
 
 const WORK_DIR = '/tmp/video_work';
-const FONT_BOLD = '/tmp/fonts/Mukta-Bold.ttf';
-const FONT_REG = '/tmp/fonts/Mukta-Regular.ttf';
-const FONT_XBOLD = '/tmp/fonts/Mukta-ExtraBold.ttf';
+const FONT_DIR = '/tmp/fonts';
+const FONT_BOLD = `${FONT_DIR}/Mukta-Bold.ttf`;
+const FONT_REG = `${FONT_DIR}/Mukta-Regular.ttf`;
+const FONT_XBOLD = `${FONT_DIR}/Mukta-ExtraBold.ttf`;
 
-if (!fs.existsSync(WORK_DIR)) {
-  fs.mkdirSync(WORK_DIR, { recursive: true });
+// 1. Ensure directories and fonts exist
+if (!fs.existsSync(WORK_DIR)) fs.mkdirSync(WORK_DIR, { recursive: true });
+if (!fs.existsSync(FONT_DIR)) fs.mkdirSync(FONT_DIR, { recursive: true });
+
+if (!fs.existsSync(FONT_BOLD)) {
+  console.log('Downloading Mukta fonts...');
+  try {
+    execSync(`curl -s -L -o "${FONT_BOLD}" "https://github.com/google/fonts/raw/main/ofl/mukta/Mukta-Bold.ttf"`);
+    execSync(`curl -s -L -o "${FONT_REG}" "https://github.com/google/fonts/raw/main/ofl/mukta/Mukta-Regular.ttf"`);
+    execSync(`curl -s -L -o "${FONT_XBOLD}" "https://github.com/google/fonts/raw/main/ofl/mukta/Mukta-ExtraBold.ttf"`);
+  } catch (e) {
+    console.warn('Font download error:', e.message);
+  }
 }
 
+// 2. Render 5 Scenes
 console.log('Rendering Scene 1: Hook & Brand Intro...');
 execSync(`convert -size 720x1280 gradient:"#7f1d1d-#18181b" \\
   -fill "#fef08a" -draw "roundrectangle 160,110 560,165 28,28" \\
@@ -143,4 +156,97 @@ execSync(`convert -size 720x1280 gradient:"#991b1b-#1e1b4b" \\
   -font "${FONT_REG}" -fill "#ffffff" -pointsize 22 -gravity north -annotate +0+1140 "आफ्नो साथी र परिवारसँग शेयर गर्नुहोस्" \\
   ${WORK_DIR}/scene5.png`);
 
-console.log('All 5 scenes rendered successfully!');
+// 3. Synthesize Audio Track
+console.log('Synthesizing Audio melody track...');
+const sampleRate = 44100;
+const duration = 19;
+const totalSamples = sampleRate * duration;
+const wavBuffer = Buffer.alloc(44 + totalSamples * 2);
+
+wavBuffer.write('RIFF', 0);
+wavBuffer.writeUInt32LE(36 + totalSamples * 2, 4);
+wavBuffer.write('WAVE', 8);
+wavBuffer.write('fmt ', 12);
+wavBuffer.writeUInt32LE(16, 16);
+wavBuffer.writeUInt16LE(1, 20);
+wavBuffer.writeUInt16LE(1, 22);
+wavBuffer.writeUInt32LE(sampleRate, 24);
+wavBuffer.writeUInt32LE(sampleRate * 2, 28);
+wavBuffer.writeUInt16LE(2, 32);
+wavBuffer.writeUInt16LE(16, 34);
+wavBuffer.write('data', 36);
+wavBuffer.writeUInt32LE(totalSamples * 2, 40);
+
+const scale = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
+const melody = [
+  [0, 0.4], [2, 0.4], [3, 0.4], [4, 0.4], [5, 0.8],
+  [4, 0.4], [3, 0.4], [2, 0.4], [0, 0.8],
+  [2, 0.4], [3, 0.4], [5, 0.4], [6, 0.4], [7, 0.8],
+  [6, 0.4], [5, 0.4], [4, 0.4], [3, 0.8],
+  [0, 0.4], [2, 0.4], [3, 0.4], [5, 0.4], [4, 0.4], [3, 0.4], [2, 0.8],
+  [3, 0.4], [4, 0.4], [5, 0.6], [7, 0.6], [5, 1.2],
+  [4, 0.4], [3, 0.4], [2, 0.4], [0, 0.4], [0, 2.0]
+];
+
+let melodyTimeline = [];
+let tCursor = 0;
+for (const [noteIdx, dur] of melody) {
+  melodyTimeline.push({ freq: scale[noteIdx], start: tCursor, dur });
+  tCursor += dur;
+}
+
+for (let i = 0; i < totalSamples; i++) {
+  const t = i / sampleRate;
+  let sample = 0;
+  for (const n of melodyTimeline) {
+    if (t >= n.start && t < n.start + n.dur) {
+      const dt = t - n.start;
+      const env = Math.exp(-dt * 2.8) * Math.min(dt / 0.03, 1.0);
+      const s1 = Math.sin(2 * Math.PI * n.freq * dt);
+      const s2 = 0.35 * Math.sin(2 * Math.PI * (n.freq * 2) * dt);
+      const s3 = 0.15 * Math.sin(2 * Math.PI * (n.freq * 3) * dt);
+      sample += (s1 + s2 + s3) * env * 0.45;
+    }
+  }
+  const beat = t % 1.0;
+  if (beat < 0.2) {
+    sample += Math.sin(2 * Math.PI * 1046.5 * beat) * Math.exp(-beat * 15) * 0.12;
+  }
+  sample += Math.sin(2 * Math.PI * 130.81 * t) * 0.08;
+  sample = Math.max(-1, Math.min(1, sample));
+  wavBuffer.writeInt16LE(Math.floor(sample * 32767), 44 + i * 2);
+}
+
+const audioPath = `${WORK_DIR}/audio.wav`;
+fs.writeFileSync(audioPath, wavBuffer);
+
+// 4. Assemble with ffmpeg
+console.log('Assembling final MP4 video with ffmpeg...');
+const publicDir = path.join(process.cwd(), 'public');
+if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
+const outputPath = path.join(publicDir, 'shubhapatro-ad-video.mp4');
+
+const ffmpegCmd = `ffmpeg -y \\
+  -loop 1 -t 3.8 -i ${WORK_DIR}/scene1.png \\
+  -loop 1 -t 3.8 -i ${WORK_DIR}/scene2.png \\
+  -loop 1 -t 3.8 -i ${WORK_DIR}/scene3.png \\
+  -loop 1 -t 3.8 -i ${WORK_DIR}/scene4.png \\
+  -loop 1 -t 4.2 -i ${WORK_DIR}/scene5.png \\
+  -i ${audioPath} \\
+  -filter_complex "\\
+    [0:v]settb=AVTB,scale=720:1280,zoompan=z='min(zoom+0.0008,1.05)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=114:s=720x1280:fps=30[v0]; \\
+    [1:v]settb=AVTB,scale=720:1280,zoompan=z='min(zoom+0.0008,1.05)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=114:s=720x1280:fps=30[v1]; \\
+    [2:v]settb=AVTB,scale=720:1280,zoompan=z='min(zoom+0.0008,1.05)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=114:s=720x1280:fps=30[v2]; \\
+    [3:v]settb=AVTB,scale=720:1280,zoompan=z='min(zoom+0.0008,1.05)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=114:s=720x1280:fps=30[v3]; \\
+    [4:v]settb=AVTB,scale=720:1280,zoompan=z='min(zoom+0.0008,1.05)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=126:s=720x1280:fps=30[v4]; \\
+    [v0][v1]xfade=transition=fade:duration=0.4:offset=3.4[x1]; \\
+    [x1][v2]xfade=transition=fade:duration=0.4:offset=6.8[x2]; \\
+    [x2][v3]xfade=transition=fade:duration=0.4:offset=10.2[x3]; \\
+    [x3][v4]xfade=transition=fade:duration=0.4:offset=13.6[vout]" \\
+  -map "[vout]" -map 5:a \\
+  -c:v libx264 -preset fast -crf 22 -pix_fmt yuv420p \\
+  -c:a aac -b:a 128k -shortest \\
+  "${outputPath}"`;
+
+execSync(ffmpegCmd);
+console.log(`Video created successfully at: ${outputPath}`);

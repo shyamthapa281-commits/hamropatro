@@ -1728,6 +1728,23 @@ app.get('/sitemap.xml', (req, res) => {
 </urlset>`);
 });
 
+// TikTok Video Ad routes
+app.get('/shubhapatro-ad-video.mp4', (req, res) => {
+  const videoPath = path.join(process.cwd(), 'public', 'shubhapatro-ad-video.mp4');
+  if (fs.existsSync(videoPath)) {
+    return res.sendFile(videoPath);
+  }
+  return res.redirect('/?tab=tiktok-ad');
+});
+
+app.get('/tiktok-ad.html', (req, res) => {
+  const htmlPath = path.join(process.cwd(), 'public', 'tiktok-ad.html');
+  if (fs.existsSync(htmlPath)) {
+    return res.sendFile(htmlPath);
+  }
+  return res.redirect('/?tab=tiktok-ad');
+});
+
 // Serve static files from public directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
