@@ -51,10 +51,11 @@ import {
   getKaranaDetails 
 } from '../utils/panchangaDetails';
 import { NEPALI_SEASONS_WELLNESS } from '../data/healthWellnessData';
-import { DailyMotivationCard } from './DailyMotivationCard';
+import { DailyMotivation } from './DailyMotivation';
 import { CalendarSearchBar } from './CalendarSearchBar';
 import { Year12MonthView } from './Year12MonthView';
 import { DayDetailModal } from './DayDetailModal';
+import { EDITORIAL_ARTICLES } from '../data/editorialArticlesData';
 
 interface CalendarViewProps {
   todayBs: NepaliDate;
@@ -1256,7 +1257,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
           {/* Section 3: Daily Motivation & Seasonal Ayurveda Wellness */}
           {(gridWidthMode === 'standard' || rightRailActiveTab === 'wellness' || rightRailActiveTab === 'all') && (
             <div className="space-y-4">
-              <DailyMotivationCard lang={lang} todayBs={todayBs} />
+              <DailyMotivation lang={lang} todayBs={todayBs} defaultExpanded={false} />
               {wellnessCardElement}
             </div>
           )}
@@ -1312,6 +1313,64 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ todayBs, lang, onNav
         </div>
       </div>
       )}
+
+      {/* Daily Motivation Spotlight - Appears directly after the Calendar */}
+      <section id="calendar-daily-motivation-section" className="my-6">
+        <DailyMotivation lang={lang} todayBs={todayBs} defaultExpanded={true} />
+      </section>
+
+      {/* Featured Editorial Guides & Knowledge Section */}
+      <section className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-5 sm:p-7 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-stone-100 dark:border-stone-800 pb-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>{lang === 'ne' ? 'सम्पादकीय शोध तथा ज्ञान केन्द्र' : 'Editorial Guides & Cultural Knowledge'}</span>
+            </div>
+            <h2 className="text-lg sm:text-xl font-extrabold text-stone-900 dark:text-white">
+              {lang === 'ne' ? 'नेपाली पञ्चाङ्ग, बिक्रम संवत् र वैदिक खगोलका प्रमुख लेखहरू' : 'Essential Guides on Bikram Sambat, Panchanga & Vedic Traditions'}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate?.('articles')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/80 text-sky-700 dark:text-sky-300 text-xs font-bold transition-all cursor-pointer border border-sky-200 dark:border-sky-800 shrink-0"
+          >
+            <span>{lang === 'ne' ? 'सबै ६+ लेखहरू हेर्नुहोस्' : 'Explore All 6+ Scholarly Guides'}</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {EDITORIAL_ARTICLES.slice(0, 3).map((art) => (
+            <div
+              key={art.id}
+              onClick={() => onNavigate?.('articles')}
+              className="bg-stone-50 dark:bg-stone-800/50 border border-stone-200/80 dark:border-stone-700/80 rounded-2xl overflow-hidden p-4 flex flex-col justify-between hover:shadow-md hover:border-sky-500/50 transition-all cursor-pointer group"
+            >
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400">
+                  <span className="font-bold text-sky-600 dark:text-sky-400 bg-sky-100/80 dark:bg-sky-950 px-2 py-0.5 rounded-md text-[10px]">
+                    {lang === 'ne' ? art.categoryNe : art.categoryEn}
+                  </span>
+                  <span>{art.readTimeMin} {lang === 'ne' ? 'मिनेट' : 'min'}</span>
+                </div>
+                <h3 className="font-bold text-sm text-stone-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors line-clamp-2">
+                  {lang === 'ne' ? art.titleNe : art.titleEn}
+                </h3>
+                <p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 leading-relaxed">
+                  {lang === 'ne' ? art.excerptNe : art.excerptEn}
+                </p>
+              </div>
+
+              <div className="pt-3 mt-3 border-t border-stone-200/60 dark:border-stone-700/60 flex items-center justify-between text-xs font-semibold text-sky-600 dark:text-sky-400">
+                <span>{lang === 'ne' ? 'पढ्नुहोस्' : 'Read Guide'}</span>
+                <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Comprehensive Day Detail Modal */}
       <DayDetailModal

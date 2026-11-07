@@ -26,12 +26,14 @@ import {
   Smartphone,
   Phone,
   Mail,
+  MessageSquare,
   Receipt,
   Share2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import QRCode from 'qrcode';
 import { PaymentConfig, ReceivedPayment, PaymentStatus } from '../types/payment';
+import { BankingOtpLockCard } from './BankingOtpLockCard';
 
 interface ReceivePaymentsViewProps {
   lang: 'ne' | 'en';
@@ -42,7 +44,7 @@ interface ReceivePaymentsViewProps {
 const DEFAULT_CONFIG: PaymentConfig = {
   nepalBankName: 'NMB Bank Limited',
   nepalAccountNumber: '1990256249400016',
-  nepalAccountHolder: 'Shyam Thapa',
+  nepalAccountHolder: 'Shubha Patro',
   nepalBranch: 'Gwarko, Lalitpur',
   nepalSwiftCode: 'NMBNNPKA',
   stripePaymentLink: 'https://buy.stripe.com/bJeeVc1ImcTf0wZdMf8so00',
@@ -53,12 +55,16 @@ const DEFAULT_CONFIG: PaymentConfig = {
   australiaBankName: 'Commonwealth Bank of Australia (CBA)',
   australiaBsb: '063620',
   australiaAccountNumber: '11170070',
-  australiaAccountHolder: 'Shyam Thapa',
+  australiaAccountHolder: 'Shubha Patro',
   australiaPayId: '0416045056',
   supportPhone: '+61 416 045 056 / 0416045056',
   supportEmail: 'shyamthapa281@gmail.com',
   notificationEmail: 'shyamthapa281@gmail.com',
-  adminPin: '1234',
+  smtpHost: 'smtp.gmail.com',
+  smtpPort: '587',
+  smtpUser: 'shyamthapa281@gmail.com',
+  smtpPass: '',
+  adminPin: '',
   acceptingPayments: true,
   currencyAccepted: ['AUD', 'NPR', 'USD', 'EUR', 'GBP']
 };
@@ -80,18 +86,32 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
   const [editConfigForm, setEditConfigForm] = useState<PaymentConfig>(DEFAULT_CONFIG);
   const [isSavingConfig, setIsSavingConfig] = useState(false);
   const [configSaveSuccess, setConfigSaveSuccess] = useState(false);
+  const [isTestingEmail, setIsTestingEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // Received Payments Ledger (For Owner Only)
   const [paymentsList, setPaymentsList] = useState<ReceivedPayment[]>([]);
   const [isLoadingPayments, setIsLoadingPayments] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [adminActiveTab, setAdminActiveTab] = useState<'ledger' | 'settings'>('ledger');
+  const [adminActiveTab, setAdminActiveTab] = useState<'ledger' | 'requests' | 'settings'>('ledger');
+  const [adminUnlockRequests, setAdminUnlockRequests] = useState<Array<{
+    id: string;
+    email: string;
+    name: string;
+    channel: string;
+    code: string;
+    createdAt: number;
+    expiresAt: number;
+    status: 'pending' | 'used' | 'expired';
+  }>>([]);
+  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
+  const [requestsError, setRequestsError] = useState<string | null>(null);
 
   // Customer Payer Form State
-  const [selectedPurpose, setSelectedPurpose] = useState<string>(initialPurpose || 'vedic_kundali');
+  const [selectedPurpose, setSelectedPurpose] = useState<string>('platform_support');
   const [selectedCurrency, setSelectedCurrency] = useState<'AUD' | 'NPR' | 'USD' | 'EUR'>('AUD');
-  const [selectedAmount, setSelectedAmount] = useState<number>(38);
+  const [selectedAmount, setSelectedAmount] = useState<number>(25);
   const [customAmount, setCustomAmount] = useState<string>('');
   
   // Available tailored channels:
@@ -111,62 +131,152 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Services Catalog
+  // Banking Info OTP Protection State
+  const [isBankUnlocked, setIsBankUnlocked] = useState<boolean>(false);
+  const [unlockedUntil, setUnlockedUntil] = useState<number | null>(null);
+  const [remainingUnlockSeconds, setRemainingUnlockSeconds] = useState<number>(0);
+  
+  // OTP Request / Verification Form State
+  const [otpEmailInput, setOtpEmailInput] = useState<string>('');
+  const [otpNameInput, setOtpNameInput] = useState<string>('');
+  const [otpCodeInput, setOtpCodeInput] = useState<string>('');
+  const [isSendingOtp, setIsSendingOtp] = useState<boolean>(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState<boolean>(false);
+  const [otpSentEmail, setOtpSentEmail] = useState<string | null>(null);
+  const [otpSentMessage, setOtpSentMessage] = useState<string | null>(null);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpCooldown, setOtpCooldown] = useState<number>(0);
+  const [otpExpirySeconds, setOtpExpirySeconds] = useState<number>(0);
+
+  // Countdown timer for OTP cooldown, OTP expiration, and Unlocked banking session
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setOtpCooldown(prev => (prev > 0 ? prev - 1 : 0));
+      setOtpExpirySeconds(prev => (prev > 0 ? prev - 1 : 0));
+
+      if (isBankUnlocked && unlockedUntil) {
+        const diff = Math.max(0, Math.floor((unlockedUntil - Date.now()) / 1000));
+        setRemainingUnlockSeconds(diff);
+        if (diff <= 0) {
+          setIsBankUnlocked(false);
+          setUnlockedUntil(null);
+          setOtpError(lang === 'ne' 
+            ? 'सुरक्षाका लागि बैंकिङ पहुँच सत्रको समय समाप्त भएको छ। विवरण पुनः लक गरिएको छ।' 
+            : 'Your secure session has expired. Banking details have been re-locked for security.');
+        }
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isBankUnlocked, unlockedUntil, lang]);
+
+  const formatOtpTimer = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  // Request Banking OTP
+  const handleRequestOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!otpEmailInput.trim() || !otpEmailInput.includes('@')) {
+      setOtpError(lang === 'ne' ? 'कृपया मान्य इमेल ठेगाना प्रविष्ट गर्नुहोस्।' : 'Please enter a valid email address.');
+      return;
+    }
+
+    setIsSendingOtp(true);
+    setOtpError(null);
+    setOtpSentMessage(null);
+
+    try {
+      const res = await fetch('/api/payments/banking-otp/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: otpEmailInput.trim(),
+          name: otpNameInput.trim() || payerName.trim(),
+          lang,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to generate OTP');
+      }
+
+      setOtpSentEmail(data.email);
+      setOtpSentMessage(data.message);
+      setOtpCooldown(60); // 60s cooldown before next send
+      setOtpExpirySeconds(data.expiresInSeconds || 600); // 10 minutes
+      if (!payerEmail) setPayerEmail(otpEmailInput.trim());
+      if (otpNameInput.trim() && !payerName) setPayerName(otpNameInput.trim());
+    } catch (err: any) {
+      setOtpError(err.message || 'Error sending OTP');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  // Verify Banking OTP
+  const handleVerifyOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!otpSentEmail) {
+      setOtpError(lang === 'ne' ? 'कृपया पहिले OTP कोड अनुरोध गर्नुहोस्।' : 'Please request an OTP code first.');
+      return;
+    }
+    if (!otpCodeInput.trim() || otpCodeInput.trim().length < 6) {
+      setOtpError(lang === 'ne' ? 'कृपया पूरा ६-अङ्कको OTP कोड प्रविष्ट गर्नुहोस्।' : 'Please enter the complete 6-digit OTP code.');
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    setOtpError(null);
+
+    try {
+      const res = await fetch('/api/payments/banking-otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: otpSentEmail,
+          code: otpCodeInput.trim(),
+          lang,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Invalid OTP code');
+      }
+
+      setIsBankUnlocked(true);
+      setUnlockedUntil(data.unlockedUntil || Date.now() + (data.expiresInSeconds || 900) * 1000);
+      setRemainingUnlockSeconds(data.expiresInSeconds || 900);
+      setOtpError(null);
+      setOtpSentMessage(null);
+      confetti({ particleCount: 60, spread: 60, origin: { y: 0.7 } });
+    } catch (err: any) {
+      setOtpError(err.message || 'Verification failed');
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  const handleManualRelock = () => {
+    setIsBankUnlocked(false);
+    setUnlockedUntil(null);
+    setRemainingUnlockSeconds(0);
+    setOtpCodeInput('');
+  };
+
+  // Services Catalog - Exclusive to Shubha Patro Platform & Server Patronage
   const SERVICE_OPTIONS = [
     {
-      id: 'vedic_kundali',
-      nameNe: 'वैदिक कुण्डली तथा जन्मपत्रिका परामर्श',
-      nameEn: 'Vedic Kundali & Horoscope Consultation',
-      defaultAud: 38,
-      defaultNpr: 1999,
-      defaultUsd: 25,
-      icon: '🔮',
-      badgeNe: 'लोकप्रिय',
-      badgeEn: 'Popular'
-    },
-    {
-      id: 'temple_pooja',
-      nameNe: 'पशुपतिनाथ मन्दिर विशेष पूजा सङ्कल्प',
-      nameEn: 'Pashupatinath Temple Puja Sankalpa',
-      defaultAud: 60,
-      defaultNpr: 3499,
-      defaultUsd: 40,
-      icon: '🪔',
-      badgeNe: 'विशेष',
-      badgeEn: 'Sacred'
-    },
-    {
-      id: 'gun_milan',
-      nameNe: '३६ गुण मिलान तथा विवाह साइत',
-      nameEn: 'Marriage 36 Gun Milan & Muhurta',
-      defaultAud: 22,
-      defaultNpr: 999,
-      defaultUsd: 15,
-      icon: '💍',
-      badgeNe: 'वैदिक',
-      badgeEn: 'Vedic'
-    },
-    {
       id: 'platform_support',
-      nameNe: 'शुभ पात्रो प्लेटफर्म सञ्चालन तथा विकास सहयोग',
+      nameNe: 'शुभ पात्रो प्लेटफर्म तथा सर्भर सञ्चालन सहयोग',
       nameEn: 'Shubha Patro Platform & Server Patronage',
-      defaultAud: 15,
-      defaultNpr: 500,
-      defaultUsd: 10,
-      icon: '🙏',
-      badgeNe: 'पुण्य कार्य',
-      badgeEn: 'Goodwill'
-    },
-    {
-      id: 'other',
-      nameNe: 'अन्य धार्मिक अनुष्ठान वा ऐच्छिक दक्षिणा',
-      nameEn: 'Other Ritual or Custom Dakshina',
       defaultAud: 25,
       defaultNpr: 1000,
       defaultUsd: 20,
-      icon: '✨',
-      badgeNe: 'ऐच्छिक',
-      badgeEn: 'Custom'
+      icon: '🙏',
+      badgeNe: 'आधिकारिक सहयोग',
+      badgeEn: 'Official Patronage'
     }
   ];
 
@@ -205,6 +315,31 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
     }
   };
 
+  // Fetch Unlock Requests (for owner to view codes and authorize customers)
+  const fetchUnlockRequests = async () => {
+    if (!isAdminLoggedIn) return;
+    setIsLoadingRequests(true);
+    setRequestsError(null);
+    try {
+      const res = await fetch('/api/payments/banking-otp/requests', {
+        headers: {
+          'x-admin-pin': adminPinInput || ''
+        }
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.requests)) {
+        setAdminUnlockRequests(data.requests);
+      } else {
+        setRequestsError(data.error || 'Failed to fetch unlock requests');
+      }
+    } catch (err: any) {
+      console.error('Error fetching unlock requests:', err);
+      setRequestsError(err.message || 'Error fetching requests');
+    } finally {
+      setIsLoadingRequests(false);
+    }
+  };
+
   useEffect(() => {
     fetchConfig();
   }, [isAdminLoggedIn]);
@@ -212,6 +347,7 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
   useEffect(() => {
     if (isAdminLoggedIn) {
       fetchPayments();
+      fetchUnlockRequests();
     }
   }, [isAdminLoggedIn]);
 
@@ -383,6 +519,42 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
     }
   };
 
+  // Test Email Notification Dispatch
+  const handleSendTestEmail = async () => {
+    setIsTestingEmail(true);
+    setTestEmailResult(null);
+    try {
+      const res = await fetch('/api/payments/test-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-pin': adminPinInput || '',
+        },
+        body: JSON.stringify({
+          toEmail: editConfigForm.notificationEmail || 'shyamthapa281@gmail.com',
+          smtpHost: editConfigForm.smtpHost || 'smtp.gmail.com',
+          smtpPort: editConfigForm.smtpPort || '587',
+          smtpUser: editConfigForm.smtpUser || editConfigForm.notificationEmail || 'shyamthapa281@gmail.com',
+          smtpPass: editConfigForm.smtpPass || '',
+          formspreeEndpoint: editConfigForm.formspreeEndpoint || '',
+          resendApiKey: editConfigForm.resendApiKey || '',
+        }),
+      });
+      const data = await res.json();
+      setTestEmailResult({
+        success: !!data.success,
+        message: data.message || data.error || 'Server returned unknown response',
+      });
+    } catch (err: any) {
+      setTestEmailResult({
+        success: false,
+        message: err.message || 'Network error while testing email',
+      });
+    } finally {
+      setIsTestingEmail(false);
+    }
+  };
+
   // Admin toggling status of a payment in ledger
   const handleUpdateStatus = async (id: string, newStatus: PaymentStatus) => {
     try {
@@ -462,9 +634,22 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
       {/* ========================================================= */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-sky-900 via-sky-850 to-indigo-950 text-white p-6 sm:p-10 shadow-2xl border border-sky-600/30">
         <div className="relative z-10 max-w-4xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md text-amber-300 text-xs font-bold tracking-wide border border-white/10">
-            <Wallet className="w-4 h-4 fill-amber-300 text-amber-300" />
-            <span>{lang === 'ne' ? 'सुरक्षित सहयोग केन्द्र' : 'Official Secure Support Portal'}</span>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md text-amber-300 text-xs font-bold tracking-wide border border-white/10">
+              <Wallet className="w-4 h-4 fill-amber-300 text-amber-300" />
+              <span>{lang === 'ne' ? 'सुरक्षित सहयोग केन्द्र' : 'Official Secure Support Portal'}</span>
+            </div>
+
+            {!isAdminLoggedIn && (
+              <button
+                type="button"
+                onClick={() => setShowAdminPinModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 hover:text-white text-xs font-bold border border-white/15 transition-all cursor-pointer"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>{lang === 'ne' ? 'व्यवस्थापक लगइन' : 'Owner Portal'}</span>
+              </button>
+            )}
           </div>
 
           <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
@@ -509,6 +694,22 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${adminActiveTab === 'ledger' ? 'bg-amber-400 text-stone-950 font-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
               >
                 {lang === 'ne' ? 'लेजर हेर्नुहोस्' : 'View Ledger'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAdminActiveTab('requests');
+                  fetchUnlockRequests();
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all relative flex items-center gap-1 ${adminActiveTab === 'requests' ? 'bg-amber-400 text-stone-950 font-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              >
+                <KeyRound className="w-3 h-3" />
+                <span>{lang === 'ne' ? 'अनलक कोडहरू' : 'Unlock Codes'}</span>
+                {adminUnlockRequests.filter(r => r.status === 'pending' && r.expiresAt > Date.now()).length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white text-[10px] font-black animate-pulse">
+                    {adminUnlockRequests.filter(r => r.status === 'pending' && r.expiresAt > Date.now()).length}
+                  </span>
+                )}
               </button>
               <button
                 type="button"
@@ -561,18 +762,34 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setAdminActiveTab('ledger')}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${adminActiveTab === 'ledger' ? 'bg-amber-400 text-stone-950 font-black' : 'text-stone-300 hover:text-white'}`}
+                  className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all ${adminActiveTab === 'ledger' ? 'bg-amber-400 text-stone-950 font-black' : 'text-stone-300 hover:text-white'}`}
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 inline mr-1.5" />
-                  {lang === 'ne' ? 'प्राप्त भुक्तानी लेजर' : 'Received Ledger'}
+                  {lang === 'ne' ? 'लेजर' : 'Ledger'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdminActiveTab('requests');
+                    fetchUnlockRequests();
+                  }}
+                  className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all relative flex items-center gap-1.5 ${adminActiveTab === 'requests' ? 'bg-amber-400 text-stone-950 font-black' : 'text-stone-300 hover:text-white'}`}
+                >
+                  <KeyRound className="w-3.5 h-3.5 inline" />
+                  <span>{lang === 'ne' ? 'अनलक कोडहरू' : 'Unlock Codes'}</span>
+                  {adminUnlockRequests.filter(r => r.status === 'pending' && r.expiresAt > Date.now()).length > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white text-[10px] font-black animate-pulse">
+                      {adminUnlockRequests.filter(r => r.status === 'pending' && r.expiresAt > Date.now()).length}
+                    </span>
+                  )}
                 </button>
                 <button
                   type="button"
                   onClick={() => setAdminActiveTab('settings')}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${adminActiveTab === 'settings' ? 'bg-amber-400 text-stone-950 font-black' : 'text-stone-300 hover:text-white'}`}
+                  className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all ${adminActiveTab === 'settings' ? 'bg-amber-400 text-stone-950 font-black' : 'text-stone-300 hover:text-white'}`}
                 >
                   <Building2 className="w-3.5 h-3.5 inline mr-1.5" />
-                  {lang === 'ne' ? 'खाता विवरण परिवर्तन' : 'Payment Accounts'}
+                  {lang === 'ne' ? 'खाता विवरण' : 'Accounts'}
                 </button>
               </div>
 
@@ -831,7 +1048,7 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
                         value={editConfigForm.australiaAccountHolder || ''}
                         onChange={e => setEditConfigForm({ ...editConfigForm, australiaAccountHolder: e.target.value })}
                         className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        placeholder="Shyam Thapa"
+                        placeholder="Account Holder Name"
                       />
                     </div>
 
@@ -857,7 +1074,7 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
                         value={editConfigForm.australiaAccountNumber || ''}
                         onChange={e => setEditConfigForm({ ...editConfigForm, australiaAccountNumber: e.target.value })}
                         className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        placeholder="1234 5678"
+                        placeholder="11170070"
                       />
                     </div>
                   </div>
@@ -986,7 +1203,7 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
                         value={editConfigForm.nepalAccountHolder || ''}
                         onChange={e => setEditConfigForm({ ...editConfigForm, nepalAccountHolder: e.target.value })}
                         className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        placeholder="Shyam Thapa"
+                        placeholder="Account Holder Name"
                       />
                     </div>
 
@@ -1035,9 +1252,11 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
                         value={editConfigForm.adminPin || ''}
                         onChange={e => setEditConfigForm({ ...editConfigForm, adminPin: e.target.value })}
                         className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        placeholder="1234"
+                        placeholder="••••••••"
                       />
-                      <p className="text-[11px] text-stone-500 mt-1">Default PIN is 1234. Change it anytime to protect your ledger.</p>
+                      <p className="text-[11px] text-stone-500 mt-1">
+                        {lang === 'ne' ? 'आफ्नो गोप्य व्यवस्थापक PIN परिवर्तन गर्नुहोस्।' : 'Update your secret admin PIN to keep your ledger secure.'}
+                      </p>
                     </div>
 
                     <div>
@@ -1051,6 +1270,88 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
                         className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
                         placeholder="shyamthapa281@gmail.com"
                       />
+                    </div>
+
+                    {/* Automated Email Notification Settings (Gmail SMTP / Direct Delivery) */}
+                    <div className="sm:col-span-2 pt-4 border-t border-stone-200 dark:border-stone-700/80 space-y-3">
+                      <div>
+                        <div className="text-xs font-bold text-stone-900 dark:text-white flex items-center gap-1.5">
+                          <Mail className="w-4 h-4 text-sky-500" />
+                          <span>{lang === 'ne' ? 'स्वचालित इमेल सूचना प्रणाली (Gmail SMTP / App Password)' : 'Automated Email Notification System'}</span>
+                        </div>
+                        <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                          {lang === 'ne'
+                            ? 'ग्राहकले बैंक विवरण अनलक गर्न अनुरोध गर्दा तपाईंको इमेल (shyamthapa281@gmail.com) मा तुरुन्तै ६-अङ्के कोडसहितको इमेल पुग्नका लागि यो सेटिङ मिलाउनुहोस्।'
+                            : 'Ensure customer unlock requests and 6-digit codes are delivered directly to your inbox.'}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white dark:bg-stone-900 p-4 rounded-xl border border-stone-200 dark:border-stone-700">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-stone-600 dark:text-stone-300 mb-1">
+                            SMTP Server
+                          </label>
+                          <input
+                            type="text"
+                            value={editConfigForm.smtpHost || 'smtp.gmail.com'}
+                            onChange={e => setEditConfigForm({ ...editConfigForm, smtpHost: e.target.value })}
+                            className="w-full px-3 py-1.5 text-xs rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700"
+                            placeholder="smtp.gmail.com"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-stone-600 dark:text-stone-300 mb-1">
+                            SMTP Username / Email
+                          </label>
+                          <input
+                            type="email"
+                            value={editConfigForm.smtpUser || editConfigForm.notificationEmail || 'shyamthapa281@gmail.com'}
+                            onChange={e => setEditConfigForm({ ...editConfigForm, smtpUser: e.target.value })}
+                            className="w-full px-3 py-1.5 text-xs rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700"
+                            placeholder="shyamthapa281@gmail.com"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-stone-600 dark:text-stone-300 mb-1">
+                            Gmail 16-Char App Password
+                          </label>
+                          <input
+                            type="password"
+                            value={editConfigForm.smtpPass || ''}
+                            onChange={e => setEditConfigForm({ ...editConfigForm, smtpPass: e.target.value })}
+                            className="w-full px-3 py-1.5 text-xs rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 focus:ring-2 focus:ring-amber-500"
+                            placeholder="xxxx xxxx xxxx xxxx"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-3 text-[11px] text-stone-500 bg-amber-50 dark:bg-amber-950/40 p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/60 leading-relaxed">
+                          💡 <strong>Google App Password कसरी बनाउने:</strong> myaccount.google.com &gt; Security &gt; 2-Step Verification &gt; App passwords मा गई 'Shubha Patro' नाम दिई १६-अङ्के पासवर्ड बनाई यहाँ राख्नुहोस्।
+                        </div>
+
+                        <div className="sm:col-span-3 flex flex-wrap items-center justify-between gap-3 pt-1">
+                          <button
+                            type="button"
+                            onClick={handleSendTestEmail}
+                            disabled={isTestingEmail}
+                            className="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            <Mail className={`w-3.5 h-3.5 ${isTestingEmail ? 'animate-spin' : ''}`} />
+                            <span>{isTestingEmail ? 'इमेल परीक्षण गरिँदैछ...' : 'परीक्षण इमेल पठाउनुहोस् (Send Test Email)'}</span>
+                          </button>
+
+                          {testEmailResult && (
+                            <span className={`text-xs font-bold px-3 py-1 rounded-lg ${
+                              testEmailResult.success 
+                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' 
+                                : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                            }`}>
+                              {testEmailResult.message}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1076,6 +1377,206 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {/* TAB 3: BANKING UNLOCK REQUESTS (OWNER AUTHORIZATION) */}
+          {adminActiveTab === 'requests' && (
+            <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 border border-stone-200 dark:border-stone-800 shadow-sm space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-stone-200 dark:border-stone-800">
+                <div>
+                  <h3 className="text-xl font-bold text-stone-900 dark:text-white flex items-center gap-2">
+                    <KeyRound className="w-5 h-5 text-amber-500" />
+                    <span>{lang === 'ne' ? 'बैंकिङ विवरण अनलक अनुरोधहरू' : 'Banking Unlock Requests'}</span>
+                  </h3>
+                  <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1">
+                    {lang === 'ne'
+                      ? 'ग्राहकले बैंक विवरण हेर्न अनुरोध गर्दा यहाँ ६-अङ्के कोड आउँछ। ग्राहकलाई यो कोड उपलब्ध गराएपछि मात्र उनीहरूको स्क्रिनमा बैंक विवरण खुल्नेछ।'
+                      : 'When a customer requests bank details, their 6-digit unlock code appears here. Send this code to them so they can unlock the details.'}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={fetchUnlockRequests}
+                    disabled={isLoadingRequests}
+                    className="px-3.5 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingRequests ? 'animate-spin' : ''}`} />
+                    <span>{lang === 'ne' ? 'ताजा गर्नुहोस्' : 'Refresh'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {requestsError && (
+                <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{requestsError}</span>
+                </div>
+              )}
+
+              {/* Status summary pills */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
+                  <div className="text-[11px] font-bold text-amber-800 dark:text-amber-300 uppercase">
+                    {lang === 'ne' ? 'सक्रिय कोडहरू (Pending)' : 'Active Codes'}
+                  </div>
+                  <div className="text-2xl font-black text-amber-900 dark:text-amber-200 mt-1">
+                    {adminUnlockRequests.filter(r => r.status === 'pending' && r.expiresAt > Date.now()).length}
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40">
+                  <div className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase">
+                    {lang === 'ne' ? 'अनलक गरिएका (Used)' : 'Used / Unlocked'}
+                  </div>
+                  <div className="text-2xl font-black text-emerald-900 dark:text-emerald-200 mt-1">
+                    {adminUnlockRequests.filter(r => r.status === 'used').length}
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-stone-100 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700/60">
+                  <div className="text-[11px] font-bold text-stone-600 dark:text-stone-400 uppercase">
+                    {lang === 'ne' ? 'कुल अनुरोधहरू (Total)' : 'Total Requests'}
+                  </div>
+                  <div className="text-2xl font-black text-stone-800 dark:text-stone-200 mt-1">
+                    {adminUnlockRequests.length}
+                  </div>
+                </div>
+              </div>
+
+              {/* Requests List */}
+              {adminUnlockRequests.length === 0 ? (
+                <div className="text-center py-12 px-4 rounded-2xl bg-stone-50 dark:bg-stone-800/30 border border-dashed border-stone-300 dark:border-stone-700">
+                  <KeyRound className="w-12 h-12 text-stone-300 dark:text-stone-600 mx-auto mb-3" />
+                  <p className="text-sm font-semibold text-stone-600 dark:text-stone-400">
+                    {lang === 'ne'
+                      ? 'अहिलेसम्म कुनै ग्राहकले बैंक विवरण अनलक गर्न कोड अनुरोध गरेका छैनन्।'
+                      : 'No banking unlock requests received yet.'}
+                  </p>
+                  <p className="text-xs text-stone-400 mt-1">
+                    {lang === 'ne'
+                      ? 'ग्राहकले "व्यवस्थापकलाई अनुरोध पठाउनुहोस्" क्लिक गर्दा यहाँ तुरुन्तै ६-अङ्के कोड देखिनेछ।'
+                      : 'When a customer clicks "Send Request to Owner", their code will appear here in real-time.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {adminUnlockRequests.map((req) => {
+                    const isPending = req.status === 'pending' && req.expiresAt > Date.now();
+                    const isUsed = req.status === 'used';
+                    const isExpired = req.status === 'expired' || (!isUsed && req.expiresAt <= Date.now());
+                    const remainingMin = Math.max(0, Math.ceil((req.expiresAt - Date.now()) / (60 * 1000)));
+
+                    const shareMessage = `नमस्ते ${req.name || ''}, शुभ पात्रो बैंकिङ विवरण अनलक गर्ने तपाईंको ६-अङ्के कोड: ${req.code} हो। यो कोड १० मिनेटसम्म मान्य रहनेछ।`;
+                    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
+                    const mailtoUrl = `mailto:${req.email}?subject=${encodeURIComponent('Shubha Patro Banking Unlock Code')}&body=${encodeURIComponent(shareMessage)}`;
+
+                    return (
+                      <div
+                        key={req.id}
+                        className={`p-4 sm:p-5 rounded-2xl border transition-all ${
+                          isPending
+                            ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800/60 shadow-sm'
+                            : isUsed
+                            ? 'bg-emerald-50/40 dark:bg-emerald-950/15 border-emerald-200 dark:border-emerald-800/40 opacity-80'
+                            : 'bg-stone-50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700/60 opacity-60'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          {/* Customer & Channel Info */}
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-stone-900 dark:text-white text-sm">
+                                {req.name || (req as any).customerName || 'Anonymous Customer'}
+                              </span>
+                              <span className="text-xs font-mono text-stone-500">
+                                ({req.email || (req as any).customerEmail})
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                              <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                                req.channel === 'aus_bank'
+                                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200'
+                                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200'
+                              }`}>
+                                {req.channel === 'aus_bank' ? '🇦🇺 Australia Bank / PayID' : '🇳🇵 Nepal Bank Transfer'}
+                              </span>
+                              <span className="text-stone-400">
+                                {new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Code Display & Status */}
+                          <div className="flex flex-wrap items-center gap-3">
+                            <div className="text-right">
+                              <div className="text-[10px] uppercase font-bold text-stone-400">
+                                {lang === 'ne' ? 'अनलक कोड' : 'Unlock Code'}
+                              </div>
+                              <div className="font-mono text-xl sm:text-2xl font-black tracking-widest text-amber-600 dark:text-amber-400">
+                                {req.code}
+                              </div>
+                            </div>
+
+                            {/* Status badge */}
+                            <div>
+                              {isPending && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                                  <Clock className="w-3 h-3 text-amber-600" />
+                                  <span>{lang === 'ne' ? `बाँकी ${remainingMin} मिनेट` : `${remainingMin}m left`}</span>
+                                </span>
+                              )}
+                              {isUsed && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                  <span>{lang === 'ne' ? 'अनलक भयो' : 'Unlocked'}</span>
+                                </span>
+                              )}
+                              {isExpired && (
+                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-stone-200 text-stone-600 dark:bg-stone-700 dark:text-stone-300">
+                                  {lang === 'ne' ? 'म्याद समाप्त' : 'Expired'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Direct Action Buttons to send code to customer */}
+                        {isPending && (
+                          <div className="mt-3 pt-3 border-t border-amber-200/60 dark:border-amber-800/40 flex flex-wrap items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(req.code, `code-${req.id}`)}
+                              className="px-3 py-1.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                            >
+                              {copiedKey === `code-${req.id}` ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                              <span>{copiedKey === `code-${req.id}` ? 'कोड प्रतिलिपि भयो' : 'Copy Code'}</span>
+                            </button>
+
+                            <a
+                              href={whatsappUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              <span>{lang === 'ne' ? 'व्हाट्सएपमा पठाउनुहोस्' : 'WhatsApp Code'}</span>
+                            </a>
+
+                            <a
+                              href={mailtoUrl}
+                              className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                            >
+                              <Mail className="w-3.5 h-3.5" />
+                              <span>{lang === 'ne' ? 'इमेलमा पठाउनुहोस्' : 'Email Code'}</span>
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1130,50 +1631,67 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
             </div>
           </div>
 
-          {/* Service Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {SERVICE_OPTIONS.map(srv => {
-              const isSelected = selectedPurpose === srv.id;
-              const defaultAmt = selectedCurrency === 'AUD' ? srv.defaultAud : selectedCurrency === 'NPR' ? srv.defaultNpr : srv.defaultUsd;
-              return (
-                <button
-                  key={srv.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedPurpose(srv.id);
-                    setCustomAmount('');
-                    setSelectedAmount(defaultAmt);
-                  }}
-                  className={`p-4 rounded-2xl text-left border-2 transition-all cursor-pointer relative flex flex-col justify-between gap-3 ${
-                    isSelected
-                      ? 'border-sky-600 bg-sky-50/70 dark:bg-sky-950/40 shadow-md ring-2 ring-sky-600/20'
-                      : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/30 hover:border-stone-300 dark:hover:border-stone-700'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-2xl">{srv.icon}</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-200/80 dark:bg-stone-700/80 text-stone-700 dark:text-stone-200">
-                      {lang === 'ne' ? srv.badgeNe : srv.badgeEn}
-                    </span>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-bold text-stone-900 dark:text-white leading-snug">
-                      {lang === 'ne' ? srv.nameNe : srv.nameEn}
+          {/* Exclusive Platform Patronage Showcase & Tier Presets */}
+          <div className="bg-gradient-to-br from-sky-50/80 via-white to-amber-50/60 dark:from-stone-900 dark:via-stone-900/90 dark:to-stone-900 rounded-2xl p-5 sm:p-6 border border-sky-200/80 dark:border-stone-700 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-600 to-sky-700 text-white flex items-center justify-center text-2xl shadow-sm shrink-0">
+                  🙏
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-black text-stone-900 dark:text-white">
+                      {lang === 'ne' ? 'शुभ पात्रो प्लेटफर्म तथा सर्भर सञ्चालन सहयोग' : 'Shubha Patro Platform & Server Patronage'}
                     </h3>
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-400 text-stone-950 shadow-2xs">
+                      {lang === 'ne' ? 'आधिकारिक सहयोग' : 'Official Patronage'}
+                    </span>
                   </div>
+                  <p className="text-xs text-stone-600 dark:text-stone-300 mt-0.5">
+                    {lang === 'ne'
+                      ? 'तपाईंको सानो सहयोगले लाखौं नेपालीहरूका लागि सर्भर होस्टिङ, सुरक्षा र पञ्चाङ्ग गणना निरन्तर सुचारु रहन्छ।'
+                      : 'Your generous contribution powers continuous cloud servers, astronomical Panchanga algorithms, and ad-free cultural tools.'}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-                  <div className="pt-2 border-t border-stone-200/60 dark:border-stone-700/60 flex items-center justify-between">
-                    <span className="text-xs text-stone-500 dark:text-stone-400 font-semibold">
-                      {lang === 'ne' ? 'अनुमानित दक्षिणा:' : 'Dakshina:'}
-                    </span>
-                    <span className="text-sm font-black text-sky-700 dark:text-sky-300">
-                      {selectedCurrency === 'AUD' ? `A$ ${srv.defaultAud}` : selectedCurrency === 'NPR' ? `रु ${srv.defaultNpr}` : `$ ${srv.defaultUsd}`}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+            {/* Quick Suggested Patronage Tiers */}
+            <div className="pt-2 border-t border-stone-200/60 dark:border-stone-800">
+              <div className="text-xs font-bold text-stone-600 dark:text-stone-300 mb-2">
+                {lang === 'ne' ? 'सुझाव गरिएको सहयोग रकम (Select Contribution Tier):' : 'Suggested Patronage Tiers:'}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {(selectedCurrency === 'AUD' 
+                  ? [15, 25, 50, 100] 
+                  : selectedCurrency === 'NPR' 
+                  ? [500, 1000, 2500, 5000] 
+                  : [10, 25, 50, 100]
+                ).map((presetAmt) => {
+                  const isPresetActive = !customAmount && selectedAmount === presetAmt;
+                  return (
+                    <button
+                      key={presetAmt}
+                      type="button"
+                      onClick={() => {
+                        setSelectedAmount(presetAmt);
+                        setCustomAmount('');
+                      }}
+                      className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        isPresetActive
+                          ? 'bg-sky-600 text-white shadow-md ring-2 ring-sky-600/30 scale-[1.02]'
+                          : 'bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-700 hover:border-sky-400'
+                      }`}
+                    >
+                      <span>
+                        {selectedCurrency === 'AUD' ? `A$ ${presetAmt}` : selectedCurrency === 'NPR' ? `रु ${presetAmt.toLocaleString()}` : `${selectedCurrency} ${presetAmt}`}
+                      </span>
+                      {isPresetActive && <Check className="w-3.5 h-3.5" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Amount input & presets */}
@@ -1454,184 +1972,276 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
               </div>
             )}
 
-            {/* 3. AUSTRALIA LOCAL BANKING DETAILS */}
+            {/* 3. AUSTRALIA LOCAL BANKING DETAILS (OTP PROTECTED) */}
             {selectedChannel === 'aus_bank' && (
-              <div className="space-y-6 animate-in fade-in">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-base sm:text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
-                      <Building2 className="w-5 h-5 text-amber-500" />
-                      <span>{lang === 'ne' ? 'अष्ट्रेलिया स्थानीय बैंक तथा PayID' : 'Australia Local Bank (PayID / BSB)'}</span>
-                    </h3>
-                    <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-                      {lang === 'ne'
-                        ? 'अष्ट्रेलियामा रहनुहुने भक्तजन तथा शुभचिन्तकहरूले कुनै शुल्क बिना तत्काल PayID वा Osko/BSB मार्फत रकम पठाउन सक्नुहुन्छ।'
-                        : 'If you reside in Australia, pay instantly with zero international fees via PayID or BSB transfer.'}
-                    </p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300">
-                    AUD Local Transfer
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* PayID Card */}
-                  <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                        ⚡ Quick PayID (Mobile / Email)
+              !isBankUnlocked ? (
+                <BankingOtpLockCard
+                  lang={lang}
+                  selectedChannel="aus_bank"
+                  onUnlocked={(until, sec) => {
+                    setIsBankUnlocked(true);
+                    setUnlockedUntil(until);
+                    setRemainingUnlockSeconds(sec);
+                  }}
+                  defaultEmail={payerEmail}
+                  defaultName={payerName}
+                />
+              ) : (
+                <div className="space-y-6 animate-in fade-in">
+                  {/* Verified Session Header Banner */}
+                  <div className="p-4 bg-gradient-to-r from-emerald-600 via-teal-700 to-emerald-700 text-white rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-md border border-emerald-500/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-bold">
+                        <ShieldCheck className="w-5 h-5 text-amber-300" />
                       </div>
-                      <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold px-2 py-0.5 rounded">
-                        Instant Osko
-                      </span>
-                    </div>
-
-                    <div className="bg-stone-50 dark:bg-stone-800 p-3 rounded-xl border border-stone-200 dark:border-stone-700 flex items-center justify-between">
                       <div>
-                        <div className="text-[11px] text-stone-500">PayID Identifier:</div>
-                        <div className="font-mono text-sm font-black text-stone-900 dark:text-white">
-                          {config.australiaPayId || config.supportEmail}
+                        <div className="font-extrabold text-xs sm:text-sm flex items-center gap-2">
+                          <span>{lang === 'ne' ? 'अष्ट्रेलिया बैंकिङ विवरण अनलक गरिएको छ' : 'Australian Banking Details Unlocked'}</span>
+                          <span className="text-[10px] bg-amber-400 text-stone-950 font-black px-2 py-0.5 rounded-full uppercase">
+                            Verified
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-emerald-100 flex items-center gap-1.5 mt-0.5">
+                          <Clock className="w-3.5 h-3.5 text-amber-300" />
+                          <span>
+                            {lang === 'ne' ? 'सत्र समाप्त हुन बाँकी समय:' : 'Access expires in:'}{' '}
+                            <strong className="font-mono font-bold text-amber-200">{formatOtpTimer(remainingUnlockSeconds)}</strong>
+                          </span>
                         </div>
                       </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleManualRelock}
+                      className="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>{lang === 'ne' ? 'पुनः लक गर्नुहोस्' : 'Re-lock Now'}</span>
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
+                        <Building2 className="w-5 h-5 text-amber-500" />
+                        <span>{lang === 'ne' ? 'अष्ट्रेलिया स्थानीय बैंक तथा PayID' : 'Australia Local Bank (PayID / BSB)'}</span>
+                      </h3>
+                      <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                        {lang === 'ne'
+                          ? 'अष्ट्रेलियामा रहनुहुने भक्तजन तथा शुभचिन्तकहरूले कुनै शुल्क बिना तत्काल PayID वा Osko/BSB मार्फत रकम पठाउन सक्नुहुन्छ।'
+                          : 'If you reside in Australia, pay instantly with zero international fees via PayID or BSB transfer.'}
+                      </p>
+                    </div>
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300">
+                      AUD Local Transfer
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* PayID Card */}
+                    <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                          ⚡ Quick PayID (Mobile / Email)
+                        </div>
+                        <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold px-2 py-0.5 rounded">
+                          Instant Osko
+                        </span>
+                      </div>
+
+                      <div className="bg-stone-50 dark:bg-stone-800 p-3 rounded-xl border border-stone-200 dark:border-stone-700 flex items-center justify-between">
+                        <div>
+                          <div className="text-[11px] text-stone-500">PayID Identifier:</div>
+                          <div className="font-mono text-sm font-black text-stone-900 dark:text-white">
+                            {config.australiaPayId || config.supportEmail}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(config.australiaPayId || config.supportEmail, 'payid')}
+                          className="p-2 rounded-lg bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 hover:bg-stone-100 text-stone-700 dark:text-stone-300 cursor-pointer"
+                          title="Copy PayID"
+                        >
+                          {copiedKey === 'payid' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                        </button>
+                      </div>
+
+                      <div className="text-[11px] text-stone-500">
+                        Open CommBank, ANZ, NAB, Westpac, or any AU Banking App &gt; Pay Someone &gt; By PayID.
+                      </div>
+                    </div>
+
+                    {/* BSB & Account Number Card */}
+                    <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm space-y-3">
+                      <div className="text-xs font-bold text-stone-500 uppercase tracking-wider">
+                        🏦 Bank Account & BSB
+                      </div>
+                      <div className="space-y-1.5 text-xs text-stone-700 dark:text-stone-300 font-medium">
+                        <div className="flex justify-between py-1 border-b border-stone-100 dark:border-stone-800">
+                          <span className="text-stone-500">Bank:</span>
+                          <span className="font-bold">{config.australiaBankName || 'Commonwealth Bank of Australia'}</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-stone-100 dark:border-stone-800">
+                          <span className="text-stone-500">Account Name:</span>
+                          <span className="font-bold">{config.australiaAccountHolder || 'Shubha Patro'}</span>
+                        </div>
+                        <div className="flex justify-between py-1 border-b border-stone-100 dark:border-stone-800">
+                          <span className="text-stone-500">BSB:</span>
+                          <span className="font-mono font-bold">{config.australiaBsb || '062-000'}</span>
+                        </div>
+                        <div className="flex justify-between py-1 items-center">
+                          <span className="text-stone-500">Account No:</span>
+                          <span className="font-mono font-bold">{config.australiaAccountNumber || '11170070'}</span>
+                        </div>
+                      </div>
+
                       <button
                         type="button"
-                        onClick={() => handleCopy(config.australiaPayId || config.supportEmail, 'payid')}
-                        className="p-2 rounded-lg bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 hover:bg-stone-100 text-stone-700 dark:text-stone-300"
-                        title="Copy PayID"
+                        onClick={() => handleCopy(`BSB: ${config.australiaBsb} Acc: ${config.australiaAccountNumber} Name: ${config.australiaAccountHolder}`, 'aus-acc')}
+                        className="w-full py-2 px-3 rounded-xl border border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        {copiedKey === 'payid' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                        {copiedKey === 'aus-acc' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedKey === 'aus-acc' ? 'विवरण प्रतिलिपि भयो!' : 'Copy Bank Details'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
+
+            {/* 4. NEPAL BANK ACCOUNT DETAILS (OTP PROTECTED) */}
+            {selectedChannel === 'nepal_bank' && (
+              !isBankUnlocked ? (
+                <BankingOtpLockCard
+                  lang={lang}
+                  selectedChannel="nepal_bank"
+                  onUnlocked={(until, sec) => {
+                    setIsBankUnlocked(true);
+                    setUnlockedUntil(until);
+                    setRemainingUnlockSeconds(sec);
+                  }}
+                  defaultEmail={payerEmail}
+                  defaultName={payerName}
+                />
+              ) : (
+                <div className="space-y-6 animate-in fade-in">
+                  {/* Verified Session Header Banner */}
+                  <div className="p-4 bg-gradient-to-r from-emerald-600 via-teal-700 to-emerald-700 text-white rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-md border border-emerald-500/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-bold">
+                        <ShieldCheck className="w-5 h-5 text-amber-300" />
+                      </div>
+                      <div>
+                        <div className="font-extrabold text-xs sm:text-sm flex items-center gap-2">
+                          <span>{lang === 'ne' ? 'नेपाल बैंकिङ विवरण अनलक गरिएको छ' : 'Nepal Banking Details Unlocked'}</span>
+                          <span className="text-[10px] bg-amber-400 text-stone-950 font-black px-2 py-0.5 rounded-full uppercase">
+                            Verified
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-emerald-100 flex items-center gap-1.5 mt-0.5">
+                          <Clock className="w-3.5 h-3.5 text-amber-300" />
+                          <span>
+                            {lang === 'ne' ? 'सत्र समाप्त हुन बाँकी समय:' : 'Access expires in:'}{' '}
+                            <strong className="font-mono font-bold text-amber-200">{formatOtpTimer(remainingUnlockSeconds)}</strong>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleManualRelock}
+                      className="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>{lang === 'ne' ? 'पुनः लक गर्नुहोस्' : 'Re-lock Now'}</span>
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
+                        <Building2 className="w-5 h-5 text-emerald-600" />
+                        <span>{lang === 'ne' ? 'नेपाल बैंक खाता प्रत्यक्ष ट्रान्सफर' : 'Direct Nepal Bank Transfer'}</span>
+                      </h3>
+                      <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                        {lang === 'ne'
+                          ? 'नेपालका कुनै पनि मोबाइल बैंकिङ एप, ConnectIPS वा बैंक काउन्टरबाट सीधा खातामा जम्मा गर्नुहोस्।'
+                          : 'Transfer directly using ConnectIPS, Nepal Mobile Banking, or bank counter.'}
+                      </p>
+                    </div>
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300">
+                      ConnectIPS / Mobile Banking
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Bank Info Table Card */}
+                    <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm space-y-3">
+                      <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                        📋 बैंक खाता विवरण (Account Details)
+                      </div>
+                      <div className="space-y-2 text-xs text-stone-700 dark:text-stone-300">
+                        <div className="flex justify-between py-1.5 border-b border-stone-100 dark:border-stone-800">
+                          <span className="text-stone-500">{lang === 'ne' ? 'बैंकको नाम:' : 'Bank Name:'}</span>
+                          <span className="font-bold">{config.nepalBankName}</span>
+                        </div>
+                        <div className="flex justify-between py-1.5 border-b border-stone-100 dark:border-stone-800">
+                          <span className="text-stone-500">{lang === 'ne' ? 'खातावालाको नाम:' : 'Account Holder:'}</span>
+                          <span className="font-bold">{config.nepalAccountHolder}</span>
+                        </div>
+                        <div className="flex justify-between py-1.5 border-b border-stone-100 dark:border-stone-800 items-center">
+                          <span className="text-stone-500">{lang === 'ne' ? 'खाता नम्बर:' : 'Account Number:'}</span>
+                          <span className="font-mono font-black text-sm text-emerald-700 dark:text-emerald-400">
+                            {config.nepalAccountNumber}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-1.5 border-b border-stone-100 dark:border-stone-800">
+                          <span className="text-stone-500">{lang === 'ne' ? 'शाखा:' : 'Branch:'}</span>
+                          <span className="font-semibold">{config.nepalBranch}</span>
+                        </div>
+                        {config.nepalSwiftCode && (
+                          <div className="flex justify-between py-1.5">
+                            <span className="text-stone-500">SWIFT Code:</span>
+                            <span className="font-mono">{config.nepalSwiftCode}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(`Bank: ${config.nepalBankName}\nA/C: ${config.nepalAccountNumber}\nName: ${config.nepalAccountHolder}\nBranch: ${config.nepalBranch}`, 'nepal-bank-all')}
+                        className="w-full py-2 px-3 rounded-xl border border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        {copiedKey === 'nepal-bank-all' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedKey === 'nepal-bank-all' ? 'विवरण प्रतिलिपि भयो!' : 'Copy Bank Details'}</span>
                       </button>
                     </div>
 
-                    <div className="text-[11px] text-stone-500">
-                      Open CommBank, ANZ, NAB, Westpac, or any AU Banking App &gt; Pay Someone &gt; By PayID.
-                    </div>
-                  </div>
-
-                  {/* BSB & Account Number Card */}
-                  <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm space-y-3">
-                    <div className="text-xs font-bold text-stone-500 uppercase tracking-wider">
-                      🏦 Bank Account & BSB
-                    </div>
-
-                    <div className="space-y-1.5 text-xs text-stone-700 dark:text-stone-300 font-medium">
-                      <div className="flex justify-between py-1 border-b border-stone-100 dark:border-stone-800">
-                        <span className="text-stone-500">Bank:</span>
-                        <span className="font-bold">{config.australiaBankName || 'Commonwealth Bank of Australia'}</span>
+                    {/* QR Code Card */}
+                    <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm flex flex-col items-center justify-center text-center space-y-3">
+                      <div className="text-xs font-bold text-stone-500 uppercase tracking-wider">
+                        📱 Scan to Pay / QR कोड
                       </div>
-                      <div className="flex justify-between py-1 border-b border-stone-100 dark:border-stone-800">
-                        <span className="text-stone-500">Account Name:</span>
-                        <span className="font-bold">{config.australiaAccountHolder || 'Shyam Thapa'}</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-stone-100 dark:border-stone-800">
-                        <span className="text-stone-500">BSB:</span>
-                        <span className="font-mono font-bold">{config.australiaBsb || '062-000'}</span>
-                      </div>
-                      <div className="flex justify-between py-1 items-center">
-                        <span className="text-stone-500">Account No:</span>
-                        <span className="font-mono font-bold">{config.australiaAccountNumber || '1234 5678'}</span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(`BSB: ${config.australiaBsb} Acc: ${config.australiaAccountNumber} Name: ${config.australiaAccountHolder}`, 'aus-acc')}
-                      className="w-full py-2 px-3 rounded-xl border border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs flex items-center justify-center gap-1.5"
-                    >
-                      {copiedKey === 'aus-acc' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedKey === 'aus-acc' ? 'विवरण प्रतिलिपि भयो!' : 'Copy Bank Details'}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 4. NEPAL BANK ACCOUNT DETAILS */}
-            {selectedChannel === 'nepal_bank' && (
-              <div className="space-y-6 animate-in fade-in">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-base sm:text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
-                      <Building2 className="w-5 h-5 text-emerald-600" />
-                      <span>{lang === 'ne' ? 'नेपाल बैंक खाता प्रत्यक्ष ट्रान्सफर' : 'Direct Nepal Bank Transfer'}</span>
-                    </h3>
-                    <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-                      {lang === 'ne'
-                        ? 'नेपालका कुनै पनि मोबाइल बैंकिङ एप, ConnectIPS वा बैंक काउन्टरबाट सीधा खातामा जम्मा गर्नुहोस्।'
-                        : 'Transfer directly using ConnectIPS, Nepal Mobile Banking, or bank counter.'}
-                    </p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300">
-                    ConnectIPS / Mobile Banking
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Bank Info Table Card */}
-                  <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm space-y-3">
-                    <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                      📋 बैंक खाता विवरण (Account Details)
-                    </div>
-
-                    <div className="space-y-2 text-xs text-stone-700 dark:text-stone-300">
-                      <div className="flex justify-between py-1.5 border-b border-stone-100 dark:border-stone-800">
-                        <span className="text-stone-500">{lang === 'ne' ? 'बैंकको नाम:' : 'Bank Name:'}</span>
-                        <span className="font-bold">{config.nepalBankName}</span>
-                      </div>
-                      <div className="flex justify-between py-1.5 border-b border-stone-100 dark:border-stone-800">
-                        <span className="text-stone-500">{lang === 'ne' ? 'खातावालाको नाम:' : 'Account Holder:'}</span>
-                        <span className="font-bold">{config.nepalAccountHolder}</span>
-                      </div>
-                      <div className="flex justify-between py-1.5 border-b border-stone-100 dark:border-stone-800 items-center">
-                        <span className="text-stone-500">{lang === 'ne' ? 'खाता नम्बर:' : 'Account Number:'}</span>
-                        <span className="font-mono font-black text-sm text-emerald-700 dark:text-emerald-400">
-                          {config.nepalAccountNumber}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-1.5 border-b border-stone-100 dark:border-stone-800">
-                        <span className="text-stone-500">{lang === 'ne' ? 'शाखा:' : 'Branch:'}</span>
-                        <span className="font-semibold">{config.nepalBranch}</span>
-                      </div>
-                      {config.nepalSwiftCode && (
-                        <div className="flex justify-between py-1.5">
-                          <span className="text-stone-500">SWIFT Code:</span>
-                          <span className="font-mono">{config.nepalSwiftCode}</span>
+                      {qrDataUrl ? (
+                        <img
+                          src={qrDataUrl}
+                          alt="Bank QR Code"
+                          className="w-44 h-44 rounded-xl border border-stone-200 dark:border-stone-700 p-1 shadow-inner bg-white"
+                        />
+                      ) : (
+                        <div className="w-44 h-44 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-xl">
+                          <RefreshCw className="w-6 h-6 animate-spin text-stone-400" />
                         </div>
                       )}
+                      <p className="text-[11px] text-stone-500">
+                        {lang === 'ne' ? 'कुनै पनि बैंकिङ वा वालेट एपबाट स्क्यान गर्न सक्नुहुन्छ।' : 'Scan using your mobile banking application.'}
+                      </p>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(`Bank: ${config.nepalBankName}\nA/C: ${config.nepalAccountNumber}\nName: ${config.nepalAccountHolder}\nBranch: ${config.nepalBranch}`, 'nepal-bank-all')}
-                      className="w-full py-2 px-3 rounded-xl border border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
-                    >
-                      {copiedKey === 'nepal-bank-all' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedKey === 'nepal-bank-all' ? 'विवरण प्रतिलिपि भयो!' : 'Copy Bank Details'}</span>
-                    </button>
-                  </div>
-
-                  {/* QR Code Card */}
-                  <div className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm flex flex-col items-center justify-center text-center space-y-3">
-                    <div className="text-xs font-bold text-stone-500 uppercase tracking-wider">
-                      📱 Scan to Pay / QR कोड
-                    </div>
-                    {qrDataUrl ? (
-                      <img
-                        src={qrDataUrl}
-                        alt="Bank QR Code"
-                        className="w-44 h-44 rounded-xl border border-stone-200 dark:border-stone-700 p-1 shadow-inner bg-white"
-                      />
-                    ) : (
-                      <div className="w-44 h-44 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-xl">
-                        <RefreshCw className="w-6 h-6 animate-spin text-stone-400" />
-                      </div>
-                    )}
-                    <p className="text-[11px] text-stone-500">
-                      {lang === 'ne' ? 'कुनै पनि बैंकिङ वा वालेट एपबाट स्क्यान गर्न सक्नुहुन्छ।' : 'Scan using your mobile banking application.'}
-                    </p>
                   </div>
                 </div>
-              </div>
+              )
             )}
           </div>
         </div>
@@ -1867,7 +2477,7 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
               type="button"
               onClick={() => setShowAdminPinModal(true)}
               className="inline-flex items-center gap-1.5 text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-all cursor-pointer"
-              title="Shyam Thapa Admin Access"
+              title="Owner Admin Portal Access"
             >
               <Lock className="w-3.5 h-3.5" />
               <span>{lang === 'ne' ? 'व्यवस्थापक पहुँच (Owner Admin)' : 'Owner Login'}</span>
@@ -1922,9 +2532,6 @@ export const ReceivePaymentsView: React.FC<ReceivePaymentsViewProps> = ({
                   placeholder="••••"
                   className="w-full px-4 py-3 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-center text-xl tracking-widest font-mono font-black focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
-                <div className="text-[11px] text-stone-400 mt-1 text-center">
-                  {lang === 'ne' ? 'प्रारम्भिक पिन: 1234' : 'Initial default PIN: 1234'}
-                </div>
               </div>
 
               {adminPinError && (

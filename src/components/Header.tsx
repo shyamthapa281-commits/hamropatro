@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { NepaliDate, Panchanga, Language } from '../types';
 import { toNepaliDigits } from '../utils/nepaliCalendar';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
   todayBs: NepaliDate;
@@ -90,17 +91,17 @@ export const Header: React.FC<HeaderProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+        <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
           {/* Forex & Gold Quick Link */}
           <button
             id="header-forex-top-btn"
             type="button"
             onClick={() => onNavigate('forex')}
-            className="flex items-center gap-1 bg-sky-900/60 dark:bg-stone-800/70 hover:bg-sky-800 dark:hover:bg-stone-700 px-2.5 py-0.5 rounded-lg border border-sky-600/40 dark:border-stone-700 text-amber-200 text-xs transition-colors font-medium cursor-pointer"
+            className="h-7 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 dark:bg-stone-800/80 dark:hover:bg-stone-700/80 border border-white/15 dark:border-stone-700 text-white text-xs transition-all font-medium flex items-center gap-1.5 cursor-pointer active:scale-95"
             title={lang === 'ne' ? 'विदेशी मुद्रा र सुनचाँदी दर' : 'Forex & Gold Rates'}
           >
-            <Coins className="w-3 h-3 text-amber-300" />
-            <span className="hidden lg:inline">{lang === 'ne' ? 'विदेशी मुद्रा / सुन' : 'Forex & Gold'}</span>
+            <Coins className="w-3.5 h-3.5 text-amber-300" />
+            <span className="hidden lg:inline">{lang === 'ne' ? 'मुद्रा / सुन' : 'Forex & Gold'}</span>
           </button>
 
           {/* Weather Quick Link */}
@@ -108,10 +109,10 @@ export const Header: React.FC<HeaderProps> = ({
             id="header-weather-top-btn"
             type="button"
             onClick={() => onNavigate('weather')}
-            className="flex items-center gap-1 bg-sky-900/60 dark:bg-stone-800/70 hover:bg-sky-800 dark:hover:bg-stone-700 px-2.5 py-0.5 rounded-lg border border-sky-600/40 dark:border-stone-700 text-sky-100 text-xs transition-colors font-medium cursor-pointer"
+            className="h-7 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 dark:bg-stone-800/80 dark:hover:bg-stone-700/80 border border-white/15 dark:border-stone-700 text-white text-xs transition-all font-medium flex items-center gap-1.5 cursor-pointer active:scale-95"
             title={lang === 'ne' ? 'नेपालको मौसम पूर्वानुमान हेर्नुहोस्' : 'Nepal Weather Forecast'}
           >
-            <CloudSun className="w-3 h-3 text-sky-300" />
+            <CloudSun className="w-3.5 h-3.5 text-sky-300" />
             <span className="hidden sm:inline">{lang === 'ne' ? 'मौसम' : 'Weather'}</span>
           </button>
 
@@ -120,22 +121,25 @@ export const Header: React.FC<HeaderProps> = ({
             id="header-worldclock-top-btn"
             type="button"
             onClick={() => onNavigate('worldclock')}
-            className="flex items-center gap-1 bg-sky-900/60 dark:bg-stone-800/70 hover:bg-sky-800 dark:hover:bg-stone-700 px-2.5 py-0.5 rounded-lg border border-sky-600/40 dark:border-stone-700 text-amber-200 text-xs transition-colors font-medium cursor-pointer"
+            className="h-7 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 dark:bg-stone-800/80 dark:hover:bg-stone-700/80 border border-white/15 dark:border-stone-700 text-white text-xs transition-all font-medium flex items-center gap-1.5 cursor-pointer active:scale-95"
             title={lang === 'ne' ? 'विश्व घडी हेर्नुहोस् (World Clock)' : 'Open World Clock'}
           >
-            <Clock className="w-3 h-3 text-amber-300" />
+            <Clock className="w-3.5 h-3.5 text-amber-300" />
             <span className="hidden xs:inline">{lang === 'ne' ? 'विश्व घडी' : 'World Clock'}</span>
           </button>
+
+          {/* PWA App Store Install Button */}
+          <PWAInstallButton lang={lang} variant="header" />
 
           {/* Support Quick Link */}
           <button
             id="header-support-top-btn"
             type="button"
             onClick={() => onNavigate('payments')}
-            className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-stone-950 px-2.5 py-0.5 rounded-lg border border-amber-300 text-xs transition-all font-black cursor-pointer shadow-xs"
+            className="h-7 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs transition-all font-extrabold flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 border border-emerald-500/80"
             title={lang === 'ne' ? 'सहयोग (Support)' : 'Support Our Work'}
           >
-            <Wallet className="w-3 h-3 text-stone-950 fill-current" />
+            <Wallet className="w-3.5 h-3.5 text-white" />
             <span>{lang === 'ne' ? 'सहयोग' : 'Support'}</span>
           </button>
 
@@ -144,22 +148,22 @@ export const Header: React.FC<HeaderProps> = ({
             id="header-theme-toggle-top"
             type="button"
             onClick={onToggleTheme}
-            className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all border cursor-pointer ${
+            className={`h-7 px-2.5 rounded-xl text-xs font-semibold transition-all border flex items-center gap-1.5 cursor-pointer active:scale-95 ${
               theme === 'dark'
                 ? 'bg-amber-400 text-stone-950 border-amber-300 hover:bg-amber-300 shadow-xs'
-                : 'bg-sky-900/70 hover:bg-sky-800 text-amber-200 border-sky-700/50'
+                : 'bg-white/10 hover:bg-white/20 text-white border-white/15'
             }`}
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode for Nighttime'}
           >
             {theme === 'dark' ? (
               <>
                 <Sun className="w-3.5 h-3.5 text-stone-950 fill-stone-950" />
-                <span>{lang === 'ne' ? 'दिन मोड' : 'Light'}</span>
+                <span className="hidden sm:inline">{lang === 'ne' ? 'दिन' : 'Light'}</span>
               </>
             ) : (
               <>
                 <Moon className="w-3.5 h-3.5 text-amber-300 fill-amber-300/40" />
-                <span>{lang === 'ne' ? 'रात्री मोड' : 'Dark'}</span>
+                <span className="hidden sm:inline">{lang === 'ne' ? 'रात' : 'Dark'}</span>
               </>
             )}
           </button>
@@ -168,10 +172,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="header-language-toggle-top"
             onClick={onToggleLang}
-            className="flex items-center gap-1 bg-sky-900/60 hover:bg-sky-800/80 px-2 py-0.5 rounded border border-sky-600/40 text-amber-200 transition-colors font-medium cursor-pointer"
+            className="h-7 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 dark:bg-stone-800/80 dark:hover:bg-stone-700/80 border border-white/15 dark:border-stone-700 text-amber-200 hover:text-white text-xs transition-all font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95"
           >
-            <Globe className="w-3 h-3" />
-            <span>{lang === 'ne' ? 'English' : 'नेपाली'}</span>
+            <Globe className="w-3.5 h-3.5 text-amber-300" />
+            <span>{lang === 'ne' ? 'EN' : 'नेपाली'}</span>
           </button>
         </div>
       </div>

@@ -1,3 +1,5 @@
+import { GUIDE_PHOTOS } from '../assets/guideImages';
+
 /**
  * Comprehensive Dharma, Vedic Culture & Swapna Shastra (Dream Interpretation) Data
  */
@@ -34,6 +36,7 @@ export interface VedicRitual {
   significanceNe: string;
   significanceEn: string;
   iconName: string;
+  imageUrl?: string;
 }
 
 export interface SacredMantra {
@@ -503,6 +506,7 @@ export const VEDIC_RITUALS_DATA: VedicRitual[] = [
     category: 'daily',
     taglineNe: 'बिहान ओछ्यानबाट उठ्ने बित्तिकै आफ्ना हत्केलामा त्रिदेव र त्रिदेवीको दर्शन',
     taglineEn: 'Sanctifying your day by beholding divine energies resting in your palms',
+    imageUrl: GUIDE_PHOTOS.vedicPanchanga,
     descriptionNe: 'वैदिक सनातन परम्परा अनुसार बिहान ओछ्यानबाट उठ्ने बित्तिकै संसारका अन्य कुनै वस्तु वा मोबाइल हेर्नुभन्दा अगाडि आफ्ना दुवै हत्केला जोडेर हेर्ने र मन्त्र उच्चारण गर्ने नियम छ। हत्केलाको टुप्पोमा लक्ष्मी, बीचमा सरस्वती र फेदमा गोविन्द (विष्णु) को वास हुन्छ।',
     descriptionEn: 'The ancient Vedic morning ritual of beholding both palms immediately upon waking. By visualizing Lakshmi at the fingertips, Saraswati in the center, and Govinda at the wrist, one dedicates their hands to noble deeds.',
     mantraNe: 'कराग्रे वसते लक्ष्मीः करमध्ये सरस्वती ।\nकरमूले तु गोविन्दः प्रभाते करदर्शनम् ॥',
@@ -530,6 +534,7 @@ export const VEDIC_RITUALS_DATA: VedicRitual[] = [
     category: 'daily',
     taglineNe: 'प्रत्यक्ष देवता सूर्यलाई तामाको लोटाबाट जल अर्पण गरी तेज र आरोग्य प्राप्ति',
     taglineEn: 'Offering energizing water to the Sun God at dawn for vitality, sharp vision & aura',
+    imageUrl: GUIDE_PHOTOS.chhathPuja,
     descriptionNe: 'सूर्यलाई प्रत्यक्ष ईश्वर मानिन्छ। बिहान स्नानपश्चात् तामाको भाँडोमा सफा जल, रातो फूल वा अक्षता राखी उदाउँदो सूर्यलाई दुवै हात टाउकोभन्दा माथि उठाएर अर्घ्य दिँदा शारीरिक रोग नाश भई आत्मविश्वास र तेजमा वृद्धि हुन्छ।',
     descriptionEn: 'Surya is the Pratyaksha Devata (visible divinity). Offering energized water from a copper vessel at dawn allows morning light refract through the water stream, revitalizing optic nerves and boosting cellular vigor.',
     mantraNe: 'ॐ सूर्याय नमः । ॐ घृणि सूर्याय नमः ।\nॐ भूर्भुवः स्वः तत्सवितुर्वरेण्यं भर्गो देवस्य धीमहि धियो यो नः प्रचोदयात् ॥',
@@ -557,6 +562,7 @@ export const VEDIC_RITUALS_DATA: VedicRitual[] = [
     category: 'fasting',
     taglineNe: 'महिनामा दुई पटक आउने एकादशीमा अन्न त्याग गरी शरीर र मनको पूर्ण शुद्धि',
     taglineEn: 'Bimonthly Vedic fasting eliminating grains for deep physiological and mental detox',
+    imageUrl: GUIDE_PHOTOS.shubhaMuhurat,
     descriptionNe: 'एकादशीलाई सबै व्रतहरूको राजा भनिन्छ। शुक्ल र कृष्ण पक्षको ११ औं दिनमा अन्न (विशेषगरी चामल, गहुँ, दाल) नखाई फलफूल, दूध र फलाहार मात्र ग्रहण गरिन्छ। वैज्ञानिक रूपमा पनि चन्द्रमाको आकर्षणले शरीरको जलतत्वलाई सन्तुलनमा राख्न यस दिनको उपवास अचूक मानिन्छ।',
     descriptionEn: 'Known as the crown jewel of Vedic fasts, Ekadashi falls on the 11th lunar day of both waxing and waning fortnights. Abstaining from grains and pulses recalibrates digestion and aligns bodily fluids with lunar gravitation.',
     mantraNe: 'ॐ नमो भगवते वासुदेवाय ॥',
@@ -584,6 +590,7 @@ export const VEDIC_RITUALS_DATA: VedicRitual[] = [
     category: 'daily',
     taglineNe: 'घाम अस्ताउने बेला घरको ढोका र पूजा कोठामा दियो बालेर लक्ष्मीको स्वागत',
     taglineEn: 'Welcoming prosperity and warding off dusk gloom by illuminating holy lamps',
+    imageUrl: GUIDE_PHOTOS.tiharRangoli,
     descriptionNe: 'दिन र रातको मिलन हुने सन्ध्या समयमा घरमा दीप प्रज्वलन गर्नु सनातन संस्कृतिको सुन्दर परम्परा हो। यस समयमा नकारात्मक ऊर्जा हटेर देवी लक्ष्मी र कुलदेवताको आशीर्वाद घरभित्र प्रवेश गर्दछ।',
     descriptionEn: 'Dusk (Sandhya Kaal) is a sacred cosmic transition. Lighting butter lamps at the household entrance and altar purifies indoor atmosphere and invites auspicious vibrations.',
     mantraNe: 'शुभं करोति कल्याणमारोग्यं धनसम्पदाम् ।\nशत्रुबुद्धिविनाशाय दीपज्योतिर्नमोऽस्तु ते ॥',
@@ -611,6 +618,7 @@ export const VEDIC_RITUALS_DATA: VedicRitual[] = [
     category: 'vastu',
     taglineNe: 'प्रत्येक नेपाली आँगनको शोभा, अक्सिजन र औषधिको भण्डार तुलसी',
     taglineEn: 'The oxygen powerhouse, antimicrobial shield, and sacred goddess of Nepali courtyards',
+    imageUrl: GUIDE_PHOTOS.ayurvedaRitucharya,
     descriptionNe: 'तुलसीलाई वनस्पति जगत्की साक्षात् भगवती मानिन्छ। घरको आँगन वा कौसीमा पूर्व वा उत्तर-पूर्व दिशामा तुलसीको मोठ स्थापना गर्दा वास्तु दोष नाश हुन्छ, वायु शुद्ध हुन्छ र तनाव कम हुन्छ।',
     descriptionEn: 'Revered as Vrinda Devi, Holy Basil (Tulsi) continuously emits life-giving oxygen and phytoncides. Planting it in the North-East corner neutralizes energetic disharmony and cleanses airborne microbes.',
     mantraNe: 'तुलसी श्रीर्महालक्ष्मीर्विद्याविद्या यशस्विनी ।\nधर्म्या धर्मानना देवी देवीदेवमनःप्रिया ॥',

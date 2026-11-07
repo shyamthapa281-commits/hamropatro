@@ -214,24 +214,41 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({ lang, todayBs }) =
                 <div
                   key={fest.id}
                   onClick={() => setSelectedFestival(fest)}
-                  className={`rounded-3xl p-5 border cursor-pointer transition-all duration-200 flex flex-col justify-between select-none relative overflow-hidden ${
+                  className={`rounded-3xl p-5 border cursor-pointer transition-all duration-200 flex flex-col justify-between select-none relative overflow-hidden group ${
                     isSelected
                       ? 'border-sky-500 ring-2 ring-sky-400 shadow-md bg-sky-50/30 dark:bg-sky-950/20'
                       : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800 hover:border-sky-300 dark:hover:border-sky-800 hover:shadow-xs'
                   }`}
                 >
+                  {/* Card Thumbnail Image */}
+                  {fest.imageUrl && (
+                    <div className="relative -mx-5 -mt-5 mb-3.5 h-32 overflow-hidden bg-stone-100 dark:bg-stone-800">
+                      <img
+                        src={fest.imageUrl}
+                        alt={lang === 'ne' ? fest.nameNe : fest.nameEn}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-2.5 right-2.5 bg-stone-950/80 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-lg border border-white/20">
+                        {fest.adDate}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Card Header: Live BS & AD Dates */}
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2.5">
                       <span className="bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-900/60 font-extrabold text-[11px] px-2.5 py-0.5 rounded-lg">
                         {fest.bsDate}
                       </span>
-                      <span className="text-[10px] font-medium text-stone-500 dark:text-stone-400 truncate">
-                        {fest.adDate}
-                      </span>
+                      {!fest.imageUrl && (
+                        <span className="text-[10px] font-medium text-stone-500 dark:text-stone-400 truncate">
+                          {fest.adDate}
+                        </span>
+                      )}
                     </div>
 
-                    <h3 className="text-base font-extrabold text-stone-900 dark:text-white mb-1 leading-snug">
+                    <h3 className="text-base font-extrabold text-stone-900 dark:text-white mb-1 leading-snug group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                       {lang === 'ne' ? fest.nameNe : fest.nameEn}
                     </h3>
                     <p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 mb-4 leading-relaxed">
@@ -317,6 +334,24 @@ export const FestivalsView: React.FC<FestivalsViewProps> = ({ lang, todayBs }) =
               <p className="text-xs text-red-700 dark:text-red-400 font-bold mt-1">
                 {lang === 'ne' ? selectedFestival.taglineNe : selectedFestival.taglineEn}
               </p>
+
+              {/* Authentic Festival Photograph */}
+              {selectedFestival.imageUrl && (
+                <div className="relative rounded-2xl overflow-hidden border border-stone-200 dark:border-stone-800 shadow-sm mt-3.5 h-52 sm:h-60 bg-stone-100 dark:bg-stone-800">
+                  <img
+                    src={selectedFestival.imageUrl}
+                    alt={lang === 'ne' ? selectedFestival.nameNe : selectedFestival.nameEn}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950/75 via-transparent to-transparent flex items-end p-3.5">
+                    <span className="text-white text-xs font-semibold drop-shadow-sm flex items-center gap-1.5">
+                      <span className="text-amber-400">📸</span>
+                      <span>{lang === 'ne' ? selectedFestival.nameNe : selectedFestival.nameEn} • सांस्कृतिक पर्व दृश्य</span>
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Countdown Alert in Deep Dive */}
               <div className="mt-3.5 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/40 flex items-center justify-between">

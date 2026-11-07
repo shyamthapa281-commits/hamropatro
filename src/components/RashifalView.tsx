@@ -790,13 +790,13 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
         </div>
       </div>
 
-      {/* Hamro Jyotish: Interactive Vedic Kundali Consultation & Astrological Guidance */}
+      {/* Shubha Jyotish: Interactive Vedic Kundali Consultation & Astrological Guidance */}
       <div className="mt-8 mb-12 bg-white dark:bg-stone-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-stone-200 dark:border-stone-800">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-stone-100 dark:border-stone-800">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-amber-950/70 rounded-full border border-amber-300/40 dark:border-amber-800/60 text-amber-900 dark:text-amber-300 text-xs font-bold uppercase tracking-wider mb-2">
               <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>{lang === 'ne' ? 'हाम्रो ज्योतिषी तथा कुण्डली परामर्श' : 'Hamro Jyotish & Kundali Guidance'}</span>
+              <span>{lang === 'ne' ? 'शुभ ज्योतिषी तथा कुण्डली परामर्श' : 'Shubha Jyotish & Kundali Guidance'}</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-extrabold text-stone-900 dark:text-white">
               {lang === 'ne'
@@ -983,7 +983,7 @@ ${lang === 'ne' ? h.predictionNe : h.predictionEn}
                 </span>
                 <div>
                   <h4 className="font-extrabold text-stone-900 dark:text-white text-sm sm:text-base">
-                    {lang === 'ne' ? 'हाम्रो ज्योतिषीको वैदिक परामर्श' : 'Hamro Jyotish Astrological Guidance'}
+                    {lang === 'ne' ? 'शुभ ज्योतिषीको वैदिक परामर्श' : 'Shubha Jyotish Astrological Guidance'}
                   </h4>
                   <span className="text-[11px] text-stone-500 dark:text-stone-400">
                     {lang === 'ne' ? `${selectedRashi.nameNe} राशि • गोचर विश्लेषण` : `${selectedRashi.nameEn} Zodiac • Transit Analysis`}

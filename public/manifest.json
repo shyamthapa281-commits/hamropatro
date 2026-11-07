@@ -1,0 +1,64 @@
+{
+  "name": "Shubha Patro - Nepali Calendar & Utilities",
+  "short_name": "ShubhaPatro",
+  "description": "Comprehensive Nepali Bikram Sambat calendar, authentic Panchanga, Daily Rashifal, Vedic rituals, Daily Motivation, live weather & utilities.",
+  "start_url": "/?source=pwa",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#b91c1c",
+  "lang": "ne",
+  "scope": "/",
+  "id": "/",
+  "orientation": "portrait",
+  "categories": ["productivity", "utilities", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "आजको पात्रो (Calendar)",
+      "short_name": "पात्रो",
+      "description": "Check today's Nepali date, Panchanga & tithi",
+      "url": "/?tab=calendar",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "दैनिक राशिफल (Rashifal)",
+      "short_name": "राशिफल",
+      "description": "Daily horoscope predictions for all 12 rashis",
+      "url": "/?tab=rashifal",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "धर्म संस्कृति (Dharma & Puja)",
+      "short_name": "धर्म",
+      "description": "Vedic rituals, dream interpretation & 108 japa",
+      "url": "/?tab=dharma",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "विदेशी मुद्रा र सुन (Forex & Gold)",
+      "short_name": "मुद्रा",
+      "description": "Live NRB Forex rates and Gold Silver price",
+      "url": "/?tab=forex",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

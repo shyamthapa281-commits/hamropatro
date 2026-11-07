@@ -1,4 +1,4 @@
-import { MotivationQuote } from '../types';
+import { MotivationQuote, NepaliDate } from '../types';
 
 export const MOTIVATION_QUOTES: MotivationQuote[] = [
   {
@@ -10,7 +10,7 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     category: 'literary',
     categoryNe: 'साहित्यिक चिन्तन',
     categoryEn: 'Literary Classic',
-    contextNe: 'साँचो सन्तुष्टि धनदौलतमा होइन, आत्माको शान्ति र आत्मसम्मानमा हुन्छ।',
+    contextNe: 'साँचो सन्तुष्टि धनदौलतमा होइन, आत्माको शान्ति, सरलता र आत्मसम्मानमा हुन्छ।',
     contextEn: 'True peace and happiness stem from inner contentment rather than materialistic wealth.',
   },
   {
@@ -22,7 +22,7 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     category: 'perseverance',
     categoryNe: 'लगनशीलता र सङ्घर्ष',
     categoryEn: 'Resilience & Grit',
-    contextNe: 'कठिन परिस्थितिमा पनि धैर्य र आत्मबल भए असम्भव केही छैन।',
+    contextNe: 'कठिन परिस्थितिमा पनि धैर्य, आत्मविश्वास र निरन्तर मिहिनेत भए असम्भव केही छैन।',
     contextEn: 'No matter how adverse the circumstance, steadfast determination finds a way through.',
   },
   {
@@ -46,7 +46,7 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     category: 'proverb',
     categoryNe: 'नेपाली उखान टुक्का',
     categoryEn: 'Nepali Proverb',
-    contextNe: 'समयको सदुपयोग गर्नुहोस् र मुखबाट निस्कने बोलीमा सदा विवेक राख्नुहोस्।',
+    contextNe: 'समयको सदुपयोग गर्नुहोस् र मुखबाट निस्कने बोलीमा सदा विवेक र विनम्रता राख्नुहोस्।',
     contextEn: 'Time and words once spent cannot be retrieved; treat both with wisdom.',
   },
   {
@@ -56,9 +56,9 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     authorNe: 'गौतम बुद्ध',
     authorEn: 'Gautama Buddha',
     category: 'buddha',
-    categoryNe: 'बुद्ध वचन',
+    categoryNe: 'बुद्ध वाणी',
     categoryEn: 'Buddha Teachings',
-    contextNe: 'आत्मनियन्त्रण र मनको शान्ति नै समस्त सुख र उन्नतिको मूल आधार हो।',
+    contextNe: 'आत्मनियन्त्रण र मनको शान्ति नै समस्त सुख, उन्नति र मुक्तिको मूल आधार हो।',
     contextEn: 'Mastery over our own thoughts and impulses is the foundation of lasting serenity.',
   },
   {
@@ -70,7 +70,7 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     category: 'wisdom',
     categoryNe: 'सद्विचार र नम्रता',
     categoryEn: 'Humility & Grace',
-    contextNe: 'ज्ञान र सफलता जति बढ्छ, मानिसमा उति नै नम्रता र आदरभाव हुनुपर्छ।',
+    contextNe: 'ज्ञान, प्रतिष्ठा र सफलता जति बढ्छ, मानिसमा उति नै नम्रता र आदरभाव हुनुपर्छ।',
     contextEn: 'The higher your accomplishments, the deeper your humility should be.',
   },
   {
@@ -99,18 +99,54 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
   },
   {
     id: 'quote-9',
-    quoteNe: 'सय थुङ्गा फूलका हामी, एउटै माला नेपाली। सार्वभौम भई फैलिएका, मेची-महाकाली।',
-    quoteEn: 'We are hundreds of blossoms woven into one single Nepali garland; sovereign, proud, and united from the Mechi to the Mahakali.',
-    authorNe: 'व्याकुल माइला / अम्बर गुरुङ (राष्ट्रिय गान)',
-    authorEn: 'Byakul Maila & Amber Gurung (National Anthem)',
+    quoteNe: 'फूलको आँखामा फूलै संसार, काँडाको आँखामा काँडै संसार।',
+    quoteEn: 'In the eyes of a blossom, the whole world is a flower; in the eyes of a thorn, the whole world is full of thorns.',
+    authorNe: 'दुर्गालाल श्रेष्ठ / महाकवि देवकोटा',
+    authorEn: 'Durgalal Shrestha (Sung by Ani Choying Drolma)',
     category: 'literary',
-    categoryNe: 'साहित्यिक र राष्ट्रिय गौरव',
-    categoryEn: 'National Pride',
-    contextNe: 'विविधतामा नै हाम्रो राष्ट्रिय एकता र सौन्दर्यको अपार शक्ति छ।',
-    contextEn: 'Unity in our diverse tapestry is Nepal’s greatest beauty and enduring strength.',
+    categoryNe: 'साहित्यिक चिन्तन',
+    categoryEn: 'Literary Classic',
+    contextNe: 'संसार कस्तो देखिन्छ भन्ने कुरा तपाईँको आफ्नै दृष्टिकोण र मनोवृत्तिमा निर्भर रहन्छ।',
+    contextEn: 'The nature of your experience is determined not by the world outside, but by the perspective you harbor within.',
   },
   {
     id: 'quote-10',
+    quoteNe: 'घाँटी हेरी हाड निल्नु, समय र सामर्थ्य बुझेर मात्र निर्णय लिनु।',
+    quoteEn: 'Measure your throat before swallowing the bone; evaluate your resources and capacity before making weighty leaps.',
+    authorNe: 'नेपाली उखान',
+    authorEn: 'Traditional Nepali Proverb',
+    category: 'proverb',
+    categoryNe: 'नेपाली उखान टुक्का',
+    categoryEn: 'Nepali Proverb',
+    contextNe: 'योजना बनाउँदा आफ्नो क्षमता र यथार्थको सन्तुलन मिलाउनु नै बुद्धिमानीको सूचक हो।',
+    contextEn: 'Ground your grand aspirations in realism and prudent stewardship of resources.',
+  },
+  {
+    id: 'quote-11',
+    quoteNe: 'घाँसी दरिद्र घरको तर चित्त दानी, मेरो त चित्त पनि छैन धनै छ मानी...',
+    quoteEn: 'The humble grass-cutter lived in poverty yet possessed the most generous heart; a pure soul dedicated to leaving a well of kindness for travelers.',
+    authorNe: 'आदिकवि भानुभक्त आचार्य',
+    authorEn: 'Adikavi Bhanubhakta Acharya',
+    category: 'literary',
+    categoryNe: 'साहित्यिक र नैतिक आदर्श',
+    categoryEn: 'Moral Heritage',
+    contextNe: 'परोपकार गर्न अथाह धन होइन, उदार मन र समाजप्रतिको उत्तरदायित्व आवश्यक पर्दछ।',
+    contextEn: 'To be of service to humanity requires not boundless wealth, but an open and giving heart.',
+  },
+  {
+    id: 'quote-12',
+    quoteNe: 'कागलाई बेल पाक्यो हर्ष न विस्मात; आफ्नो कर्म र सीमा चिनेर अनावश्यक चिन्ताबाट मुक्त हुनु।',
+    quoteEn: 'Whether the wood-apple ripens or not is of no concern to the crow who cannot crack it; stay focused on your own path without envy.',
+    authorNe: 'नेपाली उखान',
+    authorEn: 'Nepali Proverb',
+    category: 'proverb',
+    categoryNe: 'नेपाली उखान टुक्का',
+    categoryEn: 'Nepali Proverb',
+    contextNe: 'आफ्नो वशमा नभएको विषय वा अरूको कुरामा व्यर्थको ईर्ष्या र तनाव लिएर समय खेर नफाल्नुहोस्।',
+    contextEn: 'Avoid burning emotional energy over things outside your domain or control.',
+  },
+  {
+    id: 'quote-13',
     quoteNe: 'हजार माइलको लामो यात्रा पनि सधैं पहिलो एउटा सानो पाइलाबाट नै आरम्भ हुन्छ।',
     quoteEn: 'A journey of a thousand miles begins with a single bold and purposeful step.',
     authorNe: 'प्राचीन दर्शन',
@@ -122,7 +158,7 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     contextEn: 'Do not be intimidated by ambitious goals; start with consistent action today.',
   },
   {
-    id: 'quote-11',
+    id: 'quote-14',
     quoteNe: 'आफू भलो त जगत भलो; मन शुद्ध राखे संसारै सुन्दर देखिन्छ।',
     quoteEn: 'If your intentions are pure, the world reflects goodness back to you.',
     authorNe: 'नेपाली उखान',
@@ -134,19 +170,19 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     contextEn: 'Cultivate virtue and integrity within yourself, and harmony will follow in your surroundings.',
   },
   {
-    id: 'quote-12',
-    quoteNe: 'माटोको माया र मातृभूमिको सुवास जस्तो पवित्र चिज यस जगत्मा अरू केही हुनै सक्दैन।',
-    quoteEn: 'Janani Janmabhumishcha Swargadapi Gariyasi — Mother and Motherland are more cherished than the heavens above.',
-    authorNe: 'रामायण / पूर्वीय आदर्श',
+    id: 'quote-15',
+    quoteNe: 'जननी जन्मभूमिश्च स्वर्गादपि गरीयसी; आमा र मातृभूमि स्वर्गभन्दा पनि महान् हुन्छन्।',
+    quoteEn: 'Janani Janmabhumishcha Swargadapi Gariyasi — Mother and Motherland are more exalted and sacred than heaven itself.',
+    authorNe: 'रामायण / नेपालको राष्ट्रिय आदर्श',
     authorEn: 'Valmiki Ramayana (National Motto)',
     category: 'wisdom',
     categoryNe: 'मातृभूमि र आदर्श',
     categoryEn: 'Patriotism & Duty',
-    contextNe: 'आफ्नो जन्मभूमि र आमाको ऋण कहिल्यै तिर्न सकिँदैन, उनीहरूको सधैं कदर गरौं।',
-    contextEn: 'Honoring one’s roots and parents remains the highest standard of moral devotion.',
+    contextNe: 'आफ्नो जन्मभूमि र आमाको ऋण कहिल्यै तिर्न सकिँदैन, उनीहरूको सधैं कदर र सेवा गरौं।',
+    contextEn: 'Honoring one’s roots, culture, and parents remains the highest standard of moral devotion.',
   },
   {
-    id: 'quote-13',
+    id: 'quote-16',
     quoteNe: 'धैर्य नै त्यो वृक्ष हो, जसको जरा तितो भए पनि फल सदैव अमृत जस्तै मीठो हुन्छ।',
     quoteEn: 'Patience is a tree whose roots may taste bitter in the present, but whose fruit is sweet as nectar in time.',
     authorNe: 'नीति शास्त्र',
@@ -154,11 +190,11 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     category: 'wisdom',
     categoryNe: 'धैर्य र सन्तुलन',
     categoryEn: 'Patience & Balance',
-    contextNe: 'तत्काल नतिजा खोज्ने हतारोले होइन, निरन्तरको धैर्यताले मात्र महान् उपलब्धि मिल्छ।',
+    contextNe: 'तत्काल नतिजा खोज्ने हतारोले होइन, निरन्तरको धैर्यता र निष्ठाले मात्र महान् उपलब्धि मिल्छ।',
     contextEn: 'True greatness matures through calm patience and unwavering devotion.',
   },
   {
-    id: 'quote-14',
+    id: 'quote-17',
     quoteNe: 'संसारमा नबोल्नेहरूले पनि काम गरेर देखाएका छन्; कर्म नै सबैभन्दा चर्को आवाज हो।',
     quoteEn: 'Actions speak with a thunderous resonance that empty words can never match.',
     authorNe: 'पारिजात (विष्णु कुमारी वाइवा)',
@@ -170,7 +206,7 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     contextEn: 'Silent, purposeful execution speaks louder and accomplishes far more than mere proclamation.',
   },
   {
-    id: 'quote-15',
+    id: 'quote-18',
     quoteNe: 'जुन रुखमा फल लाग्दैन, त्यसमा चराहरू पनि बस्दैनन्। गुणवान र सहयोगी बनौं।',
     quoteEn: 'Even birds do not nest on a barren tree; cultivate usefulness, generosity, and kindness.',
     authorNe: 'नेपाली गाउँले लोकोक्ति',
@@ -182,7 +218,7 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     contextEn: 'Living a life of service and warm benevolence enriches oneself and the community.',
   },
   {
-    id: 'quote-16',
+    id: 'quote-19',
     quoteNe: 'अन्धकारलाई सरापेर बस्नुभन्दा एउटा सानो दियो बाल्नु हजार गुणा उत्तम हुन्छ।',
     quoteEn: 'It is better to light a single candle than to sit in the gloom and curse the darkness.',
     authorNe: 'गौतम बुद्ध',
@@ -194,7 +230,7 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     contextEn: 'Complaining changes nothing; a small constructive initiative can transform everything.',
   },
   {
-    id: 'quote-17',
+    id: 'quote-20',
     quoteNe: 'एकतामा नै सधैं बल हुन्छ; अलग-अलग भएका सिन्का सजिलै भाँचिन्छन् तर मुठ्ठा भाँचिँदैन।',
     quoteEn: 'In unity lies invincible strength; a single stick snaps with ease, but a bound bundle cannot be broken.',
     authorNe: 'नेपाली लोक कथा सन्देश',
@@ -203,10 +239,10 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     categoryNe: 'एकता र सद्भाव',
     categoryEn: 'Unity & Harmony',
     contextNe: 'परिवार, समाज र राष्ट्रमा मेलमिलाप र सहकार्य नै शक्तिको मुहान हो।',
-    contextEn: 'Cooperation, mutual trust, and solidarity protect families and nations.',
+    contextEn: 'Cooperation, mutual trust, and solidarity protect families and communities.',
   },
   {
-    id: 'quote-18',
+    id: 'quote-21',
     quoteNe: 'विद्या ददाति विनयं, विनयाद्याति पात्रताम्। विद्याले मानिसलाई घमण्ड होइन, विनम्रता सिकाउँछ।',
     quoteEn: 'True education imparts humility; through humility one earns genuine worthiness and respect.',
     authorNe: 'संस्कृत सुभाषित',
@@ -218,7 +254,7 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     contextEn: 'A truly educated person is characterized by respect, decency, and quiet modesty.',
   },
   {
-    id: 'quote-19',
+    id: 'quote-22',
     quoteNe: 'बिहानीको घामले दिनको लक्षण देखाउँछ, आजको मिहिनेतले भोलिको सुन्दर भविष्य लेख्छ।',
     quoteEn: 'The clarity of dawn foretells the day, just as today’s sincere dedication crafts tomorrow’s glorious future.',
     authorNe: 'नेपाली लोक भनाइ',
@@ -230,7 +266,7 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     contextEn: 'The most effective way to shape tomorrow is by pouring conscious effort into today.',
   },
   {
-    id: 'quote-20',
+    id: 'quote-23',
     quoteNe: 'रात जति नै कालो र गहिरो भए पनि, बिहानीको स्वर्णिम सूर्य उदाउन कसैले रोक्न सक्दैन।',
     quoteEn: 'However dark and unending the night may appear, no power on earth can prevent the dawn from breaking.',
     authorNe: 'आशावादी नेपाली चिन्तन',
@@ -242,7 +278,7 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     contextEn: 'Adversity is temporary; maintain hope and your breakthrough will arrive.',
   },
   {
-    id: 'quote-21',
+    id: 'quote-24',
     quoteNe: 'कर्म गर, फलको आशामा मात्र आफूलाई नबाँध। निष्काम कर्म नै जीवनको परम आनन्द हो।',
     quoteEn: 'Perform your duties with dedication and devotion, without being paralyzed by anxiety over the outcomes.',
     authorNe: 'श्रीमद्भगवद्गीता (कर्मयोग)',
@@ -254,15 +290,121 @@ export const MOTIVATION_QUOTES: MotivationQuote[] = [
     contextEn: 'Immerse fully in righteous execution; anxiety over results only drains energy.',
   },
   {
-    id: 'quote-22',
-    quoteNe: 'नबोल्नेको भाग खोसिन्छ, तर मीठो बोल्नेले संसारै जित्छ। वचनमा अमृत र विष दुवै हुन्छ।',
-    quoteEn: 'One who remains passive may lose their share, but one who speaks with sweetness and grace wins hearts across the globe.',
-    authorNe: 'नेपाली परम्परागत आदर्श',
-    authorEn: 'Nepali Traditional Adage',
+    id: 'quote-25',
+    quoteNe: 'नजाने गाउँको बाटो नसोध्नु, अनावश्यक अन्योलमा समय खेर नफाल्नु।',
+    quoteEn: 'Do not inquire about roads to villages you have no intention of visiting; maintain singular focus on your genuine calling.',
+    authorNe: 'नेपाली उखान',
+    authorEn: 'Traditional Nepali Proverb',
     category: 'proverb',
     categoryNe: 'नेपाली उखान टुक्का',
     categoryEn: 'Nepali Proverb',
-    contextNe: 'मधुर, सत्य र हितकारी बोलीले शत्रुलाई पनि मित्र बनाउन सक्दछ।',
-    contextEn: 'Gentle, respectful, and articulate speech possesses the power to resolve any dispute.',
+    contextNe: 'आफ्नो लक्ष्य स्पष्ट राख्नुहोस्, अनावश्यक विषयहरूमा ध्यान भड्किन नदिनुहोस्।',
+    contextEn: 'Guard your mental focus by steering clear of irrelevant distractions and gossip.',
+  },
+  {
+    id: 'quote-26',
+    quoteNe: 'उठेपछि हिँड्नै पर्छ, हिँडेपछि पुग्नै पर्छ; पाइला रोकिए जीवन रोकिन्छ।',
+    quoteEn: 'Once you awaken you must take the step; once you walk you must arrive; momentum is the very essence of life.',
+    authorNe: 'नेपाली सङ्घर्ष चेतना',
+    authorEn: 'Nepali Movement Ethos',
+    category: 'perseverance',
+    categoryNe: 'कर्म र गन्तव्य',
+    categoryEn: 'Perseverance & Grit',
+    contextNe: 'आलस्य त्यागी निरन्तर अघि बढ्नु नै लक्ष्यमा पुग्ने अचुक सूत्र हो।',
+    contextEn: 'Consistent progress beats intermittent brilliance; keep putting one foot ahead of the other.',
+  },
+  {
+    id: 'quote-27',
+    quoteNe: 'क्रोधले अरूलाई जलाउनुभन्दा पहिला आफैंलाई भस्म गर्दछ; क्षमा नै सबैभन्दा ठूलो शक्ति हो।',
+    quoteEn: 'Holding onto anger is like grasping a hot coal with the intent of throwing it at someone else; you are the one who gets burned.',
+    authorNe: 'गौतम बुद्ध',
+    authorEn: 'Gautama Buddha',
+    category: 'buddha',
+    categoryNe: 'बुद्ध वाणी',
+    categoryEn: 'Buddha Teachings',
+    contextNe: 'शान्त चित्त र क्षमाशीलताले मनको विष निवारण गरी आरोग्य र शान्ति प्रदान गर्दछ।',
+    contextEn: 'Forgiveness and emotional restraint preserve mental well-being and protect relationships.',
+  },
+  {
+    id: 'quote-28',
+    quoteNe: 'धैर्य गर्नेको बाँस पनि फुल्छ, हतारिनेको काँचो पनि कुहिन्छ।',
+    quoteEn: 'For the patient one, even the rare bamboo tree will bloom; for the hurried one, even sweet fruit will rot uncooked.',
+    authorNe: 'नेपाली उखान',
+    authorEn: 'Nepali Proverb',
+    category: 'proverb',
+    categoryNe: 'नेपाली उखान टुक्का',
+    categoryEn: 'Nepali Proverb',
+    contextNe: 'सफलता पाक्न समय लाग्छ; धैर्यता नै प्राकृतिक उपलब्धिको मियो हो।',
+    contextEn: 'Enduring results require deep roots and patient cultivation.',
+  },
+  {
+    id: 'quote-29',
+    quoteNe: 'सय थुङ्गा फूलका हामी, एउटै माला नेपाली; सार्वभौम भई फैलिएका, मेची-महाकाली।',
+    quoteEn: 'We are hundreds of blossoms woven into one single Nepali garland; sovereign, proud, and united from the Mechi to the Mahakali.',
+    authorNe: 'व्याकुल माइला / अम्बर गुरुङ',
+    authorEn: 'Byakul Maila & Amber Gurung (National Anthem)',
+    category: 'literary',
+    categoryNe: 'राष्ट्रिय गौरव',
+    categoryEn: 'National Unity',
+    contextNe: 'विविधतामा नै हाम्रो राष्ट्रिय एकता र सौन्दर्यको अपार शक्ति छ।',
+    contextEn: 'Unity in our diverse tapestry is Nepal’s greatest beauty and enduring strength.',
+  },
+  {
+    id: 'quote-30',
+    quoteNe: 'सत्यको बाटो अप्ठ्यारो भए पनि त्यसको गन्तव्य सधैं सुरक्षित र सम्मानित हुन्छ।',
+    quoteEn: 'Though the path of integrity is rugged and demanding, its destination is forever serene and honored.',
+    authorNe: 'पूर्वीय नीति शास्त्र',
+    authorEn: 'Eastern Ethics',
+    category: 'wisdom',
+    categoryNe: 'सत्य र निष्ठा',
+    categoryEn: 'Truth & Integrity',
+    contextNe: 'छलछामको बाटो छिटो देखिए पनि दिगो हुँदैन; निष्ठाको बाटो नै अमर रहन्छ।',
+    contextEn: 'Shortcuts built on deception crumble; integrity lays a foundation that weathers any storm.',
   }
 ];
+
+/**
+ * Returns the deterministic Daily Motivation Quote for a given Nepali date.
+ * If no date is provided, uses current date.
+ */
+export function getDailyMotivationQuote(todayBs?: NepaliDate): {
+  quote: MotivationQuote;
+  index: number;
+  total: number;
+} {
+  const dateSeed = todayBs 
+    ? (todayBs.year * 372) + (todayBs.month * 31) + todayBs.day 
+    : (() => {
+        const d = new Date();
+        return (d.getFullYear() * 372) + ((d.getMonth() + 1) * 31) + d.getDate();
+      })();
+
+  const index = Math.abs(dateSeed) % MOTIVATION_QUOTES.length;
+  return {
+    quote: MOTIVATION_QUOTES[index] || MOTIVATION_QUOTES[0],
+    index,
+    total: MOTIVATION_QUOTES.length
+  };
+}
+
+/**
+ * Simulates fetching today's quote or a category quote with realistic async resolution.
+ */
+export async function fetchDailyMotivationQuote(
+  todayBs?: NepaliDate,
+  category?: string
+): Promise<MotivationQuote> {
+  // Micro delay simulating data fetch / verification
+  await new Promise((resolve) => setTimeout(resolve, 120));
+
+  if (category && category !== 'all') {
+    const pool = MOTIVATION_QUOTES.filter((q) => q.category === category);
+    if (pool.length > 0) {
+      const idx = Math.floor(Math.random() * pool.length);
+      return pool[idx];
+    }
+  }
+
+  const { quote } = getDailyMotivationQuote(todayBs);
+  return quote;
+}

@@ -14,23 +14,37 @@ import { SupportWorkView } from './components/SupportWorkView';
 import { ReceivePaymentsView } from './components/ReceivePaymentsView';
 import { NrnBankingIpoView } from './components/NrnBankingIpoView';
 import { KundaliGunMilanView } from './components/KundaliGunMilanView';
-import { TikTokAdView } from './components/TikTokAdView';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { Footer } from './components/Footer';
+import { AppStoreModal } from './components/AppStoreModal';
+import { MobileInstallStickyBanner } from './components/MobileInstallStickyBanner';
+import { usePWAInstall } from './hooks/usePWAInstall';
+import { EditorialHubView } from './components/EditorialHubView';
 
 import { getCurrentNepaliDate, getPanchangaForDate } from './utils/nepaliCalendar';
 import { Language } from './types';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<string>(() => {
+  const [activeTab, setActiveTab] = useState<string>('calendar');
+  const [lang, setLang] = useState<Language>(() => {
     try {
-      const params = new URLSearchParams(window.location.search);
-      const tabParam = params.get('tab');
-      if (tabParam === 'tiktok-ad' || tabParam === 'ad') return 'tiktok-ad';
-    } catch {}
-    return 'calendar';
+      const saved = localStorage.getItem('hamro_patro_lang');
+      if (saved === 'en' || saved === 'ne') return saved;
+      return 'en';
+    } catch {
+      return 'en';
+    }
   });
-  const [lang, setLang] = useState<Language>('ne');
+  const { isStandalone, isFromQRScan } = usePWAInstall();
+  const [showInstallModal, setShowInstallModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    // If arriving from QR code scan or install URL parameter on mobile, immediately open install prompt
+    if (isFromQRScan && !isStandalone) {
+      setShowInstallModal(true);
+    }
+  }, [isFromQRScan, isStandalone]);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try {
       const saved = localStorage.getItem('hamro_patro_theme');
@@ -59,6 +73,26 @@ export function App() {
   // Today's Nepali date and Panchanga
   const todayBs = getCurrentNepaliDate();
   const todayPanchanga = getPanchangaForDate(todayBs.year, todayBs.month, todayBs.day);
+
+  useEffect(() => {
+    try {
+      document.documentElement.lang = lang;
+      localStorage.setItem('hamro_patro_lang', lang);
+    } catch {}
+  }, [lang]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      const articleParam = params.get('article');
+      if (articleParam || tabParam === 'articles') {
+        setActiveTab('articles');
+      } else if (tabParam) {
+        setActiveTab(tabParam);
+      }
+    }
+  }, []);
 
   const toggleLanguage = () => {
     setLang((prev) => (prev === 'ne' ? 'en' : 'ne'));
@@ -97,8 +131,8 @@ export function App() {
         lang={lang}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1">
+      {/* Main Content Area (padded for mobile bottom nav on small screens) */}
+      <main className="flex-1 pb-20 md:pb-0">
         {activeTab === 'calendar' && (
           <CalendarView
             todayBs={todayBs}
@@ -107,6 +141,10 @@ export function App() {
             onSelectDateForHoroscope={() => handleNavigate('rashifal')}
             onOpenWellness={() => handleNavigate('dharma')}
           />
+        )}
+
+        {activeTab === 'articles' && (
+          <EditorialHubView lang={lang} onNavigate={handleNavigate} />
         )}
 
         {activeTab === 'rashifal' && (
@@ -126,7 +164,7 @@ export function App() {
         )}
 
         {activeTab === 'dharma' && (
-          <DharmaSanskritiView lang={lang} onNavigate={handleNavigate} />
+          <DharmaSanskritiView lang={lang} todayBs={todayBs} onNavigate={handleNavigate} />
         )}
 
         {activeTab === 'weather' && (
@@ -156,10 +194,6 @@ export function App() {
         {activeTab === 'support' && (
           <ReceivePaymentsView lang={lang} onNavigate={handleNavigate} initialPurpose="platform_support" />
         )}
-
-        {activeTab === 'tiktok-ad' && (
-          <TikTokAdView lang={lang} onNavigate={handleNavigate} />
-        )}
       </main>
 
       {/* Offline Toast Indicator */}
@@ -167,6 +201,19 @@ export function App() {
 
       {/* Footer */}
       <Footer lang={lang} onNavigate={handleNavigate} />
+
+      {/* Persistent 1-Tap Mobile Install Bar (< 768px) */}
+      <MobileInstallStickyBanner lang={lang} onOpenModal={() => setShowInstallModal(true)} />
+
+      {/* App Store Standard Mobile Bottom Navigation (< 768px) */}
+      <MobileBottomNav activeTab={activeTab} onSelectTab={handleNavigate} lang={lang} />
+
+      {/* Direct QR Scan / PWA Install Modal */}
+      <AppStoreModal
+        isOpen={showInstallModal}
+        onClose={() => setShowInstallModal(false)}
+        lang={lang}
+      />
     </div>
   );
 }

@@ -14,16 +14,46 @@ export default defineConfig(() => {
         includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
           id: '/',
-          name: 'Hamro Patro - Nepali Calendar & Utilities',
-          short_name: 'Hamro Patro',
-          description: 'Comprehensive Nepali Bikram Sambat calendar, Rashifal, live weather, news, Forex rates & tools.',
+          name: 'Shubha Patro - Nepali Calendar & Utilities',
+          short_name: 'ShubhaPatro',
+          description: 'Comprehensive Nepali Bikram Sambat calendar, authentic Panchanga, Daily Rashifal, Vedic rituals, Daily Motivation, live weather & utilities.',
           theme_color: '#b91c1c',
-          background_color: '#b91c1c',
+          background_color: '#ffffff',
           display: 'standalone',
           orientation: 'portrait',
           start_url: '/',
           scope: '/',
-          categories: ['productivity', 'utilities', 'news'],
+          categories: ['productivity', 'utilities', 'lifestyle'],
+          shortcuts: [
+            {
+              name: 'आजको पात्रो (Calendar)',
+              short_name: 'पात्रो',
+              description: "Check today's Nepali date, Panchanga & tithi",
+              url: '/?tab=calendar',
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
+            },
+            {
+              name: 'दैनिक राशिफल (Rashifal)',
+              short_name: 'राशिफल',
+              description: 'Daily horoscope predictions for all 12 rashis',
+              url: '/?tab=rashifal',
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
+            },
+            {
+              name: 'धर्म संस्कृति (Dharma & Puja)',
+              short_name: 'धर्म',
+              description: 'Vedic rituals, dream interpretation & 108 japa',
+              url: '/?tab=dharma',
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
+            },
+            {
+              name: 'विदेशी मुद्रा र सुन (Forex & Gold)',
+              short_name: 'मुद्रा',
+              description: 'Live NRB Forex rates and Gold Silver price',
+              url: '/?tab=forex',
+              icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
+            },
+          ],
           icons: [
             {
               src: '/pwa-192x192.png',
@@ -46,8 +76,8 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
-          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,jpg,jpeg,webp}'],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -80,7 +110,8 @@ export default defineConfig(() => {
           ],
         },
         devOptions: {
-          enabled: false,
+          enabled: true,
+          type: 'module',
         },
       }),
     ],
@@ -92,7 +123,7 @@ export default defineConfig(() => {
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
-      hmr: process.env.DISABLE_HMR !== 'true',
+      hmr: false,
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },

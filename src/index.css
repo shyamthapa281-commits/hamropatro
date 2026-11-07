@@ -3,8 +3,18 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    scroll-behavior: smooth;
+  }
+
   body {
     font-family: 'Mukta', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    overscroll-behavior-y: contain;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
 }
 

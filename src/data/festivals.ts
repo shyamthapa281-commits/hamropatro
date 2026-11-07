@@ -10,6 +10,7 @@ import {
   BS_MONTH_NAMES_EN, 
   toNepaliDigits 
 } from '../utils/nepaliCalendar';
+import { FESTIVAL_PHOTOS } from '../assets/guideImages';
 
 export interface FestivalDefinition {
   id: string;
@@ -553,6 +554,15 @@ export function getLiveFestivals(currentBsDate?: NepaliDate): FestivalInfo[] {
       statusBadgeEn = `Celebrated this year • Next: ${daysRemaining} days`;
     }
 
+    const imageUrl = FESTIVAL_PHOTOS[def.id] || (
+      def.id === 'ghatasthapana' ? FESTIVAL_PHOTOS.ghatasthapana :
+      def.id.includes('dashain') ? FESTIVAL_PHOTOS.dashain :
+      def.id.includes('tihar') ? FESTIVAL_PHOTOS.tihar :
+      def.id.includes('chhath') ? FESTIVAL_PHOTOS.chhath :
+      def.id.includes('shivaratri') ? FESTIVAL_PHOTOS.maha_shivaratri :
+      FESTIVAL_PHOTOS.defaultFestival
+    );
+
     return {
       id: def.id,
       nameNe: def.nameNe,
@@ -570,6 +580,7 @@ export function getLiveFestivals(currentBsDate?: NepaliDate): FestivalInfo[] {
       recipeOrHighlightNe: def.recipeOrHighlightNe,
       recipeOrHighlightEn: def.recipeOrHighlightEn,
       imageTheme: def.imageTheme,
+      imageUrl,
       isPassedThisYear,
       statusBadgeNe,
       statusBadgeEn,

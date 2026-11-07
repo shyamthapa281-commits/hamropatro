@@ -12,7 +12,8 @@ import {
   BookOpen,
   TrendingUp,
   Compass,
-  Wallet
+  Wallet,
+  Flag
 } from 'lucide-react';
 import { Language } from '../types';
 
@@ -34,21 +35,38 @@ export const Navigation: React.FC<NavigationProps> = ({
   const navItems = [
     {
       id: 'calendar',
-      nameNe: 'क्यालेन्डर / पञ्चाङ्ग',
+      nameNe: 'पात्रो / पञ्चाङ्ग',
       nameEn: 'Calendar & Panchanga',
       icon: CalendarIcon,
+    },
+    {
+      id: 'festivals',
+      nameNe: 'चाडपर्व तथा बिदा',
+      nameEn: 'Festivals & Holidays',
+      icon: Flag,
+      badgeNe: '२०८१/८२',
+      badgeEn: 'Festivals',
+    },
+    {
+      id: 'articles',
+      nameNe: 'लेख तथा ज्ञान',
+      nameEn: 'Articles & Guides',
+      icon: BookOpen,
+      badgeNe: 'ज्ञान',
+      badgeEn: 'Guides',
     },
     {
       id: 'rashifal',
       nameNe: 'दैनिक राशिफल',
       nameEn: 'Daily Rashifal',
       icon: Sparkles,
-      badge: 'शुभ',
+      badgeNe: 'शुभ',
+      badgeEn: 'Daily',
     },
     {
       id: 'kundali',
       nameNe: 'कुण्डली तथा गुण मिलान',
-      nameEn: 'Kundali & Gun Milan',
+      nameEn: 'Kundali & Milan',
       icon: Compass,
       badgeNe: 'वैदिक',
       badgeEn: 'Vedic',
@@ -66,23 +84,23 @@ export const Navigation: React.FC<NavigationProps> = ({
       nameNe: 'NRN बैंकिङ र IPO',
       nameEn: 'NRN Banking & IPO',
       icon: TrendingUp,
-      badgeNe: '१०% कोटा',
-      badgeEn: '10% Quota',
+      badgeNe: '१०%',
+      badgeEn: '10%',
     },
     {
       id: 'dharma',
       nameNe: 'धर्म संस्कृति र सपना',
-      nameEn: 'Dharma & Dreams',
+      nameEn: 'Dharma & Rituals',
       icon: BookOpen,
-      badgeNe: 'सपना फल',
-      badgeEn: 'Dreams',
+      badgeNe: 'पूजा',
+      badgeEn: 'Puja',
     },
     {
       id: 'weather',
       nameNe: 'मौसम पूर्वानुमान',
       nameEn: 'Weather',
       icon: CloudSun,
-      badgeNe: 'प्रत्यक्ष',
+      badgeNe: 'लाइभ',
       badgeEn: 'Live',
     },
     {
@@ -90,14 +108,20 @@ export const Navigation: React.FC<NavigationProps> = ({
       nameNe: 'विश्व घडी',
       nameEn: 'World Clock',
       icon: Clock,
-      badgeNe: 'नेपाल समय',
-      badgeEn: 'Nepal NPT',
+      badgeNe: 'NPT',
+      badgeEn: 'NPT',
     },
     {
       id: 'calculator',
       nameNe: 'क्याल्कुलेटर',
       nameEn: 'Calculator & EMI',
       icon: CalcIcon,
+    },
+    {
+      id: 'converter',
+      nameNe: 'नाप तथा मिति रूपान्तरण',
+      nameEn: 'Date & Unit Converter',
+      icon: ArrowLeftRight,
     },
     {
       id: 'payments',
@@ -107,19 +131,13 @@ export const Navigation: React.FC<NavigationProps> = ({
       badgeNe: 'सहयोग',
       badgeEn: 'Support',
     },
-    {
-      id: 'converter',
-      nameNe: 'नाप तथा मिति रूपान्तरण',
-      nameEn: 'Measurement & Date',
-      icon: ArrowLeftRight,
-    },
   ];
 
   const updateScrollButtons = () => {
     if (!scrollContainerRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-    setShowLeftArrow(scrollLeft > 8);
-    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 8);
+    setShowLeftArrow(scrollLeft > 10);
+    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
   };
 
   useEffect(() => {
@@ -138,86 +156,114 @@ export const Navigation: React.FC<NavigationProps> = ({
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollContainerRef.current) return;
-    const scrollAmount = direction === 'left' ? -240 : 240;
+    const scrollAmount = direction === 'left' ? -260 : 260;
     scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     setTimeout(updateScrollButtons, 320);
   };
 
   return (
-    <nav className="bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800 shadow-xs sticky top-[73px] sm:top-[77px] z-30 transition-colors duration-200">
+    <nav 
+      aria-label="Main Navigation"
+      className="bg-stone-900/95 dark:bg-stone-950/95 backdrop-blur-md text-white sticky top-[73px] sm:top-[77px] z-30 transition-all duration-200 border-b border-stone-800/80 shadow-lg shadow-black/20"
+    >
+      {/* Subtle top golden accent hairline */}
+      <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
+
       <div className="max-w-7xl mx-auto px-2 sm:px-4 relative flex items-center">
-        {/* Left Scroll Arrow */}
+        {/* Left Scroll Button with soft gradient scrim */}
         {showLeftArrow && (
-          <button
-            onClick={() => scroll('left')}
-            className="flex absolute left-1 sm:left-2 z-10 w-7 h-7 sm:w-8 sm:h-8 items-center justify-center rounded-full bg-white/95 dark:bg-stone-800/95 text-stone-700 dark:text-stone-200 hover:text-sky-600 dark:hover:text-sky-400 shadow-md border border-stone-200 dark:border-stone-700 transition-all cursor-pointer hover:scale-105 active:scale-95"
-            aria-label="Scroll left"
-            title="Scroll left"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
+          <div className="absolute left-0 z-20 flex items-center pl-1 sm:pl-2 pr-6 bg-gradient-to-r from-stone-900 via-stone-900/95 to-transparent dark:from-stone-950 dark:via-stone-950/95 h-full pointer-events-none">
+            <button
+              type="button"
+              onClick={() => scroll('left')}
+              className="pointer-events-auto flex w-8 h-8 items-center justify-center rounded-xl bg-stone-800/90 text-stone-300 hover:text-white hover:bg-stone-700/90 border border-stone-700 shadow-lg backdrop-blur-md transition-all cursor-pointer active:scale-95 hover:border-amber-400/50"
+              aria-label="Scroll navigation left"
+              title="Scroll left"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </div>
         )}
 
         {/* Scrollable Navigation Track */}
         <div
           ref={scrollContainerRef}
           onScroll={updateScrollButtons}
-          className="flex items-center space-x-1.5 sm:space-x-2 overflow-x-auto py-1.5 scroll-smooth scrollbar-none w-full px-1"
+          className="flex items-center space-x-1.5 sm:space-x-2 overflow-x-auto py-2.5 sm:py-3 scroll-smooth scrollbar-none w-full px-1"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
+            const badgeText = lang === 'ne' ? item.badgeNe : item.badgeEn;
+
             return (
               <button
                 key={item.id}
                 id={`nav-tab-${item.id}`}
+                type="button"
                 onClick={() => onSelectTab(item.id)}
-                className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 select-none cursor-pointer shrink-0 ${
+                className={`group relative flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 select-none cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 active:scale-[0.98] ${
                   isActive
-                    ? 'bg-sky-600 text-white shadow-sm ring-1 ring-sky-700 dark:ring-sky-500'
-                    : 'text-stone-700 dark:text-stone-200 hover:text-sky-600 dark:hover:text-amber-300 hover:bg-sky-50/80 dark:hover:bg-stone-800 bg-stone-50/60 dark:bg-stone-800/40 border border-transparent dark:border-stone-800/60'
+                    ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white font-bold shadow-md shadow-red-950/40 border border-red-400/40 ring-1 ring-red-400/20'
+                    : 'text-stone-300 hover:text-white bg-white/5 hover:bg-white/10 dark:bg-stone-800/50 dark:hover:bg-stone-800 border border-stone-800/80 hover:border-stone-700/80 shadow-2xs'
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-300' : 'text-stone-500 dark:text-stone-400'}`} />
-                <span>{lang === 'ne' ? item.nameNe : item.nameEn}</span>
-                {item.badgeNe && (
+                <Icon
+                  className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
+                    isActive
+                      ? 'text-amber-300 stroke-[2.3] scale-105'
+                      : 'text-amber-400/80 group-hover:text-amber-300 group-hover:scale-110'
+                  }`}
+                />
+                <span className={`tracking-tight ${isActive ? 'font-bold text-white' : 'font-medium'}`}>
+                  {lang === 'ne' ? item.nameNe : item.nameEn}
+                </span>
+
+                {/* Subtle refined micro-badge */}
+                {badgeText && (
                   <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider ${
-                      isActive
-                        ? 'bg-amber-400 text-stone-950'
-                        : 'bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300'
+                    className={`text-[9.5px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider transition-colors shrink-0 ${
+                      item.id === 'payments'
+                        ? (isActive
+                            ? 'bg-black/35 text-emerald-300 border border-emerald-400/30'
+                            : 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 group-hover:bg-emerald-900')
+                        : (isActive
+                            ? 'bg-black/35 text-amber-200 border border-amber-300/30'
+                            : 'bg-stone-800 text-stone-300 dark:text-stone-400 border border-stone-700/60 group-hover:text-amber-300 group-hover:border-amber-400/30')
                     }`}
                   >
-                    {lang === 'ne' ? item.badgeNe : item.badgeEn}
+                    {badgeText}
                   </span>
                 )}
-                {item.badge && !item.badgeNe && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
+
+                {/* Active bottom glow line indicator */}
+                {isActive && (
+                  <span className="absolute -bottom-1 left-3 right-3 h-[2px] bg-gradient-to-r from-amber-300 via-amber-400 to-amber-300 rounded-full shadow-xs shadow-amber-300/60" />
                 )}
               </button>
             );
           })}
         </div>
 
-        {/* Right Scroll Arrow */}
+        {/* Right Scroll Button with soft gradient scrim */}
         {showRightArrow && (
-          <button
-            onClick={() => scroll('right')}
-            className="flex absolute right-1 sm:right-2 z-10 w-7 h-7 sm:w-8 sm:h-8 items-center justify-center rounded-full bg-white/95 dark:bg-stone-800/95 text-stone-700 dark:text-stone-200 hover:text-sky-600 dark:hover:text-sky-400 shadow-md border border-stone-200 dark:border-stone-700 transition-all cursor-pointer hover:scale-105 active:scale-95"
-            aria-label="Scroll right"
-            title="Scroll right"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          <div className="absolute right-0 z-20 flex items-center pr-1 sm:pr-2 pl-6 bg-gradient-to-l from-stone-900 via-stone-900/95 to-transparent dark:from-stone-950 dark:via-stone-950/95 h-full pointer-events-none">
+            <button
+              type="button"
+              onClick={() => scroll('right')}
+              className="pointer-events-auto flex w-8 h-8 items-center justify-center rounded-xl bg-stone-800/90 text-stone-300 hover:text-white hover:bg-stone-700/90 border border-stone-700 shadow-lg backdrop-blur-md transition-all cursor-pointer active:scale-95 hover:border-amber-400/50"
+              aria-label="Scroll navigation right"
+              title="Scroll right"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         )}
       </div>
+
+      {/* Radiant accent border strip along bottom */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-stone-700/60 to-transparent" />
     </nav>
   );
 };

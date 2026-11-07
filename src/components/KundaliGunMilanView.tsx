@@ -54,7 +54,7 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
   const [activeMode, setActiveMode] = useState<'kundali' | 'gunmilan'>('kundali');
 
   // Kundali Form State
-  const [name, setName] = useState('श्याम थापा');
+  const [name, setName] = useState('');
   const [gender, setGender] = useState('पुरुष');
   
   // Date format toggle for Kundali: Bikram Sambat (BS) vs Gregorian (AD)
@@ -230,7 +230,7 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
   const [paymentConfig, setPaymentConfig] = useState<PaymentConfig>({
     nepalBankName: 'NMB Bank Limited',
     nepalAccountNumber: '1990256249400016',
-    nepalAccountHolder: 'Shyam Thapa',
+    nepalAccountHolder: 'Shubha Patro',
     nepalBranch: 'Gwarko, Lalitpur',
     nepalSwiftCode: 'NMBNNPKA',
     stripePaymentLink: 'https://buy.stripe.com/bJeeVc1ImcTf0wZdMf8so00',
@@ -241,12 +241,11 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
     australiaBankName: 'Commonwealth Bank of Australia (CBA)',
     australiaBsb: '063620',
     australiaAccountNumber: '11170070',
-    australiaAccountHolder: 'Shyam Thapa',
+    australiaAccountHolder: 'Shubha Patro',
     australiaPayId: '0416045056',
     supportPhone: '+61 416 045 056 / 0416045056',
     supportEmail: 'shyamthapa281@gmail.com',
     notificationEmail: 'shyamthapa281@gmail.com',
-    adminPin: '1234',
     acceptingPayments: true,
     currencyAccepted: ['AUD', 'NPR', 'USD']
   });
@@ -405,7 +404,13 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
 
   const handleConfirmPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!transactionRef.trim()) return;
+    const cleanRef = transactionRef.trim();
+    if (!cleanRef || cleanRef.length < 6 || cleanRef.toUpperCase().startsWith('REF-SAMPLE') || cleanRef.toLowerCase() === 'test') {
+      alert(lang === 'ne' 
+        ? 'कृपया भुक्तानी गरिसकेपछि बैंक, कार्ड वा वालेटबाट प्राप्त आधिकारिक कारोबार नम्बर (कमसेकम ६ अक्षर/अङ्क) प्रविष्ट गर्नुहोस्।' 
+        : 'Please enter a valid authentic payment transaction reference (at least 6 characters).');
+      return;
+    }
 
     setIsVerifyingPayment(true);
 
@@ -418,22 +423,26 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
     const pricing = priceMap[selectedChannel] || { amount: 250, currency: 'NPR' };
 
     try {
-      await fetch('/api/payments/submit', {
+      const res = await fetch('/api/payments/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          senderName: payerName.trim() || (activeMode === 'kundali' ? name : `${boyName} & ${girlName}`),
+          senderName: payerName.trim() || (activeMode === 'kundali' ? (name || 'ग्राहक') : `${boyName} & ${girlName}`),
           senderPhone: payerPhone.trim(),
           servicePurpose: activeMode === 'kundali' ? 'vedic_kundali' : 'gun_milan',
           serviceName: activeMode === 'kundali' ? 'Vedic Kundali Full Dossier' : 'Ashtakoot 36-Gun Milan Report',
           amount: pricing.amount,
           currency: pricing.currency,
           paymentMethod: selectedChannel,
-          transactionRef: transactionRef.trim(),
-          notes: `Instant Unlock on Web App • ${activeMode === 'kundali' ? `Kundali: ${name}` : `Milan: ${boyName} & ${girlName}`}`
+          transactionRef: cleanRef,
+          notes: `Web App Unlock Submission • ${activeMode === 'kundali' ? `Kundali: ${name || 'Kundali'}` : `Milan: ${boyName} & ${girlName}`}`
         })
       });
-    } catch (err) {
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'भुक्तानी दर्ता हुन सकेन।');
+      }
+    } catch (err: any) {
       console.warn('Payment recording log:', err);
     }
 
@@ -642,7 +651,7 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
                   <input
                     type="text"
                     required
-                    placeholder="उदा. श्याम थापा / Shyam Thapa"
+                    placeholder={lang === 'ne' ? 'तपाईंको पूरा नाम (उदा. राम शर्मा)' : 'Your Full Name (e.g. Ram Sharma)'}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-white font-medium focus:ring-2 focus:ring-amber-500"
@@ -1659,7 +1668,7 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
                       className="px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer"
                     >
                       <Unlock className="w-4 h-4" />
-                      <span>{lang === 'ne' ? 'रु २५० मा अनलक गर्नुहोस् (Instant Unlock)' : 'Unlock for NPR 250 / $4.99'}</span>
+                      <span>{lang === 'ne' ? 'रु २५० मा अनलक गर्नुहोस्' : 'Unlock for NPR 250 / $4.99'}</span>
                     </button>
                     
                     <button
@@ -1850,7 +1859,7 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
 
                     <div className="p-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700">
                       <span className="text-stone-400 text-[10px] block">Account Name:</span>
-                      <strong className="text-stone-900 dark:text-white block mt-0.5">{paymentConfig.australiaAccountHolder || 'Shyam Thapa'}</strong>
+                      <strong className="text-stone-900 dark:text-white block mt-0.5">{paymentConfig.australiaAccountHolder || 'Shubha Patro'}</strong>
                     </div>
 
                     <div className="p-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700">
@@ -1989,64 +1998,40 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
                     ? 'भुक्तानी ट्रान्ज्याक्सन / बैंक रेफरेन्स कोड: *'
                     : 'Transaction Reference / Receipt ID: *'}
                 </label>
-                <div className="flex gap-2">
+                <div className="space-y-1">
                   <input
                     type="text"
                     required
-                    placeholder="उदा. 0005AB23 वा NMB-1234 वा CBA-TXN वा PayPal Ref"
+                    placeholder={lang === 'ne' ? 'उदा. 0005AB23 वा NMB-789012 वा CBA-TXN वा PayPal Ref' : 'e.g. 0005AB23, NMB-789012, or CBA-TXN'}
                     value={transactionRef}
                     onChange={(e) => setTransactionRef(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-white font-mono text-xs"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-white font-mono text-xs focus:ring-2 focus:ring-amber-500"
                   />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const sample = `REF-${Math.floor(100000 + Math.random() * 900000)}`;
-                      setTransactionRef(sample);
-                    }}
-                    className="px-2.5 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-700 text-[10px] font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-300 cursor-pointer shrink-0"
-                    title="Quick Auto Ref for testing"
-                  >
-                    Auto Fill
-                  </button>
+                  <p className="text-[10px] text-stone-500 dark:text-stone-400">
+                    {lang === 'ne' 
+                      ? 'कृपया भुक्तानी गरिसकेपछि बैंक, कार्ड वा वालेटबाट प्राप्त आधिकारिक ट्रान्ज्याक्सन आइडी यहाँ प्रविष्ट गर्नुहोस्।' 
+                      : 'Enter the authentic Transaction Reference or Receipt Number received after completing payment.'}
+                  </p>
                 </div>
               </div>
 
-              <div className="pt-1 flex flex-col sm:flex-row gap-2">
+              <div className="pt-2">
                 <button
                   type="submit"
                   disabled={isVerifyingPayment}
-                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50 text-xs transition-all"
+                  className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black rounded-xl flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50 text-xs sm:text-sm transition-all"
                 >
                   {isVerifyingPayment ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>{lang === 'ne' ? 'प्रमाणीकरण हुँदैछ...' : 'Verifying & Unlocking...'}</span>
+                      <span>{lang === 'ne' ? 'भुक्तानी प्रमाणीकरण हुँदैछ...' : 'Verifying & Recording Payment...'}</span>
                     </>
                   ) : (
                     <>
                       <Unlock className="w-4 h-4" />
-                      <span>{lang === 'ne' ? 'भुक्तानी पुष्टि गरी प्रतिवेदन तुरुन्त अनलक गर्नुहोस्' : 'Confirm & Unlock Full Vedic Report'}</span>
+                      <span>{lang === 'ne' ? 'भुक्तानी पुष्टि गरी प्रतिवेदन अनलक गर्नुहोस्' : 'Confirm Payment & Unlock Full Vedic Report'}</span>
                     </>
                   )}
-                </button>
-
-                {/* Instant Unlock Button for Easy Devotee Experience */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsUnlocked(true);
-                    archiveCurrentReport();
-                    setShowPaymentModal(false);
-                    confetti({
-                      particleCount: 120,
-                      spread: 90,
-                      origin: { y: 0.6 }
-                    });
-                  }}
-                  className="py-3 px-4 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold rounded-xl text-xs cursor-pointer text-center"
-                >
-                  {lang === 'ne' ? 'तुरुन्त अनलक' : 'Instant Unlock'}
                 </button>
               </div>
 
@@ -2107,7 +2092,7 @@ export const KundaliGunMilanView: React.FC<KundaliGunMilanViewProps> = ({ lang, 
                 </label>
                 <input
                   type="text"
-                  placeholder="उदा. श्याम थापा, रोहन शर्मा, सृष्टि ..."
+                  placeholder={lang === 'ne' ? 'उदा. राम शर्मा, रोहन अधिकारी, सृष्टि...' : 'e.g. Ram Sharma, Rohan, Srishti...'}
                   value={findSearchQuery}
                   onChange={(e) => setFindSearchQuery(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-white"

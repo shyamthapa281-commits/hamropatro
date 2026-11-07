@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="ne">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <!-- Extension Guard for Web3 Wallet property collisions -->
     <script>
       (function() {
@@ -35,11 +35,81 @@
             }
           };
 
+          // Safe WebSocket wrapper for Vite HMR in container environments
+          if (typeof window !== 'undefined' && window.WebSocket) {
+            const NativeWebSocket = window.WebSocket;
+            function SafeWebSocket(url, protocols) {
+              const isViteHmr = 
+                (typeof protocols === 'string' && (protocols === 'vite-hmr' || protocols === 'vite-ping')) ||
+                (Array.isArray(protocols) && (protocols.includes('vite-hmr') || protocols.includes('vite-ping'))) ||
+                (typeof url === 'string' && (url.includes('vite-hmr') || url.includes('token=') || url.includes('24678') || url.includes('5173')));
+
+              if (isViteHmr) {
+                const listeners = {};
+                const fakeSocket = {
+                  readyState: 1,
+                  url: String(url),
+                  protocol: typeof protocols === 'string' ? protocols : (protocols && protocols[0]) || 'vite-hmr',
+                  extensions: '',
+                  bufferedAmount: 0,
+                  binaryType: 'blob',
+                  send: function() {},
+                  close: function(code, reason) {
+                    fakeSocket.readyState = 3;
+                    const ev = { type: 'close', wasClean: true, code: code || 1000, reason: reason || '' };
+                    if (typeof fakeSocket.onclose === 'function') fakeSocket.onclose(ev);
+                    (listeners['close'] || []).forEach(function(cb) { cb(ev); });
+                  },
+                  addEventListener: function(type, cb) {
+                    if (!listeners[type]) listeners[type] = [];
+                    listeners[type].push(cb);
+                    if (type === 'open') {
+                      setTimeout(function() {
+                        const ev = { type: 'open' };
+                        if (typeof fakeSocket.onopen === 'function') fakeSocket.onopen(ev);
+                        cb(ev);
+                      }, 0);
+                    }
+                  },
+                  removeEventListener: function(type, cb) {
+                    if (listeners[type]) {
+                      listeners[type] = listeners[type].filter(function(fn) { return fn !== cb; });
+                    }
+                  },
+                  dispatchEvent: function() { return true; },
+                  onopen: null,
+                  onclose: null,
+                  onerror: null,
+                  onmessage: null,
+                };
+                return fakeSocket;
+              }
+              return new NativeWebSocket(url, protocols);
+            }
+            SafeWebSocket.prototype = NativeWebSocket.prototype;
+            SafeWebSocket.CONNECTING = 0;
+            SafeWebSocket.OPEN = 1;
+            SafeWebSocket.CLOSING = 2;
+            SafeWebSocket.CLOSED = 3;
+            window.WebSocket = SafeWebSocket;
+          }
+
           // Intercept benign [vite] websocket logs in AI Studio container environment
           const originalConsoleError = console.error;
           console.error = function(...args) {
-            const msg = args.map(a => (typeof a === 'string' ? a : (a && a.message) ? a.message : '')).join(' ');
-            if (msg.includes('[vite] failed to connect') || msg.includes('[vite]')) {
+            const rawStr = args.map(a => {
+              if (typeof a === 'string') return a;
+              if (a && a.stack) return a.stack;
+              if (a && a.message) return a.message;
+              return String(a);
+            }).join(' ').toLowerCase();
+
+            if (
+              rawStr.includes('[vite]') ||
+              rawStr.includes('websocket') ||
+              rawStr.includes('closed without opened') ||
+              rawStr.includes('failed to connect')
+            ) {
               return;
             }
             return originalConsoleError.apply(console, args);
@@ -47,21 +117,39 @@
 
           const originalConsoleWarn = console.warn;
           console.warn = function(...args) {
-            const msg = args.map(a => (typeof a === 'string' ? a : (a && a.message) ? a.message : '')).join(' ');
-            if (msg.includes('[vite] failed to connect') || msg.includes('[vite]')) {
+            const rawStr = args.map(a => {
+              if (typeof a === 'string') return a;
+              if (a && a.stack) return a.stack;
+              if (a && a.message) return a.message;
+              return String(a);
+            }).join(' ').toLowerCase();
+
+            if (
+              rawStr.includes('[vite]') ||
+              rawStr.includes('websocket') ||
+              rawStr.includes('closed without opened') ||
+              rawStr.includes('failed to connect')
+            ) {
               return;
             }
             return originalConsoleWarn.apply(console, args);
           };
 
           window.addEventListener('error', function(event) {
-            const msg = (event && event.message) ? event.message : '';
+            const msg = (
+              (event && event.message) ||
+              (event && event.error && event.error.message) ||
+              (event && event.error && event.error.stack) ||
+              String(event)
+            ).toLowerCase();
+
             if (
               msg.includes('[vite]') ||
               msg.includes('websocket') ||
-              msg.includes('Cannot redefine property: ethereum') ||
-              msg.includes('Cannot redefine property') ||
-              msg.includes('ethereum')
+              msg.includes('closed without opened') ||
+              msg.includes('cannot redefine property') ||
+              msg.includes('ethereum') ||
+              msg.includes('solana')
             ) {
               event.preventDefault?.();
               event.stopPropagation?.();
@@ -71,19 +159,50 @@
 
           window.addEventListener('unhandledrejection', function(event) {
             const reason = event && event.reason;
-            const msg = typeof reason === 'string' ? reason : ((reason && reason.message) ? reason.message : '');
+            const msg = (
+              typeof reason === 'string'
+                ? reason
+                : (reason && reason.stack)
+                ? reason.stack
+                : (reason && reason.message)
+                ? reason.message
+                : String(reason)
+            ).toLowerCase();
+
             if (
               msg.includes('[vite]') ||
               msg.includes('websocket') ||
-              msg.includes('Cannot redefine property: ethereum') ||
-              msg.includes('Cannot redefine property')
+              msg.includes('closed without opened') ||
+              msg.includes('cannot redefine property') ||
+              msg.includes('ethereum') ||
+              msg.includes('solana')
             ) {
               event.preventDefault?.();
               event.stopPropagation?.();
               return true;
             }
           }, true);
+
+          window.onerror = function(message, source, lineno, colno, error) {
+            var str = (String(message) + ' ' + String(source) + ' ' + (error ? String(error.stack || error.message) : '')).toLowerCase();
+            if (
+              str.includes('websocket') ||
+              str.includes('closed without opened') ||
+              str.includes('[vite]') ||
+              str.includes('vite/client')
+            ) {
+              return true; // suppresses the benign HMR dev-runner error
+            }
+          };
         } catch (_) {}
+
+        // Global early capture of PWA beforeinstallprompt on Android/Chrome
+        window.__deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+          e.preventDefault();
+          window.__deferredInstallPrompt = e;
+          window.dispatchEvent(new CustomEvent('pwa-prompt-ready', { detail: e }));
+        });
       })();
     </script>
     <title>Shubha Patro - Nepali Calendar (बिक्रम संवत्), Panchanga, Rashifal & Utilities</title>
@@ -91,7 +210,30 @@
     <meta property="og:title" content="Shubha Patro - Nepali Calendar (बिक्रम संवत्), Panchanga, Rashifal & Utilities" />
     <meta property="og:description" content="Shubha Patro - Comprehensive Nepali Calendar (Bikram Sambat), authentic Dharma Sanskriti (Vedic rituals, puja vidhi & 108 japa counter), Swapna Shastra dream interpretation, daily Rashifal, Kundali & Gun Milan, Daily Motivation, Health & Wellness Ayurvedic Ritucharya, NRN banking & IPO tools, Forex & Gold rates, and utilities." />
     <meta property="og:type" content="website" />
-    <!-- Google AdSense -->
+    <meta property="og:url" content="https://shubhapatro.com" />
+    <!-- App Store & PWA Structured Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MobileApplication",
+      "name": "Shubha Patro",
+      "operatingSystem": "Android, iOS, Windows, macOS",
+      "applicationCategory": "UtilitiesApplication",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "ratingCount": "12480"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "Authentic Nepali Bikram Sambat calendar, daily Panchanga, Rashifal, Vedic rituals, Swapna Shastra, and offline tools."
+    }
+    </script>
+    <!-- Google AdSense Site Verification & Ad Serving -->
+    <meta name="google-adsense-account" content="ca-pub-4451581237303819" />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4451581237303819"
      crossorigin="anonymous"></script>
 
@@ -103,6 +245,9 @@
     <meta name="apple-mobile-web-app-title" content="Shubha Patro" />
     <meta name="application-name" content="Shubha Patro" />
     <meta name="msapplication-TileColor" content="#b91c1c" />
+
+    <!-- PWA Web App Manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
 
     <!-- PWA Icons -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

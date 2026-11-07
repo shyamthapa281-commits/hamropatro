@@ -26,6 +26,16 @@ export interface PaymentConfig {
   supportPhone: string;
   supportEmail: string;
   notificationEmail: string;
+
+  // Automated SMTP Email Notification Settings
+  smtpHost?: string;
+  smtpPort?: string;
+  smtpUser?: string;
+  smtpPass?: string;
+  smtpSecure?: boolean;
+  smtpFrom?: string;
+  formspreeEndpoint?: string;
+  resendApiKey?: string;
   
   // Security
   adminPin: string;

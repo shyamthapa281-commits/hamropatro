@@ -168,6 +168,7 @@ export interface FestivalInfo {
   recipeOrHighlightNe?: string;
   recipeOrHighlightEn?: string;
   imageTheme: string;
+  imageUrl?: string;
   isPassedThisYear?: boolean;
   statusBadgeNe?: string;
   statusBadgeEn?: string;

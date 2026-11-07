@@ -1,8 +1,10 @@
 import express from 'express';
+import http from 'http';
 import path from 'path';
 import fs from 'fs';
 import https from 'https';
 import dotenv from 'dotenv';
+import nodemailer from 'nodemailer';
 import { XMLParser } from 'fast-xml-parser';
 import { createServer as createViteServer } from 'vite';
 import { translateOffline } from './src/utils/nepaliTranslator';
@@ -1342,7 +1344,7 @@ const PAYMENTS_FILE = path.join(process.cwd(), 'data', 'received_payments.json')
 const DEFAULT_PAYMENT_CONFIG = {
   nepalBankName: 'NMB Bank Limited',
   nepalAccountNumber: '1990256249400016',
-  nepalAccountHolder: 'Shyam Thapa',
+  nepalAccountHolder: 'Shubha Patro',
   nepalBranch: 'Gwarko, Lalitpur',
   nepalSwiftCode: 'NMBNNPKA',
   stripePaymentLink: 'https://buy.stripe.com/bJeeVc1ImcTf0wZdMf8so00',
@@ -1353,12 +1355,18 @@ const DEFAULT_PAYMENT_CONFIG = {
   australiaBankName: 'Commonwealth Bank of Australia (CBA)',
   australiaBsb: '063620',
   australiaAccountNumber: '11170070',
-  australiaAccountHolder: 'Shyam Thapa',
+  australiaAccountHolder: 'Shubha Patro',
   australiaPayId: '0416045056',
   supportPhone: '+61 416 045 056 / 0416045056',
   supportEmail: 'shyamthapa281@gmail.com',
   notificationEmail: 'shyamthapa281@gmail.com',
-  adminPin: '1234',
+  smtpHost: 'smtp.gmail.com',
+  smtpPort: '587',
+  smtpUser: 'shyamthapa281@gmail.com',
+  smtpPass: '',
+  formspreeEndpoint: '',
+  resendApiKey: '',
+  adminPin: process.env.ADMIN_PIN || '8848',
   acceptingPayments: true,
   currencyAccepted: ['AUD', 'NPR', 'USD', 'EUR', 'GBP'],
   personalEsewaNumber: '',
@@ -1462,6 +1470,460 @@ app.get('/api/payments/list', (req, res) => {
     success: true,
     total: list.length,
     payments: list,
+  });
+});
+
+// 2b. Test Email Notification (Owner Admin verification)
+app.post('/api/payments/test-email', async (req, res) => {
+  const pinHeader = req.headers['x-admin-pin'] || req.body?.pin;
+  const config = loadPaymentConfig();
+  if (!pinHeader || pinHeader.toString().trim() !== config.adminPin.toString().trim()) {
+    return res.status(401).json({ success: false, error: 'Unauthorized: Invalid Admin PIN' });
+  }
+
+  const targetEmail = req.body?.toEmail || config.notificationEmail || config.supportEmail || 'shyamthapa281@gmail.com';
+  const smtpHost = req.body?.smtpHost || config.smtpHost || process.env.SMTP_HOST || 'smtp.gmail.com';
+  const smtpUser = req.body?.smtpUser || config.smtpUser || process.env.SMTP_USER || targetEmail;
+  const smtpPass = req.body?.smtpPass || config.smtpPass || process.env.SMTP_PASS;
+  const smtpPort = parseInt(req.body?.smtpPort || config.smtpPort || process.env.SMTP_PORT || '587', 10);
+  const formspreeEndpoint = req.body?.formspreeEndpoint || config.formspreeEndpoint || process.env.FORMSPREE_ENDPOINT;
+  const resendApiKey = req.body?.resendApiKey || config.resendApiKey || process.env.RESEND_API_KEY;
+
+  // 1. Try Resend if configured
+  if (resendApiKey) {
+    try {
+      const resendRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${resendApiKey}`,
+        },
+        body: JSON.stringify({
+          from: 'Shubha Patro <onboarding@resend.dev>',
+          to: [targetEmail],
+          subject: '✅ [Shubha Patro] परीक्षण सूचना इमेल (Test Notification)',
+          html: '<p>यो शुभ पात्रो बैंकिङ अनलक सूचना प्रणालीको परीक्षण इमेल हो।</p>',
+        }),
+      });
+      if (resendRes.ok) {
+        return res.json({ success: true, message: `Resend मार्फत परीक्षण इमेल ${targetEmail} मा सफलतापूर्वक पठाइयो!` });
+      }
+    } catch (_) {}
+  }
+
+  // 2. Try Formspree if configured
+  if (formspreeEndpoint) {
+    try {
+      const fsUrl = formspreeEndpoint.startsWith('http') ? formspreeEndpoint : `https://formspree.io/f/${formspreeEndpoint}`;
+      const fsRes = await fetch(fsUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          _subject: '✅ [Shubha Patro] परीक्षण सूचना इमेल',
+          message: `यो शुभ पात्रो बैंकिङ अनलक सूचना प्रणालीको परीक्षण सन्देश हो। Target: ${targetEmail}`,
+        }),
+      });
+      if (fsRes.ok) {
+        return res.json({ success: true, message: `Formspree मार्फत परीक्षण सन्देश सफलतापूर्वक पठाइयो!` });
+      }
+    } catch (_) {}
+  }
+
+  // 3. Try Nodemailer SMTP
+  if (smtpPass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+      });
+
+      const info = await transporter.sendMail({
+        from: `"Shubha Patro Security" <${smtpUser}>`,
+        to: targetEmail,
+        subject: '✅ [Shubha Patro] परीक्षण सूचना इमेल (Test Notification Email)',
+        html: `
+          <div style="font-family: sans-serif; padding: 22px; border: 2px solid #16a34a; border-radius: 14px; max-width: 520px; background: #ffffff;">
+            <h2 style="color: #16a34a; margin-top: 0;">✅ इमेल सूचना प्रणाली सक्रिय भयो!</h2>
+            <p>नमस्ते <strong>व्यवस्थापक (Administrator) ज्यू</strong>,</p>
+            <p>यो शुभ पात्रो बैंकिङ अनलक सूचना प्रणालीको परीक्षण इमेल हो। अब कुनै पनि ग्राहकले बैंक विवरण अनलक गर्न कोड अनुरोध गर्दा तपाईंको यो इमेलमा तुरुन्तै ६-अङ्के कोडसहितको सूचना आउनेछ।</p>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+            <p style="font-size: 11px; color: #64748b; margin: 0;">Shubha Patro • shubhapatro.com</p>
+          </div>
+        `,
+        text: `Shubha Patro test notification email succeeded. Target: ${targetEmail}`,
+      });
+
+      return res.json({
+        success: true,
+        message: `परीक्षण इमेल सफलतापूर्वक ${targetEmail} मा पठाइयो! (Message ID: ${info.messageId})`,
+      });
+    } catch (err: any) {
+      console.error('Test email SMTP error:', err);
+      return res.status(500).json({
+        success: false,
+        error: `SMTP त्रुटि: ${err.message || 'Authentication error'}. यदि Gmail प्रयोग गर्दै हुनुहुन्छ भने सामान्य पासवर्डको सट्टा १६-अङ्के 'Google App Password' राख्नुहोस्।`,
+      });
+    }
+  }
+
+  return res.status(400).json({
+    success: false,
+    error: 'इमेल पठाउनका लागि कृपया आफ्नो Gmail 16-अङ्कको App Password वा Formspree / Resend कुञ्जी प्रविष्ट गर्नुहोस्।',
+  });
+});
+
+// ==========================================
+// Banking OTP Verification (Temporary Unlock)
+// ==========================================
+interface BankingOtpEntry {
+  code: string;
+  expiresAt: number;
+  name: string;
+  attempts: number;
+}
+const bankingOtpStore = new Map<string, BankingOtpEntry>();
+const UNLOCK_REQUESTS_FILE = path.join(process.cwd(), 'data', 'banking_unlock_requests.json');
+
+interface StoredUnlockRequest {
+  id: string;
+  customerName: string;
+  name: string;
+  customerEmail: string;
+  email: string;
+  customerPhone?: string;
+  phone?: string;
+  customerNote?: string;
+  note?: string;
+  channel: string;
+  code: string;
+  createdAt: number;
+  expiresAt: number;
+  status: 'pending' | 'used' | 'expired';
+}
+
+function loadUnlockRequests(): StoredUnlockRequest[] {
+  try {
+    if (fs.existsSync(UNLOCK_REQUESTS_FILE)) {
+      const raw = fs.readFileSync(UNLOCK_REQUESTS_FILE, 'utf-8');
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.warn('Error reading unlock requests file:', err);
+  }
+  return [];
+}
+
+function saveUnlockRequests(list: StoredUnlockRequest[]) {
+  try {
+    fs.writeFileSync(UNLOCK_REQUESTS_FILE, JSON.stringify(list, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('Error saving unlock requests file:', err);
+  }
+}
+
+// Clean expired OTPs every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of bankingOtpStore.entries()) {
+    if (now > val.expiresAt) {
+      bankingOtpStore.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
+// 3a. Generate and Email Unlock Code to Owner / Administrator
+app.post('/api/payments/banking-otp/generate', async (req, res) => {
+  const { email = '', name = '', phone = '', note = '', channel = 'aus_bank', lang = 'ne' } = req.body;
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  const cleanPhone = String(phone || '').trim();
+  const cleanName = String(name || '').trim() || (lang === 'ne' ? 'आदरणीय सहयोगी' : 'Valued Patron');
+  const cleanNote = String(note || '').trim();
+  const config = loadPaymentConfig();
+  const ownerEmail = config.notificationEmail || config.supportEmail || 'shyamthapa281@gmail.com';
+  const ownerName = config.australiaAccountHolder || config.nepalAccountHolder || 'Administrator';
+  const ownerPhone = config.supportPhone || '+61 416 045 056';
+
+  if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+    return res.status(400).json({ 
+      success: false, 
+      error: lang === 'ne' ? 'कृपया मान्य ग्राहक इमेल ठेगाना प्रविष्ट गर्नुहोस्।' : 'Please enter a valid customer email address.' 
+    });
+  }
+
+  // Generate 6-digit numeric Unlock Code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const validityMinutes = 30; // 30 minutes to allow owner to pass code to customer
+  const expiresAt = Date.now() + validityMinutes * 60 * 1000;
+
+  bankingOtpStore.set(cleanEmail, {
+    code,
+    expiresAt,
+    name: cleanName,
+    attempts: 0,
+  });
+
+  const channelLabel = channel === 'aus_bank' 
+    ? 'Australia Bank (CBA / BSB / PayID)' 
+    : 'Nepal Bank (NMB Bank / SWIFT)';
+
+  // Persist request in storage so owner can view it anytime in the Admin Dashboard
+  const storedReq: StoredUnlockRequest = {
+    id: `req-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    customerName: cleanName,
+    name: cleanName,
+    customerEmail: cleanEmail,
+    email: cleanEmail,
+    customerPhone: cleanPhone,
+    phone: cleanPhone,
+    customerNote: cleanNote,
+    note: cleanNote,
+    channel: channelLabel,
+    code,
+    createdAt: Date.now(),
+    expiresAt,
+    status: 'pending',
+  };
+  const allReqs = loadUnlockRequests();
+  allReqs.unshift(storedReq);
+  saveUnlockRequests(allReqs.slice(0, 100));
+
+  console.log(`[BANKING-AUTH-REQUEST] Customer: ${cleanName} (${cleanEmail}, Phone: ${cleanPhone}) requested ${channelLabel}. Code: ${code}`);
+
+  // 1. Email to the Owner / Administrator (Shyam Thapa) containing the code and customer details
+  const ownerSubject = `🚨 [Shubha Patro] बैंक विवरण अनलक अनुरोध - ${cleanName} (कोड: ${code})`;
+  const ownerHtml = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 2px solid #b91c1c; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <div style="background: linear-gradient(135deg, #b91c1c, #991b1b); padding: 24px; text-align: center; color: #ffffff;">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 800;">Shubha Patro • शुभ पात्रो</h1>
+        <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.95; font-weight: 600;">🔒 बैंक विवरण अनलक अनुरोध (Banking Access Authorization)</p>
+      </div>
+
+      <div style="padding: 24px;">
+        <p style="font-size: 15px; color: #1e293b; margin-top: 0;">
+          नमस्ते <strong>${ownerName} ज्यू</strong>,
+        </p>
+        <p style="font-size: 14px; color: #334155; line-height: 1.6;">
+          एकजना ग्राहकले शुभ पात्रो प्लेटफर्म सहयोगका लागि तपाईंको <strong>${channelLabel}</strong> विवरण हेर्न अनुरोध गर्नुभएको छ।
+        </p>
+
+        <!-- Customer Details Box -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin: 18px 0; font-size: 13px; color: #334155;">
+          <div style="font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 8px;">
+            📋 अनुरोधकर्ता ग्राहक विवरण (Customer Info):
+          </div>
+          <div style="margin-bottom: 6px;">👤 <strong>नाम (Name):</strong> ${cleanName}</div>
+          <div style="margin-bottom: 6px;">📧 <strong>इमेल (Email):</strong> <a href="mailto:${cleanEmail}">${cleanEmail}</a></div>
+          ${cleanPhone ? `<div style="margin-bottom: 6px;">📱 <strong>सम्पर्क (Phone/WhatsApp):</strong> ${cleanPhone}</div>` : ''}
+          <div style="margin-bottom: 6px;">🏦 <strong>च्यानल (Channel):</strong> ${channelLabel}</div>
+          ${cleanNote ? `<div style="margin-bottom: 6px;">💬 <strong>सहयोग विवरण (Note):</strong> ${cleanNote}</div>` : ''}
+          <div style="color: #64748b; font-size: 12px; margin-top: 6px;">⏰ <strong>अनुरोध समय:</strong> ${new Date().toLocaleString('en-US', { timeZone: 'Australia/Sydney' })} (Sydney Time)</div>
+        </div>
+
+        <!-- Highlighted Unlock Code Box -->
+        <div style="text-align: center; background: #fef2f2; border: 2px dashed #dc2626; border-radius: 14px; padding: 22px; margin: 24px 0;">
+          <div style="font-size: 12px; font-weight: 800; color: #991b1b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+            🔑 ग्राहकलाई दिनुपर्ने ६-अङ्कको अनलक कोड (UNLOCK CODE)
+          </div>
+          <div style="font-size: 40px; font-family: monospace; font-weight: 900; letter-spacing: 8px; color: #b91c1c;">
+            ${code}
+          </div>
+          <div style="font-size: 12px; color: #b91c1c; font-weight: 600; margin-top: 6px;">
+            ⏱️ यो कोड ३० मिनेट सम्म मान्य रहनेछ।
+          </div>
+        </div>
+
+        <!-- Action Instructions for Owner -->
+        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 16px; margin: 18px 0; font-size: 13px; color: #065f46;">
+          <strong style="display: block; font-size: 14px; margin-bottom: 6px;">✅ व्यवस्थापकको कार्य (Next Step):</strong>
+          तपाईंले माथिको ६-अङ्कको कोड <strong>${code}</strong> ग्राहक <strong>${cleanName}</strong> लाई इमेल जवाफ वा WhatsApp मार्फत पठाउनुहोस्। ग्राहकले वेबसाइटमा यो कोड राखेपछि मात्र १५ मिनेटका लागि बैंक विवरण खुल्नेछ।
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+          <a href="mailto:${cleanEmail}?subject=Shubha%20Patro%20Banking%20Unlock%20Code&body=Hello%20${encodeURIComponent(cleanName)},%0D%0A%0D%0AYour%206-digit%20code%20to%20unlock%20Shubha%20Patro%20banking%20details%20is:%20${code}%0D%0A%0D%0AValid%20for%2030%20minutes.%20Thank%20you%20for%20supporting%20Shubha%20Patro!" style="display: inline-block; background: #0284c7; color: #ffffff; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none;">
+            ✉️ ग्राहकलाई सिधै इमेल पठाउनुहोस् (Reply to Customer)
+          </a>
+        </div>
+      </div>
+
+      <div style="background: #f1f5f9; padding: 14px 20px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0;">
+        Shubha Patro (शुभ पात्रो • shubhapatro.com) • High-Security Banking Gateway
+      </div>
+    </div>
+  `;
+
+  // 2. Dispatch real email to Owner (Shyam Thapa) via nodemailer and formsubmit relay
+  (async () => {
+    // A. Send via Nodemailer SMTP if configured in config or env
+    const smtpHost = config.smtpHost || process.env.SMTP_HOST;
+    const smtpUser = config.smtpUser || process.env.SMTP_USER;
+    const smtpPass = config.smtpPass || process.env.SMTP_PASS;
+    const smtpPort = parseInt(config.smtpPort || process.env.SMTP_PORT || '587', 10);
+
+    if (smtpHost && smtpUser && smtpPass) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpPort === 465 || process.env.SMTP_SECURE === 'true',
+          auth: {
+            user: smtpUser,
+            pass: smtpPass,
+          },
+        });
+        await transporter.sendMail({
+          from: `"Shubha Patro Security" <${process.env.SMTP_FROM || smtpUser}>`,
+          to: ownerEmail,
+          subject: ownerSubject,
+          html: ownerHtml,
+          text: `Banking Unlock Request from ${cleanName} (${cleanEmail}). Unlock code to give customer: ${code}. Valid for 30 minutes.`,
+        });
+        console.log(`[EMAIL-SUCCESS] Banking unlock code sent via SMTP to ${ownerEmail}`);
+      } catch (err) {
+        console.warn('Nodemailer SMTP to owner failed:', err);
+      }
+    }
+
+    // B. Send via FormSubmit ajax relay to owner's verified inbox
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(ownerEmail)}`, {
+        signal: controller.signal,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Origin': 'https://shubhapatro.com',
+          'Referer': 'https://shubhapatro.com/support',
+        },
+        body: JSON.stringify({
+          _subject: ownerSubject,
+          customerName: cleanName,
+          customerEmail: cleanEmail,
+          customerPhone: cleanPhone || 'None',
+          customerNote: cleanNote || 'Platform Patronage Support',
+          requestedChannel: channelLabel,
+          unlockCodeForCustomer: code,
+          validityMinutes,
+          message: `URGENT: Customer ${cleanName} (${cleanEmail}, Phone: ${cleanPhone}) requested to view banking details. The 6-digit unlock code to share with the customer is: ${code}. Valid for 30 minutes.`,
+        }),
+      }).catch(() => {});
+      clearTimeout(timeoutId);
+    } catch (_) {}
+  })();
+
+  // Return clean response - NEVER return devCode to the client!
+  res.json({
+    success: true,
+    message: lang === 'ne' 
+      ? `अनुरोध सफलतापूर्वक व्यवस्थापक (${ownerName} / ${ownerEmail}) लाई पठाइयो। व्यवस्थापकले तपाईंलाई प्रदान गरेको ६-अङ्कको कोड तल प्रविष्ट गर्नुहोस्।` 
+      : `Your request has been dispatched to the Administrator (${ownerName} / ${ownerEmail}). Please enter the 6-digit code provided by the owner below.`,
+    email: cleanEmail,
+    ownerEmail,
+    ownerName,
+    ownerPhone,
+    expiresInSeconds: validityMinutes * 60,
+    expiresAt,
+  });
+});
+
+// 3b. Verify Code and Unlock Banking Details for a specified session timeframe
+app.post('/api/payments/banking-otp/verify', (req, res) => {
+  const { email = '', code = '', lang = 'ne' } = req.body;
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  const cleanCode = String(code || '').trim();
+
+  const entry = bankingOtpStore.get(cleanEmail);
+  if (!entry) {
+    return res.status(400).json({
+      success: false,
+      error: lang === 'ne'
+        ? 'कुनै मान्य अनुरोध फेला परेन। कृपया पहिले व्यवस्थापकसँग कोड अनुरोध गर्नुहोस्।'
+        : 'No valid request found for this email. Please request a code from the owner first.',
+    });
+  }
+
+  if (Date.now() > entry.expiresAt) {
+    bankingOtpStore.delete(cleanEmail);
+    return res.status(400).json({
+      success: false,
+      error: lang === 'ne'
+        ? 'अनुरोधको समय समाप्त भइसकेको छ (Expired)। कृपया नयाँ कोड अनुरोध गर्नुहोस्।'
+        : 'The unlock code request has expired. Please send a new request to the owner.',
+    });
+  }
+
+  if (entry.code !== cleanCode) {
+    entry.attempts += 1;
+    if (entry.attempts >= 5) {
+      bankingOtpStore.delete(cleanEmail);
+      return res.status(400).json({
+        success: false,
+        error: lang === 'ne'
+          ? 'धेरै पटक गलत कोड प्रविष्ट गरियो। कृपया नयाँ कोड अनुरोध गर्नुहोस्।'
+          : 'Too many incorrect attempts. Please request a new code from the owner.',
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      error: lang === 'ne'
+        ? `गलत अनलक कोड। व्यवस्थापकले दिनुभएको ६-अङ्कको कोड पुनः जाँच गर्नुहोस्। (${5 - entry.attempts} पटक बाँकी)`
+        : `Incorrect unlock code. Please double-check the 6-digit code provided by the owner. (${5 - entry.attempts} attempts remaining)`,
+    });
+  }
+
+  // Code verified successfully!
+  bankingOtpStore.delete(cleanEmail);
+
+  // Mark request as used in persistent storage
+  const reqs = loadUnlockRequests();
+  for (const r of reqs) {
+    if (r.customerEmail === cleanEmail && r.code === cleanCode && r.status === 'pending') {
+      r.status = 'used';
+    }
+  }
+  saveUnlockRequests(reqs);
+
+  // Unlocked session valid for 15 minutes (900 seconds)
+  const unlockDurationSeconds = 900;
+  const unlockedUntil = Date.now() + unlockDurationSeconds * 1000;
+
+  res.json({
+    success: true,
+    unlocked: true,
+    unlockedUntil,
+    expiresInSeconds: unlockDurationSeconds,
+    message: lang === 'ne'
+      ? 'बैंकिङ विवरण सफलतापूर्वक अनलक भयो।'
+      : 'Banking information unlocked successfully.',
+  });
+});
+
+// 3c. Get Banking Unlock Requests (Protected by Owner Admin PIN)
+app.get('/api/payments/banking-otp/requests', (req, res) => {
+  const adminPinHeader = req.headers['x-admin-pin'];
+  const config = loadPaymentConfig();
+  if (!adminPinHeader || adminPinHeader.toString().trim() !== config.adminPin.toString().trim()) {
+    return res.status(401).json({ success: false, error: 'Unauthorized: Invalid Admin PIN' });
+  }
+
+  const list = loadUnlockRequests();
+  const now = Date.now();
+  for (const item of list) {
+    if (item.status === 'pending' && now > item.expiresAt) {
+      item.status = 'expired';
+    }
+  }
+  saveUnlockRequests(list);
+
+  res.json({
+    success: true,
+    requests: list,
   });
 });
 
@@ -1700,49 +2162,80 @@ app.get("/api/download/source-tarball", (req, res) => {
   return res.status(404).send("Archive not ready yet");
 });
 
-// Google AdSense verification ads.txt route
+// Google AdSense verification ads.txt route with strict crawler compliance headers
 app.get('/ads.txt', (req, res) => {
-  res.type('text/plain');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
   res.send('google.com, pub-4451581237303819, DIRECT, f08c47fec0942fa0\n');
 });
 
 // Search Engine robots.txt
 app.get('/robots.txt', (req, res) => {
-  res.type('text/plain');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.send('User-agent: *\nAllow: /\n\nSitemap: https://shubhapatro.com/sitemap.xml\nSitemap: https://www.shubhapatro.com/sitemap.xml\n');
 });
 
-// Search Engine sitemap.xml
+// AdSense Verification & System Status Check API
+app.get('/api/adsense/status', (req, res) => {
+  res.json({
+    success: true,
+    domain: 'shubhapatro.com',
+    publisherId: 'pub-4451581237303819',
+    adsTxtLine: 'google.com, pub-4451581237303819, DIRECT, f08c47fec0942fa0',
+    metaTag: '<meta name="google-adsense-account" content="ca-pub-4451581237303819">',
+    primaryLanguage: 'en',
+    bilingualEnabled: true,
+    policyResolutions: {
+      unsupportedLanguage: 'Resolved with <html lang="en">, English-first SEO meta tags, and bilingual articles.',
+      screensWithoutContent: 'Resolved with comprehensive Cultural & Astronomical Knowledge Hub (6+ authoritative guides).',
+      compliancePages: 'Resolved with dedicated Privacy Policy (DART cookie disclosures), Terms, About Us, and Contact Us.',
+      siteOwnership: 'Verified via live /ads.txt and <meta name="google-adsense-account"> tag.',
+    },
+    lastVerified: new Date().toISOString(),
+  });
+});
+
+// Search Engine sitemap.xml covering all publisher editorial articles and compliance routes
 app.get('/sitemap.xml', (req, res) => {
-  res.type('application/xml');
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
   const host = (req.headers.host || 'shubhapatro.com').toLowerCase();
   const today = new Date().toISOString().split('T')[0];
+  const pages = [
+    { path: '', priority: '1.0', changefreq: 'daily' },
+    { path: 'articles', priority: '0.9', changefreq: 'weekly' },
+    { path: 'articles/guide-to-bikram-sambat-calendar', priority: '0.9', changefreq: 'monthly' },
+    { path: 'articles/demystifying-panchanga-five-pillars', priority: '0.9', changefreq: 'monthly' },
+    { path: 'articles/grand-festivals-of-nepal-dashain-tihar', priority: '0.9', changefreq: 'monthly' },
+    { path: 'articles/vedic-astrology-janma-kundali-gun-milan', priority: '0.9', changefreq: 'monthly' },
+    { path: 'articles/ayurvedic-ritucharya-seasonal-health-living', priority: '0.9', changefreq: 'monthly' },
+    { path: 'articles/finding-auspicious-muhurat-shubha-sait', priority: '0.9', changefreq: 'monthly' },
+    { path: 'festivals', priority: '0.8', changefreq: 'weekly' },
+    { path: 'rashifal', priority: '0.8', changefreq: 'daily' },
+    { path: 'kundali', priority: '0.8', changefreq: 'weekly' },
+    { path: 'forex', priority: '0.8', changefreq: 'hourly' },
+    { path: 'dharma', priority: '0.8', changefreq: 'weekly' },
+    { path: 'privacy-policy', priority: '0.7', changefreq: 'monthly' },
+    { path: 'terms-of-service', priority: '0.7', changefreq: 'monthly' },
+    { path: 'about-us', priority: '0.7', changefreq: 'monthly' },
+    { path: 'contact', priority: '0.7', changefreq: 'monthly' },
+  ];
+
+  const urls = pages.map(p => `  <url>
+    <loc>https://${host}/${p.path}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${p.changefreq}</changefreq>
+    <priority>${p.priority}</priority>
+  </url>`).join('\n');
+
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://${host}/</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
+${urls}
 </urlset>`);
 });
 
-// TikTok Video Ad routes
-app.get('/shubhapatro-ad-video.mp4', (req, res) => {
-  const distVideo = path.join(process.cwd(), 'dist', 'shubhapatro-ad-video.mp4');
-  const publicVideo = path.join(process.cwd(), 'public', 'shubhapatro-ad-video.mp4');
-  if (fs.existsSync(distVideo)) return res.sendFile(distVideo);
-  if (fs.existsSync(publicVideo)) return res.sendFile(publicVideo);
-  return res.redirect('/?tab=tiktok-ad');
-});
-
-app.get('/tiktok-ad.html', (req, res) => {
-  const distHtml = path.join(process.cwd(), 'dist', 'tiktok-ad.html');
-  const publicHtml = path.join(process.cwd(), 'public', 'tiktok-ad.html');
-  if (fs.existsSync(distHtml)) return res.sendFile(distHtml);
-  if (fs.existsSync(publicHtml)) return res.sendFile(publicHtml);
-  return res.redirect('/?tab=tiktok-ad');
+// PWA Manifest alias
+app.get('/manifest.json', (req, res) => {
+  res.redirect(301, '/manifest.webmanifest');
 });
 
 // Serve static files from public directory
@@ -1750,9 +2243,14 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Vite middleware setup
 async function startServer() {
+  const httpServer = http.createServer(app);
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { 
+        middlewareMode: true,
+        hmr: false,
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -1764,8 +2262,8 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Hamro Patro server running on http://localhost:${PORT}`);
+  httpServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`Shubha Patro server running on http://localhost:${PORT}`);
   });
 }
 

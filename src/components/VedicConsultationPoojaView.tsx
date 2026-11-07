@@ -885,7 +885,7 @@ export const VedicConsultationPoojaView: React.FC<VedicConsultationPoojaViewProp
                   <div className="p-3 bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 space-y-2">
                     {paymentMethod === 'esewa' && (
                       <div className="flex items-center justify-between text-xs">
-                        <span>eSewa ID: <strong>9800000000</strong> (Shyam Thapa)</span>
+                        <span>eSewa ID: <strong>9800000000</strong> (Shubha Patro)</span>
                         <button
                           type="button"
                           onClick={() => copyToClipboard('9800000000', 'esewa')}
@@ -897,7 +897,7 @@ export const VedicConsultationPoojaView: React.FC<VedicConsultationPoojaViewProp
                     )}
                     {paymentMethod === 'khalti' && (
                       <div className="flex items-center justify-between text-xs">
-                        <span>Khalti ID: <strong>9800000000</strong> (Shyam Thapa)</span>
+                        <span>Khalti ID: <strong>9800000000</strong> (Shubha Patro)</span>
                         <button
                           type="button"
                           onClick={() => copyToClipboard('9800000000', 'khalti')}
@@ -1016,7 +1016,7 @@ export const VedicConsultationPoojaView: React.FC<VedicConsultationPoojaViewProp
                       required
                       value={poojaDevoteeName}
                       onChange={(e) => setPoojaDevoteeName(e.target.value)}
-                      placeholder="e.g. Shyam Thapa"
+                      placeholder={lang === 'ne' ? 'उदा. राम शर्मा' : 'e.g. Ram Sharma'}
                       className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-white"
                     />
                   </div>
@@ -1122,7 +1122,7 @@ export const VedicConsultationPoojaView: React.FC<VedicConsultationPoojaViewProp
                   <div className="p-3 bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 space-y-2">
                     {paymentMethod === 'esewa' && (
                       <div className="flex items-center justify-between text-xs">
-                        <span>eSewa ID: <strong>9800000000</strong> (Shyam Thapa)</span>
+                        <span>eSewa ID: <strong>9800000000</strong> (Shubha Patro)</span>
                         <button
                           type="button"
                           onClick={() => copyToClipboard('9800000000', 'esewa')}
@@ -1134,7 +1134,7 @@ export const VedicConsultationPoojaView: React.FC<VedicConsultationPoojaViewProp
                     )}
                     {paymentMethod === 'khalti' && (
                       <div className="flex items-center justify-between text-xs">
-                        <span>Khalti ID: <strong>9800000000</strong> (Shyam Thapa)</span>
+                        <span>Khalti ID: <strong>9800000000</strong> (Shubha Patro)</span>
                         <button
                           type="button"
                           onClick={() => copyToClipboard('9800000000', 'khalti')}

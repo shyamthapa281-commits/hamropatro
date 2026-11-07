@@ -382,7 +382,7 @@ export const SupportWorkView: React.FC<SupportWorkViewProps> = ({ lang, onNaviga
                     <div className="p-3 bg-stone-50 dark:bg-stone-800/50 rounded-xl border border-stone-200/60 dark:border-stone-700/60">
                       <span className="text-[10.5px] text-stone-400 block font-medium">खातावालाको नाम (Account Name):</span>
                       <span className="font-bold text-stone-900 dark:text-white text-xs sm:text-sm block">
-                        Shyam Thapa (श्याम थापा)
+                        Shubha Patro (शुभ पात्रो)
                       </span>
                     </div>
 
@@ -427,7 +427,7 @@ export const SupportWorkView: React.FC<SupportWorkViewProps> = ({ lang, onNaviga
 
                   <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60">
                     <span className="text-stone-400 text-[10.5px] block">{lang === 'ne' ? 'खातावालाको नाम:' : 'Account Holder:'}</span>
-                    <span className="font-bold text-stone-900 dark:text-white text-xs">Shyam Thapa (Nepali Calendar)</span>
+                    <span className="font-bold text-stone-900 dark:text-white text-xs">Shubha Patro (Nepali Calendar)</span>
                   </div>
 
                   <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60">
@@ -528,7 +528,7 @@ export const SupportWorkView: React.FC<SupportWorkViewProps> = ({ lang, onNaviga
 
                   <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60">
                     <span className="text-stone-400 text-[10.5px] block font-medium">Account Name:</span>
-                    <span className="font-bold text-stone-900 dark:text-white text-xs block">Shyam Thapa</span>
+                    <span className="font-bold text-stone-900 dark:text-white text-xs block">Shubha Patro</span>
                   </div>
 
                   <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-700/60">
@@ -638,7 +638,7 @@ export const SupportWorkView: React.FC<SupportWorkViewProps> = ({ lang, onNaviga
                 <input
                   type="text"
                   required
-                  placeholder={lang === 'ne' ? 'उदा. श्याम थापा' : 'e.g. Shyam Thapa'}
+                  placeholder={lang === 'ne' ? 'तपाईंको पूरा नाम (उदा. राम शर्मा)' : 'Your Name (e.g. Ram Sharma)'}
                   value={donorName}
                   onChange={(e) => setDonorName(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500"

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   BookOpen, 
   Search, 
@@ -37,21 +37,47 @@ import {
   VedicRitual,
   SacredMantra
 } from '../data/dharmaCultureData';
-import { toNepaliDigits } from '../utils/nepaliCalendar';
+import { toNepaliDigits, getCurrentNepaliDate } from '../utils/nepaliCalendar';
 import { soundSynthesizer } from '../utils/audioSynthesizer';
+import { DailyWellnessTip } from './DailyWellnessTip';
+import { NEPALI_SEASONS_WELLNESS } from '../data/healthWellnessData';
+import { NepaliDate } from '../types';
 
 interface DharmaSanskritiViewProps {
   lang: Language;
+  todayBs?: NepaliDate;
   onNavigate?: (tab: string) => void;
-  initialSubTab?: 'dreams' | 'rituals' | 'mantras' | 'fasting';
+  initialSubTab?: 'dreams' | 'rituals' | 'mantras' | 'fasting' | 'wellness';
 }
 
 export const DharmaSanskritiView: React.FC<DharmaSanskritiViewProps> = ({ 
   lang, 
+  todayBs,
   onNavigate,
   initialSubTab = 'dreams'
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'dreams' | 'rituals' | 'mantras' | 'fasting'>(initialSubTab);
+  const activeTodayBs = useMemo(() => todayBs || getCurrentNepaliDate(), [todayBs]);
+  const [activeSubTab, setActiveSubTab] = useState<'dreams' | 'rituals' | 'mantras' | 'fasting' | 'wellness'>(initialSubTab);
+  const contentSectionRef = useRef<HTMLDivElement>(null);
+
+  // Sync when initialSubTab prop updates
+  useEffect(() => {
+    if (initialSubTab) {
+      setActiveSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
+
+  // Handle heading selection with smooth auto-scroll so selected appearance is right at the top
+  const handleSelectSubTab = (tab: 'dreams' | 'rituals' | 'mantras' | 'fasting' | 'wellness') => {
+    setActiveSubTab(tab);
+    setTimeout(() => {
+      if (contentSectionRef.current) {
+        const yOffset = -70;
+        const y = contentSectionRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+      }
+    }, 40);
+  };
 
   // --- DREAM SEARCH STATE ---
   const [dreamQuery, setDreamQuery] = useState<string>('');
@@ -196,7 +222,8 @@ Shubha Patro (शुभ पात्रो • shubhapatro.com) • धर्म
           {/* Quick Jump Buttons */}
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setActiveSubTab('dreams')}
+              type="button"
+              onClick={() => handleSelectSubTab('dreams')}
               className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs ${
                 activeSubTab === 'dreams'
                   ? 'bg-amber-400 text-stone-950 font-extrabold shadow-md scale-105'
@@ -207,7 +234,8 @@ Shubha Patro (शुभ पात्रो • shubhapatro.com) • धर्म
               <span>{lang === 'ne' ? 'सपनाको फल (Swapna Shastra)' : 'Dream Interpretation'}</span>
             </button>
             <button
-              onClick={() => setActiveSubTab('rituals')}
+              type="button"
+              onClick={() => handleSelectSubTab('rituals')}
               className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs ${
                 activeSubTab === 'rituals'
                   ? 'bg-amber-400 text-stone-950 font-extrabold shadow-md scale-105'
@@ -218,7 +246,8 @@ Shubha Patro (शुभ पात्रो • shubhapatro.com) • धर्म
               <span>{lang === 'ne' ? 'नित्यकर्म र पूजा विधि' : 'Daily Rituals & Puja'}</span>
             </button>
             <button
-              onClick={() => setActiveSubTab('mantras')}
+              type="button"
+              onClick={() => handleSelectSubTab('mantras')}
               className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs ${
                 activeSubTab === 'mantras'
                   ? 'bg-amber-400 text-stone-950 font-extrabold shadow-md scale-105'
@@ -229,7 +258,8 @@ Shubha Patro (शुभ पात्रो • shubhapatro.com) • धर्म
               <span>{lang === 'ne' ? 'मन्त्र र १०८ जप काउन्टर' : 'Sacred Mantras & 108 Japa'}</span>
             </button>
             <button
-              onClick={() => setActiveSubTab('fasting')}
+              type="button"
+              onClick={() => handleSelectSubTab('fasting')}
               className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs ${
                 activeSubTab === 'fasting'
                   ? 'bg-amber-400 text-stone-950 font-extrabold shadow-md scale-105'
@@ -239,6 +269,19 @@ Shubha Patro (शुभ पात्रो • shubhapatro.com) • धर्म
               <Calendar className="w-4 h-4" />
               <span>{lang === 'ne' ? 'व्रत र उपवास नियम' : 'Vedic Fasting Rules'}</span>
             </button>
+            <button
+              type="button"
+              id="subtab-wellness-btn"
+              onClick={() => handleSelectSubTab('wellness')}
+              className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs ${
+                activeSubTab === 'wellness'
+                  ? 'bg-emerald-400 text-stone-950 font-extrabold shadow-md scale-105'
+                  : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+              }`}
+            >
+              <Leaf className="w-4 h-4 text-emerald-300" />
+              <span>{lang === 'ne' ? 'दैनिक ऋतु आरोग्य (Ayurveda & Yoga)' : 'Daily Wellness Tip'}</span>
+            </button>
           </div>
         </div>
 
@@ -246,6 +289,220 @@ Shubha Patro (शुभ पात्रो • shubhapatro.com) • धर्म
         <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-12 -top-12 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
       </div>
+
+      {/* Target Content Anchor & Sticky Headings Navigation */}
+      <div 
+        ref={contentSectionRef} 
+        className="sticky top-14 sm:top-16 z-20 bg-stone-50/95 dark:bg-stone-900/95 backdrop-blur-md p-2 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-sm flex items-center justify-between gap-2 overflow-x-auto scrollbar-none transition-all"
+      >
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-max">
+          <button
+            type="button"
+            onClick={() => handleSelectSubTab('dreams')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSubTab === 'dreams'
+                ? 'bg-amber-500 text-stone-950 font-black shadow-xs ring-2 ring-amber-400/40'
+                : 'bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-200 dark:border-stone-700/60'
+            }`}
+          >
+            <Moon className="w-3.5 h-3.5" />
+            <span>{lang === 'ne' ? 'सपनाको फल (Dreams)' : 'Dreams'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSelectSubTab('rituals')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSubTab === 'rituals'
+                ? 'bg-amber-500 text-stone-950 font-black shadow-xs ring-2 ring-amber-400/40'
+                : 'bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-200 dark:border-stone-700/60'
+            }`}
+          >
+            <Sun className="w-3.5 h-3.5" />
+            <span>{lang === 'ne' ? 'नित्यकर्म र पूजा (Rituals)' : 'Rituals & Puja'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSelectSubTab('mantras')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSubTab === 'mantras'
+                ? 'bg-amber-500 text-stone-950 font-black shadow-xs ring-2 ring-amber-400/40'
+                : 'bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-200 dark:border-stone-700/60'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5" />
+            <span>{lang === 'ne' ? 'मन्त्र र १०८ जप (Mantras)' : '108 Japa Mantras'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSelectSubTab('fasting')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSubTab === 'fasting'
+                ? 'bg-amber-500 text-stone-950 font-black shadow-xs ring-2 ring-amber-400/40'
+                : 'bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-200 dark:border-stone-700/60'
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            <span>{lang === 'ne' ? 'व्रत र उपवास (Fasting)' : 'Fasting Rules'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSelectSubTab('wellness')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSubTab === 'wellness'
+                ? 'bg-emerald-500 text-stone-950 font-black shadow-xs ring-2 ring-emerald-400/40'
+                : 'bg-white dark:bg-stone-800 text-emerald-800 dark:text-emerald-300 hover:bg-stone-100 dark:hover:bg-stone-700 border border-emerald-200 dark:border-emerald-800/60'
+            }`}
+          >
+            <Leaf className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>{lang === 'ne' ? 'ऋतु आरोग्य (Wellness)' : 'Daily Wellness'}</span>
+          </button>
+        </div>
+
+        {/* Quick jump to wellness tip if in another subtab */}
+        {activeSubTab !== 'wellness' && (
+          <button
+            type="button"
+            onClick={() => handleSelectSubTab('wellness')}
+            className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-850 text-[11px] font-bold shrink-0 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 cursor-pointer transition-colors"
+          >
+            <Leaf className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{lang === 'ne' ? 'दैनिक ऋतु आरोग्य सुझाव' : 'Daily Wellness Tip'}</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+
+      {/* ============================================================ */}
+      {/* SUB-TAB 0: DEDICATED SEASONAL WELLNESS (ऋतुचर्या तथा आयुर्वेद) */}
+      {/* ============================================================ */}
+      {activeSubTab === 'wellness' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Featured Daily Seasonal Wellness Tip (Now specifically in Wellness tab) */}
+          <DailyWellnessTip 
+            lang={lang} 
+            todayBs={activeTodayBs} 
+            className="shadow-sm" 
+            defaultExpanded={true}
+          />
+          {(() => {
+            const currentSeason = NEPALI_SEASONS_WELLNESS.find((s) => s.monthNumbers.includes(activeTodayBs.month)) || NEPALI_SEASONS_WELLNESS[0];
+            return (
+              <div className="space-y-6">
+                {/* Active Season Overview Card */}
+                <div className="bg-white dark:bg-stone-900 rounded-3xl p-5 sm:p-7 border border-stone-200 dark:border-stone-800 shadow-sm space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 dark:border-stone-800 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold">
+                        <Leaf className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg sm:text-xl font-extrabold text-stone-900 dark:text-white">
+                          {lang === 'ne' ? `${currentSeason.nameNe} (${currentSeason.sanskritTitle})` : `${currentSeason.nameEn} - Seasonal Ritucharya`}
+                        </h3>
+                        <p className="text-xs text-stone-500 dark:text-stone-400">
+                          {lang === 'ne' ? `नेपाली महिनाहरू: ${currentSeason.monthsNe}` : `Active Months: ${currentSeason.monthsEn}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-amber-800 dark:text-amber-400 block">
+                        {lang === 'ne' ? `प्रभावित दोष: ${currentSeason.doshaNe}` : `Dominant Dosha: ${currentSeason.doshaEn}`}
+                      </span>
+                      <span className="text-[11px] text-stone-500 dark:text-stone-400">
+                        {lang === 'ne' ? `महाभूत: ${currentSeason.elementNe}` : `Elements: ${currentSeason.elementEn}`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
+                    {lang === 'ne' ? currentSeason.climateSummaryNe : currentSeason.climateSummaryEn}
+                  </p>
+
+                  <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-900/40 text-xs text-stone-800 dark:text-stone-200">
+                    <strong className="block font-bold text-emerald-900 dark:text-emerald-300 mb-1">
+                      {lang === 'ne' ? '🌿 ऋतु अनुसार दोष अवस्था र शारीरिक प्रभाव:' : '🌿 Dosha Dynamics & Physiological Impact:'}
+                    </strong>
+                    <span>{lang === 'ne' ? currentSeason.doshaStateNe : currentSeason.doshaStateEn}</span>
+                  </div>
+
+                  {/* Seasonal Diet Matrix: Favorable vs Avoid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    {/* Favorable Diet */}
+                    <div className="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/50 space-y-2">
+                      <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-xs uppercase tracking-wider">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>{lang === 'ne' ? 'ऋतु अनुकूल पथ्य (खानुपर्ने आहार)' : 'Favorable Seasonal Foods'}</span>
+                      </div>
+                      <div className="space-y-1.5 text-xs text-stone-700 dark:text-stone-300">
+                        {(lang === 'ne' ? currentSeason.dietRecommendations.favorableNe : currentSeason.dietRecommendations.favorableEn).map((item, idx) => (
+                          <div key={idx} className="flex items-start gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5" />
+                            <span>{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Foods to Avoid */}
+                    <div className="p-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/50 space-y-2">
+                      <div className="flex items-center gap-2 text-rose-800 dark:text-rose-300 font-bold text-xs uppercase tracking-wider">
+                        <AlertCircle className="w-4 h-4 text-rose-600" />
+                        <span>{lang === 'ne' ? 'अपथ्य (त्याग्नुपर्ने वा कम खानुपर्ने)' : 'Foods to Moderate / Avoid'}</span>
+                      </div>
+                      <div className="space-y-1.5 text-xs text-stone-700 dark:text-stone-300">
+                        {(lang === 'ne' ? currentSeason.dietRecommendations.avoidNe : currentSeason.dietRecommendations.avoidEn).map((item, idx) => (
+                          <div key={idx} className="flex items-start gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 mt-1.5" />
+                            <span>{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Daily Ritucharya Routine Habits */}
+                  <div className="pt-2 space-y-2">
+                    <span className="text-xs font-bold text-stone-900 dark:text-white uppercase tracking-wider block">
+                      {lang === 'ne' ? 'दैनिक ऋतुचर्या नियमहरू (Daily Lifestyle Guidelines):' : 'Seasonal Daily Lifestyle Habits:'}
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      {(lang === 'ne' ? currentSeason.dailyRitucharyaNe : currentSeason.dailyRitucharyaEn).map((habit, idx) => (
+                        <div key={idx} className="p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/70 dark:border-stone-700/60 text-stone-700 dark:text-stone-300 flex items-start gap-2">
+                          <Compass className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <span>{habit}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Seasonal Herbal Decoction Recipe */}
+                  <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Flame className="w-4 h-4 text-amber-600" />
+                        <h4 className="font-bold text-amber-950 dark:text-amber-200 text-xs sm:text-sm">
+                          {lang === 'ne' ? `घरेलु आयुर्वेदिक काढा: ${currentSeason.herbalRemedy.nameNe}` : `Seasonal Remedy: ${currentSeason.herbalRemedy.nameEn}`}
+                        </h4>
+                      </div>
+                    </div>
+                    <div className="text-xs text-stone-800 dark:text-stone-200 space-y-1">
+                      <p><strong>{lang === 'ne' ? 'सामग्री:' : 'Ingredients:'}</strong> {lang === 'ne' ? currentSeason.herbalRemedy.ingredientsNe : currentSeason.herbalRemedy.ingredientsEn}</p>
+                      <p><strong>{lang === 'ne' ? 'बनाउने विधि:' : 'Instructions:'}</strong> {lang === 'ne' ? currentSeason.herbalRemedy.instructionsNe : currentSeason.herbalRemedy.instructionsEn}</p>
+                      <p className="text-emerald-800 dark:text-emerald-300 font-semibold">
+                        <strong>{lang === 'ne' ? 'मुख्य लाभ:' : 'Benefits:'}</strong> {lang === 'ne' ? currentSeason.herbalRemedy.benefitNe : currentSeason.herbalRemedy.benefitEn}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* ============================================================ */}
       {/* SUB-TAB 1: DREAMS INTERPRETATION (सपनाको फल) */}
@@ -602,21 +859,41 @@ Shubha Patro (शुभ पात्रो • shubhapatro.com) • धर्म
             {VEDIC_RITUALS_DATA.map((ritual) => (
               <div
                 key={ritual.id}
-                className="bg-white dark:bg-stone-900 rounded-3xl p-6 shadow-sm border border-stone-200 dark:border-stone-800 flex flex-col justify-between transition-colors space-y-4"
+                className="bg-white dark:bg-stone-900 rounded-3xl p-6 shadow-sm border border-stone-200 dark:border-stone-800 flex flex-col justify-between transition-colors space-y-4 overflow-hidden group"
               >
                 <div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-red-600 text-white flex items-center justify-center font-bold shadow-sm">
-                      <Sparkles className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider block">
+                  {ritual.imageUrl && (
+                    <div className="relative -mx-6 -mt-6 mb-4 h-40 overflow-hidden bg-stone-100 dark:bg-stone-800">
+                      <img
+                        src={ritual.imageUrl}
+                        alt={lang === 'ne' ? ritual.titleNe : ritual.titleEn}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-3 left-3 bg-stone-950/80 backdrop-blur-xs text-amber-300 text-[10px] font-bold px-2.5 py-0.5 rounded-lg border border-amber-500/30 uppercase tracking-wider">
                         {ritual.category === 'daily'
                           ? (lang === 'ne' ? 'दैनिक नित्यकर्म' : 'Daily Observance')
                           : ritual.category === 'fasting'
                           ? (lang === 'ne' ? 'पवित्र व्रत' : 'Sacred Fast')
                           : (lang === 'ne' ? 'वास्तु तथा कल्याण' : 'Vastu & Wellness')}
-                      </span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-red-600 text-white flex items-center justify-center font-bold shadow-sm shrink-0">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div>
+                      {!ritual.imageUrl && (
+                        <span className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider block">
+                          {ritual.category === 'daily'
+                            ? (lang === 'ne' ? 'दैनिक नित्यकर्म' : 'Daily Observance')
+                            : ritual.category === 'fasting'
+                            ? (lang === 'ne' ? 'पवित्र व्रत' : 'Sacred Fast')
+                            : (lang === 'ne' ? 'वास्तु तथा कल्याण' : 'Vastu & Wellness')}
+                        </span>
+                      )}
                       <h3 className="font-extrabold text-stone-900 dark:text-white text-base">
                         {lang === 'ne' ? ritual.titleNe : ritual.titleEn}
                       </h3>

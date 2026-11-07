@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Language } from '../types';
 import { EmailServerModal } from './EmailServerModal';
+import { AdSenseComplianceModals } from './AdSenseComplianceModals';
 
 interface FooterProps {
   lang: Language;
@@ -42,6 +43,7 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
   } | null>(null);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
+  const [complianceModal, setComplianceModal] = useState<'privacy' | 'terms' | 'about' | 'contact' | null>(null);
 
   const handleSubmitAdvice = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,23 +231,23 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
               <li>
                 <button
                   type="button"
+                  id="footer-quick-articles"
+                  onClick={() => onNavigate('articles')}
+                  className="text-sky-400 hover:text-sky-300 font-semibold transition-colors cursor-pointer hover:underline text-left w-full flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+                  <span>{lang === 'ne' ? '• लेख तथा सांस्कृतिक ज्ञान (Articles & Guides)' : '• Articles & Cultural Knowledge Hub'}</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
                   id="footer-quick-support"
                   onClick={() => onNavigate('support')}
                   className="text-amber-400 hover:text-amber-300 font-bold transition-colors cursor-pointer hover:underline text-left w-full flex items-center gap-1.5"
                 >
                   <Heart className="w-3.5 h-3.5 text-amber-400 fill-amber-400/30" />
                   <span>{lang === 'ne' ? '• सहयोग (Support Our Work)' : '• Support Our Work'}</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  id="footer-quick-tiktok-ad"
-                  onClick={() => onNavigate('tiktok-ad')}
-                  className="hover:text-pink-400 transition-colors cursor-pointer text-stone-400 hover:underline text-left w-full flex items-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-pink-400" />
-                  <span>{lang === 'ne' ? '• टिकटक विज्ञापन (TikTok Ad)' : '• TikTok Ad Video'}</span>
                 </button>
               </li>
             </ul>
@@ -266,7 +268,9 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   <span className="text-stone-400 block text-[11px]">
                     {lang === 'ne' ? 'निर्देशक तथा संयोजक:' : 'Director & Coordinator:'}
                   </span>
-                  <strong className="text-white font-semibold">Shyam Thapa (श्याम थापा)</strong>
+                  <strong className="text-white font-semibold">
+                    {lang === 'ne' ? 'श्याम थापा' : 'Shyam Thapa'}
+                  </strong>
                 </div>
               </div>
 
@@ -276,7 +280,9 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   <span className="text-stone-400 block text-[11px]">
                     {lang === 'ne' ? 'सल्लाहकार:' : 'Advisor:'}
                   </span>
-                  <strong className="text-white font-semibold">Mana Magar(मन मगर)</strong>
+                  <strong className="text-white font-semibold">
+                    {lang === 'ne' ? 'मन मगर' : 'Mana Magar'}
+                  </strong>
                 </div>
               </div>
 
@@ -286,7 +292,9 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
                   <span className="text-stone-400 block text-[11px]">
                     {lang === 'ne' ? 'डिजाइन तथा प्राविधिक:' : 'Design & Technical:'}
                   </span>
-                  <strong className="text-white font-semibold">Samriddha Thapa (समृद्ध थापा)</strong>
+                  <strong className="text-white font-semibold">
+                    {lang === 'ne' ? 'समृद्ध थापा' : 'Samriddha Thapa'}
+                  </strong>
                 </div>
               </div>
             </div>
@@ -537,8 +545,60 @@ export const Footer: React.FC<FooterProps> = ({ lang, onNavigate }) => {
           defaultSubject="Inquiry to Shubha Patro"
         />
 
+        {/* Publisher Legal & AdSense Compliance Row */}
+        <div className="py-4 border-t border-stone-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-stone-400">
+            <button
+              type="button"
+              onClick={() => setComplianceModal('privacy')}
+              className="hover:text-emerald-400 transition-colors cursor-pointer text-left font-medium"
+            >
+              {lang === 'ne' ? 'गोपनीयता नीति (Privacy Policy)' : 'Privacy Policy'}
+            </button>
+            <span className="text-stone-700">•</span>
+            <button
+              type="button"
+              onClick={() => setComplianceModal('terms')}
+              className="hover:text-sky-400 transition-colors cursor-pointer text-left font-medium"
+            >
+              {lang === 'ne' ? 'सेवाका सर्तहरू (Terms of Service)' : 'Terms of Service'}
+            </button>
+            <span className="text-stone-700">•</span>
+            <button
+              type="button"
+              onClick={() => setComplianceModal('about')}
+              className="hover:text-amber-400 transition-colors cursor-pointer text-left font-medium"
+            >
+              {lang === 'ne' ? 'हाम्रो बारेमा (About Us)' : 'About Us & Editorial Team'}
+            </button>
+            <span className="text-stone-700">•</span>
+            <button
+              type="button"
+              onClick={() => setComplianceModal('contact')}
+              className="hover:text-blue-400 transition-colors cursor-pointer text-left font-medium"
+            >
+              {lang === 'ne' ? 'सम्पर्क (Contact)' : 'Contact Us'}
+            </button>
+            <span className="text-stone-700">•</span>
+            <button
+              type="button"
+              onClick={() => onNavigate('articles')}
+              className="hover:text-amber-300 text-sky-400 transition-colors cursor-pointer text-left font-medium"
+            >
+              {lang === 'ne' ? 'सांस्कृतिक लेख तथा मार्गनिर्देशन' : 'Articles & Guides'}
+            </button>
+          </div>
+        </div>
+
+        {/* AdSense Compliance Modals */}
+        <AdSenseComplianceModals
+          type={complianceModal}
+          onClose={() => setComplianceModal(null)}
+          lang={lang}
+        />
+
         {/* Bottom copyright */}
-        <div className="pt-6 border-t border-stone-800 flex flex-wrap items-center justify-between gap-4 text-xs text-stone-500">
+        <div className="pt-4 border-t border-stone-800 flex flex-wrap items-center justify-between gap-4 text-xs text-stone-500">
           <p>© {new Date().getFullYear()} Shubha Patro (शुभ पात्रो • shubhapatro.com). Nepali Calendar. All rights reserved.</p>
           <p className="flex items-center gap-1">
             <span>Made with</span>
